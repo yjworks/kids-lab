@@ -105,14 +105,16 @@
     quiz('pitch', 8, function (i, lv) {
       var a = K.randInt(0, 7), b = K.randInt(0, 7); if (Math.abs(a - b) < (lv >= 3 ? 1 : 3)) b = a < 4 ? Math.min(7, a + (lv >= 3 ? 1 : 3)) : Math.max(0, a - (lv >= 3 ? 1 : 3)); if (a === b) b = a === 7 ? 6 : a + 1;
       var high = i % 2 === 0;
-      return { prompt: '🔊 두 소리를 듣고 ' + (high ? '더 높은' : '더 낮은') + ' 소리는?', say: null, cols: 2, choices: [{ html: '1️⃣', correct: high ? a > b : a < b }, { html: '2️⃣', correct: high ? b > a : b < a }], after: function () { setTimeout(function () { K.sfx.note(NOTES[a][1], 0.5); }, 300); setTimeout(function () { K.sfx.note(NOTES[b][1], 0.5); }, 1100); } };
+      return { key: 'pitch' + a + '-' + b + '-' + (high ? 'h' : 'l'), prompt: '🔊 두 소리를 듣고 ' + (high ? '더 높은' : '더 낮은') + ' 소리는?', say: null, cols: 2, choices: [{ html: '1️⃣', correct: high ? a > b : a < b }, { html: '2️⃣', correct: high ? b > a : b < a }], after: function () { setTimeout(function () { K.sfx.note(NOTES[a][1], 0.5); }, 300); setTimeout(function () { K.sfx.note(NOTES[b][1], 0.5); }, 1100); } };
     });
   }
   function earQuiz() {
     quiz('ear', 8, function (i, lv) {
-      var pool = lv === 1 ? [0, 4, 7] : lv === 2 ? [0, 2, 4, 7] : lv === 3 ? [0, 1, 2, 3, 4] : [0, 1, 2, 3, 4, 5, 6, 7];
-      var ans = K.pick(pool); var opts = K.shuffle(pool).slice(0, Math.min(4, pool.length)); if (opts.indexOf(ans) < 0) opts[0] = ans;
-      return { prompt: '🔊 어떤 음일까요? (다시 들으려면 여기를 눌러요)', cols: opts.length, choices: K.shuffle(opts).map(function (n) { return { html: NOTES[n][2] + '<div style="font-size:26px">' + NOTES[n][0] + '</div>', correct: n === ans }; }), after: function (stage) { var f = function () { K.sfx.note(NOTES[ans][1], 0.6); }; setTimeout(f, 300); stage.querySelector('.kl-prompt').addEventListener('click', f); stage.querySelector('.kl-prompt').style.cursor = 'pointer'; } };
+      var pool = lv === 1 ? [0, 2, 4, 7] : lv === 2 ? [0, 1, 2, 4, 7] : lv === 3 ? [0, 1, 2, 3, 4, 5] : [0, 1, 2, 3, 4, 5, 6, 7];
+      /* 1단계는 보기를 3개만 골라 같은 문제가 덜 반복되게 한다 */
+      var nOpt = lv === 1 ? 3 : Math.min(4, pool.length);
+      var ans = K.pick(pool); var opts = K.shuffle(pool).slice(0, nOpt); if (opts.indexOf(ans) < 0) opts[0] = ans;
+      return { key: 'ear' + ans + '-' + opts.slice().sort().join(','), prompt: '🔊 어떤 음일까요? (다시 들으려면 여기를 눌러요)', cols: opts.length, choices: K.shuffle(opts).map(function (n) { return { html: NOTES[n][2] + '<div style="font-size:26px">' + NOTES[n][0] + '</div>', correct: n === ans }; }), after: function (stage) { var f = function () { K.sfx.note(NOTES[ans][1], 0.6); }; setTimeout(f, 300); stage.querySelector('.kl-prompt').addEventListener('click', f); stage.querySelector('.kl-prompt').style.cursor = 'pointer'; } };
     });
   }
   function rhythm() {

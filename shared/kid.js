@@ -265,10 +265,47 @@
 
   /* ---------- 퀴즈 엔진 ---------- */
   /* runQuiz({ el, total, mode, make(i, level)->{prompt, say, sayLang, choices:[{html,correct,say,sayLang}], cols, big}, onFinish(score,total) }) */
+  /* 문제와 보기를 합쳐 같은 문제인지 가린다.
+     소리나 그림 크기처럼 화면 글자만으로 구분되지 않는 문제는 앱이 q.key로 알려준다. */
+  function qkey(q) {
+    if (q.key) return 'k:' + q.key;
+    var ch = (q.choices || []).map(function (c) { return String(c.html); }).sort().join('~');
+    return String(q.prompt || '') + '|' + String(q.say || '') + '|' + ch;
+  }
+  /* 보기 안에 똑같은 것이 섞였는지 ('다른 것 찾기'처럼 일부러 같게 낸 문제는 제외) */
+  function hasDupChoice(q) {
+    if (q.allowDupChoices) return false;
+    var seen = {}, ch = q.choices || [];
+    for (var i = 0; i < ch.length; i++) { var h = String(ch[i].html); if (seen[h]) return true; seen[h] = 1; }
+    return false;
+  }
+  /* 한 라운드에 낼 문제를 미리 뽑는다. 같은 문제가 또 나오면 다시 뽑고,
+     낼 수 있는 문제가 라운드 길이보다 적으면 몇 번 시도한 뒤 그대로 낸다. */
+  function buildRound(cfg, total, level) {
+    var used = {}, out = [], prev = '';
+    for (var i = 0; i < total; i++) {
+      var q = cfg.make(i, level), best = null, spare = null, ok = false;
+      for (var t = 0; t < 40; t++) {
+        if (!hasDupChoice(q)) {
+          if (!used[qkey(q)]) { ok = true; break; }
+          /* 낼 수 있는 문제가 라운드보다 적을 때라도 바로 앞 문제와 겹치지는 않게 */
+          if (qkey(q) !== prev) best = q; else spare = spare || q;
+        }
+        q = cfg.make(i, level);
+      }
+      if (!ok) q = best || spare || q;
+      prev = qkey(q);
+      used[prev] = 1;
+      out.push(q);
+    }
+    return out;
+  }
+
   function runQuiz(cfg) {
     var root = typeof cfg.el === 'string' ? document.querySelector(cfg.el) : cfg.el;
     var total = cfg.total || 8, idx = 0, score = 0, tries = 0, locked = false;
     var level = cfg.level || (cfg.mode ? getLevel(cfg.mode) : 1);
+    var questions = buildRound(cfg, total, level);
     root.innerHTML = '';
     var dots = el('div', { class: 'kl-dots' });
     for (var i = 0; i < total; i++) dots.appendChild(el('i'));
@@ -278,7 +315,7 @@
     root.appendChild(stage);
     function next() {
       if (idx >= total) return finish();
-      var q = cfg.make(idx, level); tries = 0; locked = false;
+      var q = questions[idx]; tries = 0; locked = false;
       stage.innerHTML = '';
       var promptEl = el('div', { class: 'kl-prompt' + (q.big ? ' big' : ''), html: q.prompt });
       if (q.say) { promptEl.classList.add('speakable'); promptEl.addEventListener('click', function () { speak(q.say, { lang: q.sayLang || 'ko-KR' }); }); }
@@ -360,7 +397,7 @@
     missions: missions, checkMissions: checkMissions, MISSION_POOL: MISSION_POOL,
     STICKERS: STICKERS, STICKER_COST: STICKER_COST,
     sfx: sfx, speak: speak, speakEn: speakEn,
-    toast: toast, confetti: confetti, header: header, runQuiz: runQuiz, menu: menu, backButton: backButton,
+    toast: toast, confetti: confetti, header: header, runQuiz: runQuiz, buildRound: buildRound, qkey: qkey, menu: menu, backButton: backButton,
     el: el, esc: esc, randInt: randInt, pick: pick, shuffle: shuffle, sample: sample, notify: notify, APP_ID: APP_ID
   };
   if (APP_ID !== 'os') { try { markVisit(APP_ID); } catch (e) { } }

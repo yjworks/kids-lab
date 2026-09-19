@@ -98,7 +98,10 @@
   var DUR = [['👁️ 눈 깜빡이기', 1], ['🪥 이 닦기', 3], ['🍽️ 밥 먹기', 20], ['😴 밤에 자기', 600], ['🏫 유치원 하루', 300], ['🎬 만화 한 편', 15], ['🚗 할머니 집 가기', 60], ['🖐️ 손 씻기', 1], ['🛁 목욕하기', 15], ['📖 책 한 권 읽기', 10]];
   function durQuiz() {
     quiz('dur', 6, function (i, lv) {
-      var pair = K.sample(DUR, 2); var longer = i % 2 === 0; var target = pair.reduce(function (a, b) { return longer ? (a[1] > b[1] ? a : b) : (a[1] < b[1] ? a : b); });
+      /* 시간이 같은 둘이 뽑히면 답이 갈리므로 다시 뽑는다 */
+      var pair = K.sample(DUR, 2); var guard = 0;
+      while (pair[0][1] === pair[1][1] && guard++ < 50) pair = K.sample(DUR, 2);
+      var longer = i % 2 === 0; var target = pair.reduce(function (a, b) { return longer ? (a[1] > b[1] ? a : b) : (a[1] < b[1] ? a : b); });
       return { prompt: longer ? '더 오래 걸리는 것은?' : '더 빨리 끝나는 것은?', say: longer ? '더 오래 걸리는 것은 무엇일까요?' : '더 빨리 끝나는 것은 무엇일까요?', cols: 2, choices: pair.map(function (p) { return { html: p[0], cls: 'text', correct: p === target }; }) };
     });
   }

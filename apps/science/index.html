@@ -26,8 +26,9 @@
   var WEATHER = [['☀️', '맑음', '🕶️', '선글라스'], ['🌧️', '비', '☂️', '우산'], ['❄️', '눈', '🧤', '장갑'], ['🌬️', '바람', '🧥', '외투'], ['⛅', '구름', '🧢', '모자'], ['🌈', '무지개', '📷', '사진기']];
   var BODY = [['👀', '눈', '보기'], ['👂', '귀', '듣기'], ['👃', '코', '냄새 맡기'], ['👄', '입', '먹기'], ['✋', '손', '만지기'], ['🦶', '발', '걷기'], ['🦷', '이', '씹기'], ['🧠', '뇌', '생각하기'], ['❤️', '심장', '두근두근']];
   var SEASONS = [['🌸', '봄', '꽃이 피어요', '🌱'], ['☀️', '여름', '덥고 수영해요', '🏖️'], ['🍂', '가을', '낙엽이 떨어져요', '🍁'], ['❄️', '겨울', '눈이 와요', '⛄']];
+  var SEASON_SCENES = [['봄', '새싹이 돋아요', '🌱'], ['봄', '나비가 날아요', '🦋'], ['여름', '수박을 먹어요', '🍉'], ['여름', '매미가 울어요', '🦗'], ['가을', '밤과 도토리를 주워요', '🌰'], ['가을', '고추잠자리가 날아요', '🍁'], ['겨울', '눈사람을 만들어요', '⛄'], ['겨울', '목도리를 둘러요', '🧣']];
   var BABY = [['🐔', '🐥', '닭', '병아리'], ['🐸', '🐸', '개구리', '올챙이'], ['🦋', '🐛', '나비', '애벌레'], ['🐶', '🐶', '개', '강아지'], ['🐮', '🐄', '소', '송아지'], ['🐴', '🐎', '말', '망아지']];
-  var FOOD = [['🐰', '🥕', '토끼'], ['🐵', '🍌', '원숭이'], ['🐼', '🎋', '판다'], ['🐱', '🐟', '고양이'], ['🐘', '🍌', '코끼리'], ['🐨', '🌿', '코알라'], ['🐿️', '🌰', '다람쥐'], ['🐝', '🌸', '벌']];
+  var FOOD = [['🐰', '🥕', '토끼'], ['🐵', '🍌', '원숭이'], ['🐼', '🎋', '판다'], ['🐱', '🐟', '고양이'], ['🐘', '🍉', '코끼리'], ['🐨', '🌿', '코알라'], ['🐿️', '🌰', '다람쥐'], ['🐝', '🌸', '벌'], ['🐶', '🦴', '강아지'], ['🐮', '🌾', '소']];
   var SPACE = [['☀️', '해', '낮에 떠요, 아주 뜨거워요'], ['🌙', '달', '밤에 떠요, 모양이 바뀌어요'], ['⭐', '별', '밤에 반짝여요'], ['🌍', '지구', '우리가 사는 곳'], ['🚀', '로켓', '우주로 날아가요'], ['🪐', '토성', '고리가 있는 행성']];
 
   function home() {
@@ -112,9 +113,16 @@
   }
   function seasonQuiz() {
     quiz('season', 8, function (i, lv) {
+      if (i % 2) {
+        var sc = K.pick(SEASON_SCENES);
+        return { key: 'scene' + sc[1], prompt: sc[2] + ' ' + sc[1], say: sc[1] + '. 무슨 계절일까요?', cols: 4,
+          choices: SEASONS.map(function (o) { return { html: o[0] + '<div style="font-size:22px">' + o[1] + '</div>', correct: o[1] === sc[0], say: o[1] }; }) };
+      }
       var s = K.pick(SEASONS);
-      if (i % 2) return { prompt: s[3] + ' ' + s[2], say: s[2] + '. 무슨 계절일까요?', cols: 4, choices: SEASONS.map(function (o) { return { html: o[0] + '<div style="font-size:22px">' + o[1] + '</div>', correct: o === s, say: o[1] }; }) };
-      return { prompt: s[1] + '에는?', say: s[1] + '에는 어떤 일이 있을까요?', cols: 4, choices: K.shuffle(SEASONS).map(function (o) { return { html: o[3] + '<div style="font-size:18px">' + o[2] + '</div>', correct: o === s, say: o[2] }; }) };
+      var scenes = K.shuffle(SEASON_SCENES.filter(function (x) { return x[0] === s[1]; }))[0];
+      var others = SEASONS.filter(function (o) { return o !== s; }).map(function (o) { return K.shuffle(SEASON_SCENES.filter(function (x) { return x[0] === o[1]; }))[0]; });
+      return { key: 'in' + s[1] + scenes[1], prompt: s[1] + '에는?', say: s[1] + '에는 어떤 일이 있을까요?', cols: 4,
+        choices: K.shuffle([scenes].concat(others)).map(function (o) { return { html: o[2] + '<div style="font-size:18px">' + o[1] + '</div>', correct: o === scenes, say: o[1] }; }) };
     });
   }
   function babyQuiz() {
@@ -125,8 +133,9 @@
   }
   function foodQuiz() {
     quiz('food', 8, function (i, lv) {
-      var f = K.pick(FOOD); var wrong = K.sample(FOOD, 3, [f]).filter(function (x) { return x[1] !== f[1]; }).slice(0, 3);
-      while (wrong.length < 3) wrong.push(['', K.pick(['🍕', '🍔', '🍭', '🍩'])]);
+      var f = K.pick(FOOD);
+      /* 먹이가 겹치는 보기는 빼서 정답이 둘이 되지 않게 한다 */
+      var wrong = K.shuffle(FOOD.filter(function (x) { return x[1] !== f[1]; })).slice(0, 3);
       return { prompt: f[0] + ' ' + f[2], say: f[2] + '는 무엇을 먹을까요?', cols: 4, choices: K.shuffle([f].concat(wrong)).map(function (o) { return { html: o[1], correct: o === f }; }) };
     });
   }
