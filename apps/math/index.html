@@ -131,7 +131,8 @@
       var e = K.pick(['🐻', '🌳', '🚗', '🎈', '🐘', '🏠']); var sizes = K.shuffle([40, 64, 96]); var biggest = i % 2 === 0;
       var target = biggest ? Math.max.apply(null, sizes) : Math.min.apply(null, sizes);
       if (lv >= 3) { sizes = K.shuffle([36, 52, 72, 96]); target = biggest ? 96 : 36; }
-      return { key: 'order' + e + sizes.join(',') + (biggest ? 'b' : 's'), prompt: biggest ? '가장 큰 것은?' : '가장 작은 것은?', say: biggest ? '가장 큰 것은 어느 것일까요?' : '가장 작은 것은 어느 것일까요?', cols: sizes.length, choices: sizes.map(function (s) { return { html: '<span style="font-size:' + s + 'px">' + e + '</span>', correct: s === target }; }) };
+      /* 크기 묶음이 같으면 자리만 바뀐 같은 문제다 */
+      return { key: 'order' + e + sizes.slice().sort(function (x, y) { return x - y; }).join(',') + (biggest ? 'b' : 's'), prompt: biggest ? '가장 큰 것은?' : '가장 작은 것은?', say: biggest ? '가장 큰 것은 어느 것일까요?' : '가장 작은 것은 어느 것일까요?', cols: sizes.length, choices: sizes.map(function (s) { return { html: '<span style="font-size:' + s + 'px">' + e + '</span>', correct: s === target }; }) };
     });
   }
   home();
