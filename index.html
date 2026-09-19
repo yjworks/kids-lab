@@ -4,7 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>키즈랩 - 우리 아이 학습 놀이터</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧸</text></svg>">
+<meta name="description" content="다섯 살부터 혼자 켜서 쓰는 한글·영어·수학·과학·생활 학습 놀이터">
+<meta name="theme-color" content="#8fd3f4">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="키즈랩">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="icon" href="icons/icon-512.png" sizes="512x512" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="shared/app.css">
 <style>
   html { height: 100%; }
@@ -144,6 +153,7 @@
   <div class="right">
     <button class="pill btn" id="missionBtn" title="오늘의 미션">🎯 <span id="missionCount">0/4</span></button>
     <button class="pill btn" id="stickerBtn" title="스티커 도감">🏅</button>
+    <button class="pill btn" id="installBtn" title="홈 화면에 설치" style="display:none">⬇️ 설치</button>
     <button class="pill btn" id="parentBtn" title="부모님 설정">👨‍👩‍👧</button>
     <span class="pill" id="clock">--:--</span>
   </div>
@@ -159,6 +169,14 @@
 </div>
 <div id="panels"></div>
 
+<script>
+  /* 서비스워커: 한 번 열어 두면 인터넷 없이도 실행된다 */
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () { /* 실패해도 그냥 웹으로 돌아간다 */ });
+    });
+  }
+</script>
 <script src="shared/kid.js"></script>
 <script src="shared/apps.js"></script>
 <script>
@@ -438,6 +456,22 @@
     panel.appendChild(el('p', { style: 'color:#888;font-size:15px;margin-top:16px', html: '💡 모든 기록은 이 컴퓨터의 브라우저(localStorage)에만 저장돼요. 서버로 보내지 않아요.<br>키보드: <b>Esc</b> = 앱 닫기, 미로/코딩은 <b>방향키</b> 사용 가능.' }));
     wrap.appendChild(panel); document.getElementById('panels').appendChild(wrap);
   }
+
+  /* 설치 안내 */
+  var deferredPrompt = null;
+  var installBtn = document.getElementById('installBtn');
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault(); deferredPrompt = e; installBtn.style.display = '';
+  });
+  installBtn.addEventListener('click', function () {
+    if (!deferredPrompt) return;
+    K.sfx.click(); deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function (r) {
+      if (r.outcome === 'accepted') { installBtn.style.display = 'none'; K.toast('홈 화면에 키즈랩을 담았어요 🧸'); }
+      deferredPrompt = null;
+    });
+  });
+  window.addEventListener('appinstalled', function () { installBtn.style.display = 'none'; });
 
   document.getElementById('profileBtn').addEventListener('click', function () { K.sfx.click(); showProfilePicker(); });
   document.getElementById('missionBtn').addEventListener('click', function () { K.sfx.click(); showMissions(); });
