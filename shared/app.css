@@ -42,8 +42,8 @@ main, .kl-main { flex: 1; padding: 18px; max-width: 1100px; margin: 0 auto; widt
 .kl-stage { background: #fff; border-radius: 30px; padding: 26px; box-shadow: 0 8px 30px rgba(0,0,0,.06); min-height: 420px; }
 .kl-prompt { font-size: 36px; font-weight: 800; text-align: center; margin-bottom: 20px; line-height: 1.3; }
 .kl-prompt.big { font-size: 96px; }
-.kl-prompt.speakable { cursor: pointer; }
-.kl-prompt.speakable::after { content: " 🔊"; font-size: 24px; opacity: .6; }
+.kl-prompt.speakable { cursor: pointer; position: relative; }
+.kl-prompt.speakable::after { content: "🔊"; position: absolute; top: -4px; right: 0; font-size: 22px; opacity: .45; }
 .kl-sub { text-align: center; color: #777; font-size: 20px; margin: -8px 0 18px; }
 .kl-choices { display: grid; gap: 16px; }
 .kl-choices.cols1 { grid-template-columns: 1fr; }
@@ -70,6 +70,7 @@ main, .kl-main { flex: 1; padding: 18px; max-width: 1100px; margin: 0 auto; widt
   .kl-choice.small { font-size: 19px; }
   .kl-prompt { font-size: 26px; margin-bottom: 14px; }
   .kl-prompt.big { font-size: 64px; }
+  .kl-prompt > div[style*="font-size"] { font-size: 34px !important; }
   .kl-sub { font-size: 17px; }
   .kl-menu { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; padding: 4px; }
   .kl-menu-item { min-height: 132px; padding: 14px 8px; border-radius: 20px; }
@@ -123,3 +124,86 @@ main, .kl-main { flex: 1; padding: 18px; max-width: 1100px; margin: 0 auto; widt
 .kl-hint { color: #888; font-size: 18px; text-align: center; margin-top: 10px; }
 .kl-big-emoji { font-size: 120px; line-height: 1; text-align: center; }
 .speak-btn { background: #e3f0ff; border-radius: 40px; padding: 10px 22px; font-size: 22px; font-weight: 700; }
+
+
+/* 세로가 짧은 화면(가로로 눕힌 폰)에서도 보기 버튼이 한 화면에 들어오도록 */
+@media (max-height: 500px) {
+  body { font-size: 17px; }
+  main, .kl-main { padding: 8px 10px; }
+  .kl-header { padding: 3px 10px; }
+  /* 창 안 + 납작한 화면이면 머리말은 아예 접는다 (별은 런처 상단바에 있다) */
+  .kl-header.compact { display: none; }
+  .kl-title { font-size: 17px; }
+  .kl-icon { font-size: 20px; }
+  .kl-stars { font-size: 15px; padding: 3px 9px; }
+  .kl-avatar { font-size: 20px; }
+  .kl-mini { width: 32px; height: 32px; font-size: 15px; }
+  .kl-back { font-size: 14px; padding: 5px 12px; margin-bottom: 6px; }
+  .kl-quiztop { margin-bottom: 4px; }
+  .kl-dots i { width: 12px; height: 12px; }
+  .kl-level { font-size: 14px; padding: 2px 10px; }
+  .kl-stage { padding: 8px 10px; border-radius: 16px; }
+  .kl-prompt { font-size: 21px; margin-bottom: 4px; }
+  .kl-prompt.big { font-size: 40px; }
+  .kl-prompt > div[style*="font-size"] { font-size: 24px !important; }
+  .kl-sub { font-size: 15px; margin: -4px 0 8px; }
+  .kl-choices { gap: 8px; }
+  .kl-choice { font-size: 26px; min-height: 58px; padding: 8px 4px; border-radius: 14px; }
+  .kl-choice.text { font-size: 17px; }
+  .kl-choice.small { font-size: 15px; }
+  .kl-menu { gap: 8px; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); }
+  .kl-menu-item { min-height: 92px; padding: 8px 6px; gap: 2px; }
+  .kl-menu-icon { font-size: 32px; }
+  .kl-menu-label { font-size: 14px; }
+  .kl-menu-level { font-size: 12px; }
+  .kl-btn { font-size: 16px; padding: 8px 14px; }
+  .kl-btn.big { font-size: 18px; padding: 10px 18px; }
+  .kl-row { margin-top: 10px; gap: 10px; }
+  .kl-result-emoji { font-size: 54px; }
+  .kl-result-title { font-size: 22px; margin: 6px 0; }
+  .kl-result-score { font-size: 17px; }
+  .kl-card { padding: 10px; }
+  .kl-big-emoji { font-size: 70px; }
+  /* 보기는 한 줄에 몰아서 세로 공간을 아낀다 */
+  .kl-choices.cols4 { grid-template-columns: repeat(4, 1fr); }
+  .kl-choices.cols5 { grid-template-columns: repeat(5, 1fr); }
+  .kl-choices.cols6 { grid-template-columns: repeat(6, 1fr); }
+  /* 앱 안의 큰 삽화도 같이 줄인다 (body[data-app]으로 앱 자체 규칙보다 우선) */
+  body[data-app] .objs { font-size: 26px; letter-spacing: 2px; }
+  body[data-app] .objs.small { font-size: 22px; }
+  body[data-app] .eq { gap: 8px; }
+  body[data-app] .eq .grp { font-size: 18px; padding: 4px 6px; max-width: 150px; }
+  body[data-app] .eq .op { font-size: 22px; }
+  body[data-app] .ten-frame { grid-template-columns: repeat(5, 34px); gap: 4px; }
+  body[data-app] .ten-frame i { width: 34px; height: 34px; font-size: 20px; }
+  body[data-app] .num-line span { width: 34px; height: 34px; font-size: 16px; }
+  body[data-app] .clock { width: 140px; height: 140px; }
+  body[data-app] .kl-choice .clock { width: 86px; height: 86px; }
+  body[data-app] .shape, body[data-app] .kl-choice .shape { width: 58px; height: 58px; }
+  body[data-app] .chip, body[data-app] .color-chip { width: 52px; height: 52px; border-radius: 14px; }
+  body[data-app] .pattern .cell { width: 46px; height: 46px; font-size: 30px; }
+  body[data-app] .key { width: 52px; height: 120px; font-size: 15px; }
+  body[data-app] .key .n { font-size: 22px; }
+  body[data-app] .cell { width: 44px; height: 44px; font-size: 26px; }
+  body[data-app] .seq-target .slot { width: 72px; height: 72px; font-size: 30px; }
+  body[data-app] .seq-pool button { width: 78px; height: 78px; font-size: 30px; }
+  body[data-app] .dpad { grid-template-columns: repeat(3, 58px); grid-template-rows: repeat(3, 58px); }
+  body[data-app] .dpad button { font-size: 26px; }
+  body[data-app] .breath { width: 120px; height: 120px; font-size: 18px; }
+  body[data-app] .drums { max-width: 380px; }
+  body[data-app] .beat i { width: 40px; height: 40px; font-size: 20px; }
+  body[data-app] .keypad { grid-template-columns: repeat(3, 62px); }
+  body[data-app] .keypad button { height: 50px; font-size: 22px; }
+  body[data-app] .dial { font-size: 34px; min-height: 44px; }
+  body[data-app] .light i { width: 40px; height: 40px; }
+  body[data-app] .road { height: 130px; }
+  body[data-app] .book { font-size: 17px; padding: 12px; line-height: 1.5; }
+  body[data-app] .book .scene { font-size: 40px; }
+  body[data-app] .mood-grid button, body[data-app] .pick-grid button { font-size: 32px; padding: 8px 4px; }
+  body[data-app] .letter .ch { font-size: 34px; }
+  body[data-app] .letter .em { font-size: 22px; }
+  body[data-app] .abc .ch { font-size: 28px; }
+  body[data-app] .abc .em { font-size: 22px; }
+  body[data-app] .combo .slot { width: 64px; height: 64px; }
+  body[data-app] .combo { font-size: 34px; gap: 8px; }
+}
