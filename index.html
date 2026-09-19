@@ -7,16 +7,19 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧸</text></svg>">
 <link rel="stylesheet" href="shared/app.css">
 <style>
-  html, body { height: 100%; overflow: hidden; }
-  body { background: linear-gradient(160deg, #a8e0ff 0%, #d7f3ff 45%, #fff3c9 100%); font-size: 20px; }
-  #topbar { height: 64px; background: rgba(255,255,255,.85); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 18px; box-shadow: 0 2px 12px rgba(0,0,0,.08); position: relative; z-index: 50; }
-  #topbar .left, #topbar .right { display: flex; align-items: center; gap: 10px; }
-  .pill { background: #fff; border-radius: 30px; padding: 6px 16px; font-weight: 800; box-shadow: 0 2px 6px rgba(0,0,0,.08); display: flex; align-items: center; gap: 6px; font-size: 20px; }
+  html { height: 100%; }
+  body { height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; background: linear-gradient(160deg, #a8e0ff 0%, #d7f3ff 45%, #fff3c9 100%); font-size: 20px; }
+  #topbar { flex: none; background: rgba(255,255,255,.85); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; box-shadow: 0 2px 12px rgba(0,0,0,.08); position: relative; z-index: 50; }
+  #topbar .left, #topbar .right { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  #topbar .right { flex: none; }
+  #topbar .left { flex: 1; min-width: 0; }
+  .pill { background: #fff; border-radius: 30px; padding: 6px 14px; font-weight: 800; box-shadow: 0 2px 6px rgba(0,0,0,.08); display: flex; align-items: center; gap: 6px; font-size: 19px; white-space: nowrap; flex: none; line-height: 1.25; }
   .pill.btn:hover { background: #fff3c4; }
-  #profileBtn { font-size: 20px; }
-  #profileBtn .av { font-size: 30px; }
+  #profileBtn { min-width: 0; max-width: 46vw; overflow: hidden; }
+  #profileBtn .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #profileBtn .av { font-size: 28px; }
   #clock { font-variant-numeric: tabular-nums; }
-  #desktop { position: absolute; top: 64px; left: 0; right: 0; bottom: 70px; overflow: auto; padding: 22px; }
+  #desktop { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 16px 24px; }
   #greet { font-size: 28px; font-weight: 900; color: #245; margin: 4px 0 14px 8px; text-shadow: 0 1px 0 #fff; }
   #icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px; }
   .app-icon { background: rgba(255,255,255,.75); border-radius: 26px; padding: 16px 8px 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: 0 6px 0 rgba(0,0,0,.08); transition: transform .15s; position: relative; }
@@ -26,7 +29,7 @@
   .app-icon .nm { font-weight: 800; font-size: 19px; color: #333; }
   .app-icon .badge { position: absolute; top: 8px; right: 10px; background: #ff595e; color: #fff; border-radius: 20px; font-size: 14px; padding: 2px 8px; font-weight: 800; }
   .app-icon .today { position: absolute; top: 8px; left: 10px; font-size: 16px; }
-  #taskbar { position: absolute; left: 0; right: 0; bottom: 0; height: 70px; background: rgba(255,255,255,.92); border-top: 1px solid rgba(0,0,0,.08); display: flex; align-items: center; padding: 0 12px; gap: 10px; z-index: 60; }
+  #taskbar { flex: none; min-height: 64px; background: rgba(255,255,255,.92); border-top: 1px solid rgba(0,0,0,.08); display: flex; align-items: center; padding: 6px 10px; gap: 8px; z-index: 60; padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)); }
   #homeBtn { width: 54px; height: 54px; border-radius: 16px; background: #ffca3a; font-size: 30px; box-shadow: 0 4px 0 rgba(0,0,0,.12); }
   #tasks { display: flex; gap: 8px; flex: 1; overflow-x: auto; }
   .task { background: #f0f0f0; border-radius: 14px; padding: 8px 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; border-bottom: 4px solid transparent; white-space: nowrap; }
@@ -35,8 +38,8 @@
   .task .x:hover { opacity: 1; }
   #missionsBar { display: flex; gap: 6px; align-items: center; font-size: 18px; }
   /* 창 */
-  .win { position: absolute; background: #fff; border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.25); display: flex; flex-direction: column; overflow: hidden; min-width: 420px; min-height: 320px; z-index: 100; border: 3px solid #fff; }
-  .win.max { left: 8px !important; top: 72px !important; width: calc(100% - 16px) !important; height: calc(100% - 150px) !important; border-radius: 14px; }
+  .win { position: fixed; background: #fff; border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.25); display: flex; flex-direction: column; overflow: hidden; min-width: 420px; min-height: 320px; z-index: 100; border: 3px solid #fff; }
+  .win.max { left: 8px !important; top: calc(var(--topbar-h, 64px) + 8px) !important; width: calc(100% - 16px) !important; height: calc(100% - var(--topbar-h, 64px) - var(--taskbar-h, 70px) - 16px) !important; border-radius: 14px; }
   .win.min { display: none; }
   .win.focus { z-index: 200; border-color: #ffca3a; }
   .win .bar { height: 54px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px 0 16px; font-weight: 900; font-size: 20px; cursor: move; color: #fff; }
@@ -81,7 +84,37 @@
   .toggle button.on { background: #8ac926; color: #fff; }
   .gacha-box { text-align: center; padding: 20px; }
   .gacha-result { font-size: 140px; animation: pop .8s; }
-  @media (max-width: 700px) { .win { min-width: 0; } #greet { font-size: 22px; } .pill { font-size: 16px; padding: 5px 10px; } }
+  @media (max-width: 760px) {
+    #topbar { padding: 6px 10px; gap: 6px; }
+    .pill { font-size: 16px; padding: 5px 11px; gap: 4px; border-radius: 24px; }
+    #profileBtn .av { font-size: 24px; }
+    #desktop { padding: 14px 12px 20px; }
+    #greet { font-size: 20px; margin: 0 0 12px 4px; }
+    #icons { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 12px; }
+    .app-icon { border-radius: 20px; padding: 10px 6px 8px; }
+    .app-icon .ic { font-size: 44px; width: 68px; height: 68px; border-radius: 20px; }
+    .app-icon .nm { font-size: 15px; }
+    .app-icon .badge { font-size: 11px; padding: 1px 6px; top: 5px; right: 6px; }
+    #taskbar { min-height: 58px; }
+    #homeBtn { width: 46px; height: 46px; font-size: 24px; border-radius: 14px; }
+    .task { padding: 6px 10px; font-size: 15px; border-radius: 12px; }
+    .win, .win.max { left: 0 !important; right: 0 !important; top: var(--topbar-h, 56px) !important; width: 100% !important; height: calc(100% - var(--topbar-h, 56px) - var(--taskbar-h, 58px)) !important; min-width: 0; min-height: 0; border-radius: 0; border-width: 0; }
+    .win .bar { height: 46px; font-size: 17px; padding: 0 6px 0 12px; cursor: default; }
+    .win .bar button { width: 40px; height: 36px; font-size: 18px; }
+    .win .bar button.close { width: 52px; font-size: 22px; }
+    .win .bar .maxbtn { display: none; }
+    .panel { padding: 18px; border-radius: 22px; }
+    .panel h2 { font-size: 24px; }
+    .profile-list { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); }
+    .profile-card .av { font-size: 44px; }
+    .mission .lb { font-size: 17px; }
+    .mission .go { font-size: 15px; padding: 7px 10px; }
+    input[type=text] { font-size: 22px; }
+  }
+  @media (max-width: 900px) { #clock { font-size: 17px; } }
+  @media (max-width: 620px) { #streakPill { display: none; } }
+  @media (max-width: 520px) { #clock { display: none; } }
+  @media (max-width: 360px) { #profileBtn .nm { display: none; } }
 </style>
 </head>
 <body>
@@ -92,8 +125,8 @@
     <span class="pill" id="streakPill" title="연속 출석">🔥 0일</span>
   </div>
   <div class="right">
-    <button class="pill btn" id="missionBtn">🎯 미션 <span id="missionCount">0/4</span></button>
-    <button class="pill btn" id="stickerBtn">🏅 스티커</button>
+    <button class="pill btn" id="missionBtn" title="오늘의 미션">🎯 <span id="missionCount">0/4</span></button>
+    <button class="pill btn" id="stickerBtn" title="스티커 도감">🏅</button>
     <button class="pill btn" id="parentBtn" title="부모님 설정">👨‍👩‍👧</button>
     <span class="pill" id="clock">--:--</span>
   </div>
@@ -117,10 +150,22 @@
   var APPS = window.KIDLAB_APPS;
   var appById = {}; APPS.forEach(function (a) { appById[a.id] = a; });
 
+  /* ---------- 막대 높이를 CSS 변수로 ---------- */
+  function syncBars() {
+    var tb = document.getElementById('topbar'), bb = document.getElementById('taskbar');
+    document.documentElement.style.setProperty('--topbar-h', tb.offsetHeight + 'px');
+    document.documentElement.style.setProperty('--taskbar-h', bb.offsetHeight + 'px');
+  }
+  syncBars();
+  window.addEventListener('resize', syncBars);
+  window.addEventListener('orientationchange', function () { setTimeout(syncBars, 200); });
+  if (window.ResizeObserver) { var ro = new ResizeObserver(syncBars); ro.observe(document.getElementById('topbar')); ro.observe(document.getElementById('taskbar')); }
+
   /* ---------- 시계 ---------- */
   function tick() {
     var d = new Date(); var days = ['일', '월', '화', '수', '목', '금', '토'];
-    document.getElementById('clock').textContent = (d.getMonth() + 1) + '월 ' + d.getDate() + '일 (' + days[d.getDay()] + ') ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    var hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    document.getElementById('clock').textContent = innerWidth < 900 ? hm : (d.getMonth() + 1) + '월 ' + d.getDate() + '일 (' + days[d.getDay()] + ') ' + hm;
   }
   tick(); setInterval(tick, 10000);
 
@@ -210,13 +255,13 @@
       el('span', { html: a.icon + ' ' + esc(a.name) }),
       el('div', { class: 'ctl' }, [
         el('button', { text: '—', title: '최소화', onclick: function (e) { e.stopPropagation(); minWin(id); } }),
-        el('button', { text: '▢', title: '창 크기', onclick: function (e) { e.stopPropagation(); toggleMax(id); } }),
+        el('button', { class: 'maxbtn', text: '▢', title: '창 크기', onclick: function (e) { e.stopPropagation(); toggleMax(id); } }),
         el('button', { class: 'close', text: '✕', title: '닫기', onclick: function (e) { e.stopPropagation(); closeWin(id); } })
       ])
     ]);
     var frame = el('iframe', { src: 'apps/' + id + '/index.html', title: a.name, allow: 'autoplay' });
     w.appendChild(bar); w.appendChild(frame);
-    w.style.left = (40 + Object.keys(wins).length * 30) + 'px'; w.style.top = (100 + Object.keys(wins).length * 30) + 'px'; w.style.width = '900px'; w.style.height = '620px';
+    if (innerWidth > 760) { var off = Object.keys(wins).length * 30; w.style.left = (40 + off) + 'px'; w.style.top = (100 + off) + 'px'; w.style.width = '900px'; w.style.height = '620px'; }
     document.body.appendChild(w);
     wins[id] = { el: w, frame: frame, app: a };
     w.addEventListener('pointerdown', function () { focusWin(id); });

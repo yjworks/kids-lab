@@ -8,10 +8,13 @@ body {
 }
 button { font-family: inherit; cursor: pointer; border: none; }
 button:focus-visible { outline: 4px solid #1982c4; outline-offset: 2px; }
-.kl-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 18px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.08); position: sticky; top: 0; z-index: 20; }
-.kl-title { font-size: 26px; font-weight: 800; }
+.kl-header.compact { padding: 4px 12px; }
+.kl-header.compact .kl-title { display: none; }
+.kl-header.compact .kl-right { margin-left: auto; }
+.kl-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: nowrap; padding: 10px 18px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.08); position: sticky; top: 0; z-index: 20; }
+.kl-title { font-size: 26px; font-weight: 800; min-width: 0; }
 .kl-icon { font-size: 30px; }
-.kl-right { display: flex; align-items: center; gap: 12px; }
+.kl-right { display: flex; align-items: center; gap: 12px; flex: none; }
 .kl-stars { font-weight: 800; background: #fff3c4; padding: 6px 14px; border-radius: 30px; color: #b07a00; }
 .kl-stars.bump { animation: bump .5s; }
 .kl-avatar { font-size: 30px; }
@@ -49,7 +52,39 @@ main, .kl-main { flex: 1; padding: 18px; max-width: 1100px; margin: 0 auto; widt
 .kl-choices.cols4 { grid-template-columns: repeat(4, 1fr); }
 .kl-choices.cols5 { grid-template-columns: repeat(5, 1fr); }
 .kl-choices.cols6 { grid-template-columns: repeat(6, 1fr); }
-@media (max-width: 700px) { .kl-choices.cols4, .kl-choices.cols5, .kl-choices.cols6 { grid-template-columns: repeat(3, 1fr); } .kl-prompt { font-size: 28px; } .kl-prompt.big { font-size: 64px; } }
+@media (max-width: 760px) {
+  body { font-size: 19px; }
+  main, .kl-main { padding: 12px; }
+  .kl-header { padding: 8px 12px; gap: 8px; }
+  .kl-title { font-size: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .kl-icon { font-size: 24px; }
+  .kl-right { gap: 8px; flex: none; }
+  .kl-stars { padding: 5px 10px; font-size: 17px; white-space: nowrap; }
+  .kl-avatar { font-size: 24px; }
+  .kl-mini { width: 38px; height: 38px; font-size: 18px; }
+  .kl-stage { padding: 16px 12px; border-radius: 22px; min-height: 0; }
+  .kl-choices { gap: 10px; }
+  .kl-choices.cols4, .kl-choices.cols5, .kl-choices.cols6 { grid-template-columns: repeat(3, 1fr); }
+  .kl-choice { font-size: 34px; min-height: 86px; padding: 14px 6px; border-radius: 18px; }
+  .kl-choice.text { font-size: 21px; }
+  .kl-choice.small { font-size: 19px; }
+  .kl-prompt { font-size: 26px; margin-bottom: 14px; }
+  .kl-prompt.big { font-size: 64px; }
+  .kl-sub { font-size: 17px; }
+  .kl-menu { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; padding: 4px; }
+  .kl-menu-item { min-height: 132px; padding: 14px 8px; border-radius: 20px; }
+  .kl-menu-icon { font-size: 44px; }
+  .kl-menu-label { font-size: 17px; }
+  .kl-btn { font-size: 19px; padding: 11px 18px; }
+  .kl-btn.big { font-size: 22px; padding: 14px 24px; }
+  .kl-back { font-size: 17px; padding: 8px 16px; }
+  .kl-dots i { width: 16px; height: 16px; }
+  .kl-result-emoji { font-size: 78px; }
+  .kl-result-title { font-size: 28px; }
+  .kl-result-score { font-size: 22px; }
+  .kl-card { padding: 16px; border-radius: 20px; }
+  .kl-toast { font-size: 18px; padding: 12px 18px; bottom: 16px; }
+}
 .kl-choice { background: #f4f1ea; border-radius: 22px; padding: 20px 10px; font-size: 44px; font-weight: 800; min-height: 110px; transition: transform .12s, background .2s; box-shadow: 0 5px 0 rgba(0,0,0,.08); line-height: 1.2; }
 .kl-choice.text { font-size: 30px; }
 .kl-choice.small { font-size: 26px; }

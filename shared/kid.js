@@ -246,7 +246,11 @@
   function header(opts) {
     opts = opts || {};
     var d = data(); var p = requireProfile();
-    var h = el('div', { class: 'kl-header' }, [
+    /* 런처 창 안에서 좁은 화면이면 창 제목과 겹치므로 제목을 감춘 얇은 머리말로 */
+    var embedded = false;
+    try { embedded = window.parent && window.parent !== window; } catch (e) { }
+    var compact = embedded && window.innerWidth <= 760;
+    var h = el('div', { class: 'kl-header' + (compact ? ' compact' : '') }, [
       el('div', { class: 'kl-title', html: '<span class="kl-icon">' + (opts.icon || '') + '</span> ' + esc(opts.title || document.title) }),
       el('div', { class: 'kl-right' }, [
         el('button', { class: 'kl-mini', title: '소리 듣기', text: '🔊', onclick: function () { if (opts.say) speak(opts.say); else speak(opts.title || document.title); } }),
