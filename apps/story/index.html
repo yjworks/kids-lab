@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>이야기 만들기</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+  .pick-grid button { background: #fff; border-radius: 20px; padding: 14px 6px; font-size: 54px; box-shadow: 0 5px 0 rgba(0,0,0,.08); }
+  .pick-grid button small { display: block; font-size: 17px; font-weight: 800; color: #444; }
+  .pick-grid button:hover { transform: scale(1.05); }
+  .book { background: #fffdf5; border: 6px solid #e2c99a; border-radius: 20px; padding: 26px; font-size: 26px; line-height: 1.7; box-shadow: 0 10px 30px rgba(0,0,0,.1); }
+  .book .scene { font-size: 80px; text-align: center; margin-bottom: 10px; }
+  .book p { margin: 0 0 12px; }
+  .book p.cur { background: #fff3c4; border-radius: 10px; }
+  .steps { display: flex; gap: 6px; justify-content: center; margin-bottom: 12px; }
+  .steps i { width: 40px; height: 10px; border-radius: 5px; background: #ddd; }
+  .steps i.on { background: #ffca3a; }
+  .shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .shelf button { background: #fff; border-radius: 18px; padding: 14px; text-align: left; box-shadow: 0 5px 0 rgba(0,0,0,.08); font-weight: 800; }
+  .shelf .sc { font-size: 40px; }
+</style>
+</head>
+<body data-app="story">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '이야기 만들기', icon: '📖', say: '이야기 만들기' });
+  var main = document.getElementById('main');
+  var HEROES = [['🐰', '토끼'], ['🐻', '곰'], ['🦊', '여우'], ['🐸', '개구리'], ['🤖', '로봇'], ['👧', '소녀'], ['👦', '소년'], ['🦄', '유니콘'], ['🐉', '아기 용'], ['🐧', '펭귄'], ['🐱', '고양이'], ['🦖', '공룡']];
+  var PLACES = [['🏰', '성'], ['🌲', '숲'], ['🏖️', '바닷가'], ['🚀', '우주'], ['🏫', '유치원'], ['🏠', '우리 집'], ['🎪', '서커스'], ['🏔️', '산꼭대기'], ['🌋', '화산 옆'], ['🏝️', '무인도']];
+  var FRIENDS = [['🐶', '강아지'], ['🦋', '나비'], ['🐢', '거북이'], ['👵', '할머니'], ['🧚', '요정'], ['🐦', '작은 새'], ['🐙', '문어'], ['👾', '외계인'], ['🐝', '꿀벌'], ['🦁', '사자']];
+  var ITEMS = [['🎈', '풍선'], ['🔑', '황금 열쇠'], ['🧁', '컵케이크'], ['⭐', '떨어진 별'], ['🎁', '선물 상자'], ['🗺️', '보물 지도'], ['🪄', '마법 지팡이'], ['🎸', '기타'], ['🧸', '곰 인형'], ['🌂', '무지개 우산']];
+  var PROBLEMS = [['🌧️', '갑자기 비가 쏟아졌어요'], ['😢', '길을 잃어버렸어요'], ['🐺', '무서운 늑대가 나타났어요'], ['🕳️', '커다란 구멍에 빠졌어요'], ['🍎', '배가 너무 고팠어요'], ['🔒', '문이 잠겨 있었어요'], ['💨', '바람에 모자가 날아갔어요'], ['😴', '친구가 잠들어 버렸어요']];
+  var SOLUTIONS = [['🤝', '친구와 힘을 합쳤어요'], ['💡', '좋은 생각이 떠올랐어요'], ['🎵', '노래를 불렀더니 모두 웃었어요'], ['🙏', '"도와줘"라고 용기 내어 말했어요'], ['🏃', '열심히 달렸어요'], ['❤️', '따뜻한 마음으로 안아줬어요'], ['🔍', '차근차근 찾아봤어요'], ['✨', '마법의 물건을 사용했어요']];
+  var ENDINGS = ['그리고 모두 함께 맛있는 저녁을 먹었어요. 🍽️', '그날 밤, 별을 보며 잠이 들었어요. 🌙', '둘은 가장 친한 친구가 되었어요. 💕', '그 뒤로 매일매일 신나게 놀았대요. 🎉', '집에 돌아와 엄마에게 이야기를 들려줬어요. 🏠', '다음 모험을 기다리며 웃었어요. 😊'];
+  var STEPS = [['주인공을 골라요', HEROES], ['어디로 갈까요?', PLACES], ['누구를 만날까요?', FRIENDS], ['무엇을 찾았을까요?', ITEMS], ['어떤 일이 생겼을까요?', PROBLEMS], ['어떻게 해결했을까요?', SOLUTIONS]];
+  function home() {
+    main.innerHTML = '';
+    var d = K.data();
+    K.menu(main, [
+      { icon: '✨', label: '새 이야기 만들기', color: '#fde2c8', run: function () { build(0, []); } },
+      { icon: '🎲', label: '뚝딱 랜덤 이야기', color: '#fff3c4', run: function () { var picks = STEPS.map(function (s) { return K.pick(s[1]); }); show(picks, true); } },
+      { icon: '📚', label: '내 책장 (' + (d.stories || []).length + ')', color: '#e3f7cf', run: shelf }
+    ]);
+  }
+  function build(step, picks) {
+    main.innerHTML = ''; main.appendChild(K.backButton(step === 0 ? home : function () { build(step - 1, picks.slice(0, step - 1)); }));
+    var st = el('div', { class: 'steps' }); STEPS.forEach(function (_, i) { st.appendChild(el('i', { class: i <= step ? 'on' : '' })); }); main.appendChild(st);
+    main.appendChild(el('div', { class: 'kl-prompt', text: STEPS[step][0] }));
+    if (picks.length) main.appendChild(el('div', { class: 'kl-hint', text: '지금까지: ' + picks.map(function (p) { return p[0]; }).join(' ') }));
+    var g = el('div', { class: 'pick-grid' });
+    STEPS[step][1].forEach(function (it) { var b = el('button', { html: it[0] + '<small>' + it[1] + '</small>' }); b.addEventListener('click', function () { K.sfx.pop(); K.speak(it[1]); var np = picks.concat([it]); if (step + 1 < STEPS.length) build(step + 1, np); else show(np, false); }); g.appendChild(b); });
+    main.appendChild(g); K.speak(STEPS[step][0]);
+  }
+  function compose(p, ending) {
+    var hero = p[0][1], place = p[1][1], friend = p[2][1], item = p[3][1], prob = p[4][1], sol = p[5][1];
+    var name = K.requireProfile().name;
+    return [
+      '옛날 옛적에 ' + hero + ' 한 마리가 살았어요. ' + p[0][0],
+      '어느 날 ' + hero + '는 ' + place + '으로 모험을 떠났어요. ' + p[1][0],
+      place + '에서 ' + friend + '를 만났어요. "안녕! 같이 놀자!" ' + p[2][0],
+      '둘은 함께 ' + item + '을 발견했어요! ' + p[3][0],
+      '그런데 ' + prob + '. ' + p[4][0],
+      hero + '와 ' + friend + '는 ' + sol + '. ' + p[5][0],
+      ending || ENDINGS[0],
+      '— ' + name + '이 만든 이야기 끝 —'
+    ];
+  }
+  function show(picks, random) {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var ending = K.pick(ENDINGS); var lines = compose(picks, ending);
+    var book = el('div', { class: 'book' });
+    book.appendChild(el('div', { class: 'scene', text: picks.map(function (p) { return p[0]; }).join(' ') }));
+    var ps = lines.map(function (l) { var pe = el('p', { text: l }); book.appendChild(pe); return pe; });
+    main.appendChild(book);
+    var reading = false;
+    function read() {
+      if (reading || !window.speechSynthesis) { ps.forEach(function (x) { x.classList.remove('cur'); }); return; } reading = true; var i = 0;
+      function nextLine() { ps.forEach(function (x) { x.classList.remove('cur'); }); if (i >= lines.length) { reading = false; return; } ps[i].classList.add('cur'); try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(lines[i].replace(/[^가-힣\w\s.,!?"—-]/g, '')); u.lang = 'ko-KR'; u.rate = 0.9; u.onend = function () { i++; setTimeout(nextLine, 200); }; u.onerror = function () { reading = false; }; speechSynthesis.speak(u); } catch (e) { reading = false; } }
+      nextLine();
+    }
+    main.appendChild(el('div', { class: 'kl-row' }, [
+      el('button', { class: 'speak-btn', text: '🔊 읽어주기', onclick: read }),
+      el('button', { class: 'kl-btn green', text: '💾 책장에 넣기', onclick: function () { K.mutate(function (d) { d.stories = d.stories || []; d.stories.push({ t: Date.now(), picks: picks, ending: ending }); if (d.stories.length > 30) d.stories.shift(); }); K.addStar(2); K.event('save'); K.sfx.win(); K.confetti(); K.speak('이야기를 책장에 넣었어요'); } }),
+      el('button', { class: 'kl-btn', text: '🔀 결말 바꾸기', onclick: function () { show(picks, random); } }),
+      el('button', { class: 'kl-btn primary', text: '✨ 새 이야기', onclick: function () { build(0, []); } })
+    ]));
+    setTimeout(read, 400);
+  }
+  function shelf() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var d = K.data(); var list = d.stories || [];
+    main.appendChild(el('div', { class: 'kl-prompt', text: '📚 내 책장' }));
+    if (!list.length) { main.appendChild(el('div', { class: 'kl-hint', text: '아직 책이 없어요. 이야기를 만들고 책장에 넣어요!' })); return; }
+    var g = el('div', { class: 'shelf' });
+    list.slice().reverse().forEach(function (s) { var b = el('button', { html: '<div class="sc">' + s.picks.map(function (p) { return p[0]; }).join('') + '</div><div>' + s.picks[0][1] + '의 ' + s.picks[1][1] + ' 모험</div><small style="color:#888">' + new Date(s.t).toLocaleDateString('ko-KR') + '</small>' }); b.addEventListener('click', function () { K.sfx.click(); show(s.picks, false); }); g.appendChild(b); });
+    main.appendChild(g);
+  }
+  home();
+})();
+</script>
+</body>
+</html>

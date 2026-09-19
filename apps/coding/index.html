@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>로봇 코딩</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .wrap { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; }
+  .grid { display: grid; gap: 4px; background: #cfd8ff; padding: 6px; border-radius: 16px; }
+  .cell { width: 64px; height: 64px; background: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 40px; position: relative; }
+  .cell.wall { background: #9aa4c7; }
+  .robot { position: absolute; font-size: 44px; transition: transform .35s; }
+  .panel { display: flex; flex-direction: column; gap: 10px; min-width: 300px; max-width: 420px; }
+  .blocks { display: flex; gap: 8px; flex-wrap: wrap; }
+  .blk { font-size: 30px; border-radius: 16px; padding: 10px 16px; font-weight: 800; box-shadow: 0 4px 0 rgba(0,0,0,.12); color: #fff; }
+  .blk.up { background: #1982c4; } .blk.down { background: #6a4c93; } .blk.left { background: #ff924c; } .blk.right { background: #8ac926; } .blk.act { background: #ff595e; } .blk.rep { background: #ffca3a; color: #5a3d00; }
+  .program { min-height: 74px; background: #fff; border-radius: 16px; padding: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .program .blk { font-size: 24px; padding: 6px 12px; }
+  .program .blk.run { outline: 4px solid #333; transform: scale(1.1); }
+  .lv-list { display: flex; gap: 6px; flex-wrap: wrap; }
+  .lv-list button { width: 44px; height: 44px; border-radius: 12px; background: #eee; font-weight: 900; }
+  .lv-list button.done { background: #c9f0a8; } .lv-list button.cur { outline: 3px solid #1982c4; }
+</style>
+</head>
+<body data-app="coding">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '로봇 코딩', icon: '🤖', say: '로봇 코딩' });
+  var main = document.getElementById('main');
+  /* 맵: R 로봇 시작, G 목표, # 벽, * 별(선택), . 빈칸 */
+  var LEVELS = [
+    { map: ['R..G'], hint: '오른쪽으로 3번!' },
+    { map: ['R...', '...G'], hint: '오른쪽 3번, 아래 1번' },
+    { map: ['R..', '.#.', '..G'], hint: '벽을 피해 가요' },
+    { map: ['R.*.', '.#..', '..*G'], hint: '별을 모두 모아요' },
+    { map: ['R.#..', '..#.G', '.....'], hint: '돌아서 가요' },
+    { map: ['R....', '####.', 'G....'], hint: '길게 돌아가요' },
+    { map: ['R...*', '.###.', '.*.G.'], hint: '별 2개를 모아요' },
+    { map: ['R....', '.###.', '.#G#.', '.#.#.', '.....'], hint: '아래로 돌아 들어가요' },
+    { map: ['R.....', '#####.', '*.....', '.#####', 'G.....'], hint: '반복 블록을 써봐요' },
+    { map: ['R.*.*.', '#####.', '.*.*.G'], hint: '지그재그로!' }
+  ];
+  var DIRS = { up: [0, -1, '⬆️'], down: [0, 1, '⬇️'], left: [-1, 0, '⬅️'], right: [1, 0, '➡️'] };
+  function home() {
+    main.innerHTML = '';
+    var p = K.progress(); var doneLv = p.done || [];
+    main.appendChild(el('div', { class: 'kl-card kl-center', html: '<div style="font-size:80px">🤖</div><div class="kl-prompt" style="margin:0">파이보 로봇에게 명령을 내려요!</div><div class="kl-hint">블록을 순서대로 놓고 ▶ 실행을 누르면 로봇이 움직여요</div>' }));
+    var list = el('div', { class: 'lv-list', style: 'justify-content:center;margin-bottom:16px' });
+    LEVELS.forEach(function (l, i) { var b = el('button', { text: String(i + 1), class: doneLv.indexOf(i) >= 0 ? 'done' : '' }); b.addEventListener('click', function () { K.sfx.click(); play(i); }); list.appendChild(b); });
+    main.appendChild(list);
+    var next = 0; while (doneLv.indexOf(next) >= 0 && next < LEVELS.length - 1) next++;
+    main.appendChild(el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary big', text: '▶ ' + (next + 1) + '단계 시작', onclick: function () { play(next); } }), el('button', { class: 'kl-btn', text: '🎮 자유 놀이', onclick: function () { play(-1); } })]));
+  }
+  function play(li) {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var free = li < 0; var lv = free ? { map: ['R....', '.....', '.....', '....G'], hint: '마음대로 움직여봐요' } : LEVELS[li];
+    var map = lv.map.map(function (r) { return r.split(''); }); var H = map.length, W = map[0].length;
+    var start = null, goal = null, stars = [];
+    map.forEach(function (row, y) { row.forEach(function (c, x) { if (c === 'R') start = [x, y]; if (c === 'G') goal = [x, y]; if (c === '*') stars.push(x + ',' + y); }); });
+    var rx = start[0], ry = start[1], got = [], program = [], running = false;
+    var grid = el('div', { class: 'grid', style: 'grid-template-columns:repeat(' + W + ',64px)' });
+    var cellEls = [];
+    map.forEach(function (row, y) { cellEls.push([]); row.forEach(function (c, x) { var e = el('div', { class: 'cell' + (c === '#' ? ' wall' : ''), text: c === 'G' ? '🔋' : c === '*' ? '⭐' : '' }); grid.appendChild(e); cellEls[y].push(e); }); });
+    var robot = el('div', { class: 'robot', text: '🤖' }); cellEls[start[1]][start[0]].appendChild(robot);
+    function place() { var target = cellEls[ry][rx]; if (robot.parentNode !== target) target.appendChild(robot); }
+    var prog = el('div', { class: 'program' });
+    var status = el('div', { class: 'kl-hint', text: (free ? '' : (li + 1) + '단계: ') + lv.hint });
+    function renderProg() { prog.innerHTML = ''; if (!program.length) prog.appendChild(el('span', { style: 'color:#999;font-size:18px', text: '여기에 명령이 쌓여요' })); program.forEach(function (p, i) { var b = el('button', { class: 'blk ' + p.k, text: p.k === 'rep' ? '🔁×' + p.n : DIRS[p.k][2] }); b.addEventListener('click', function () { if (running) return; program.splice(i, 1); K.sfx.pop(); renderProg(); }); prog.appendChild(b); }); }
+    var blocks = el('div', { class: 'blocks' });
+    ['up', 'down', 'left', 'right'].forEach(function (k) { var b = el('button', { class: 'blk ' + k, text: DIRS[k][2] }); b.addEventListener('click', function () { if (running || program.length >= 20) return; program.push({ k: k }); K.sfx.pop(); K.speak({ up: '위로', down: '아래로', left: '왼쪽으로', right: '오른쪽으로' }[k]); renderProg(); }); blocks.appendChild(b); });
+    if (li >= 7 || free) { var rb = el('button', { class: 'blk rep', text: '🔁×3' }); rb.addEventListener('click', function () { if (running || !program.length) { K.toast('먼저 방향 블록을 놓아요'); return; } var last = program[program.length - 1]; if (last.k === 'rep') return; program.pop(); program.push({ k: 'rep', n: 3, inner: last.k }); K.sfx.pop(); renderProg(); }); blocks.appendChild(rb); }
+    function expand() { var out = []; program.forEach(function (p) { if (p.k === 'rep') for (var i = 0; i < p.n; i++) out.push({ k: p.inner, src: p }); else out.push({ k: p.k, src: p }); }); return out; }
+    function reset() { rx = start[0]; ry = start[1]; got = []; stars.forEach(function (s) { var xy = s.split(','); cellEls[+xy[1]][+xy[0]].textContent = '⭐'; }); place(); running = false; }
+    function run() {
+      if (running || !program.length) return; reset(); running = true; var steps = expand(); var i = 0; K.event('run');
+      function step() {
+        if (i >= steps.length) { running = false; check(); return; }
+        var s = steps[i]; var d = DIRS[s.k]; var nx = rx + d[0], ny = ry + d[1];
+        prog.querySelectorAll('.blk').forEach(function (b) { b.classList.remove('run'); }); var idx = program.indexOf(s.src); if (prog.children[idx]) prog.children[idx].classList.add('run');
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H || map[ny][nx] === '#') { K.sfx.wrong(); robot.style.transform = 'rotate(-20deg)'; setTimeout(function () { robot.style.transform = ''; }, 300); status.textContent = '쿵! 벽이에요. 다시 생각해봐요'; K.speak('쿵! 벽이에요'); running = false; return; }
+        rx = nx; ry = ny; K.sfx.pop(); place();
+        var key = rx + ',' + ry; if (stars.indexOf(key) >= 0 && got.indexOf(key) < 0) { got.push(key); cellEls[ry][rx].textContent = ''; cellEls[ry][rx].appendChild(robot); K.sfx.star(); }
+        i++; setTimeout(step, 450);
+      }
+      setTimeout(step, 300);
+    }
+    function check() {
+      prog.querySelectorAll('.blk').forEach(function (b) { b.classList.remove('run'); });
+      if (rx === goal[0] && ry === goal[1]) {
+        if (got.length < stars.length) { status.textContent = '도착! 그런데 별을 다 못 모았어요 ⭐'; K.speak('별을 모두 모아야 해요'); K.sfx.wrong(); return; }
+        status.textContent = '🎉 성공! 로봇이 배터리를 찾았어요'; K.sfx.win(); K.confetti(); K.addStar(2); K.event('win'); K.speak('성공! 로봇이 배터리를 찾았어요');
+        if (!free) { var p = K.progress(); var done = p.done || []; if (done.indexOf(li) < 0) done.push(li); K.setProgress({ done: done }); if (li + 1 < LEVELS.length) panel.appendChild(el('button', { class: 'kl-btn primary', text: '▶ 다음 단계', onclick: function () { play(li + 1); } })); else panel.appendChild(el('div', { class: 'kl-levelup', text: '🏆 모든 단계를 끝냈어요! 자유 놀이를 해봐요' })); }
+      } else { status.textContent = '아직 배터리에 못 갔어요. 블록을 더 놓아봐요'; K.speak('아직 도착하지 못했어요'); }
+    }
+    var panel = el('div', { class: 'panel' }, [status, el('div', { style: 'font-weight:800', text: '명령 블록' }), blocks, el('div', { style: 'font-weight:800', text: '내 프로그램' }), prog, el('div', { class: 'kl-row', style: 'margin-top:4px' }, [el('button', { class: 'kl-btn green big', text: '▶ 실행', onclick: run }), el('button', { class: 'kl-btn', text: '🗑️ 지우기', onclick: function () { if (running) return; program = []; renderProg(); reset(); status.textContent = lv.hint; } })])]);
+    main.appendChild(el('div', { class: 'wrap' }, [grid, panel])); renderProg();
+    K.speak(lv.hint);
+  }
+  home();
+})();
+</script>
+</body>
+</html>

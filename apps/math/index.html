@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>수학 놀이</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .objs { font-size: 54px; line-height: 1.2; letter-spacing: 6px; }
+  .objs.small { font-size: 40px; }
+  .eq { display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap; }
+  .eq .grp { background: #f7f7f7; border-radius: 20px; padding: 12px 16px; font-size: 46px; max-width: 320px; line-height: 1.2; }
+  .eq .op { font-size: 60px; font-weight: 900; color: #6a4c93; }
+  .num-line { display: flex; gap: 6px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
+  .num-line span { width: 54px; height: 54px; border-radius: 50%; background: #f4f1ea; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 24px; }
+  .num-line span.hl { background: #ffca3a; }
+  .num-line span.q { background: #ffe9ee; color: #d6336c; }
+  .count-board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; max-width: 520px; margin: 0 auto 20px; }
+  .count-board button { font-size: 48px; background: #fff; border-radius: 18px; padding: 8px; box-shadow: 0 4px 0 rgba(0,0,0,.08); }
+  .count-board button.hit { background: #c9f0a8; transform: scale(.9); }
+  .ten-frame { display: grid; grid-template-columns: repeat(5, 60px); gap: 6px; justify-content: center; margin: 10px auto; }
+  .ten-frame i { width: 60px; height: 60px; border: 3px solid #999; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 36px; font-style: normal; background: #fff; }
+</style>
+</head>
+<body data-app="math">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '수학 놀이', icon: '🔢', say: '수학 놀이' });
+  var main = document.getElementById('main');
+  var OBJ = ['🍎', '🍓', '🐥', '⭐', '🎈', '🍪', '🚗', '🐟', '🌸', '🧸'];
+  var KNUM = ['영', '하나', '둘', '셋', '넷', '다섯', '여섯', '일곱', '여덟', '아홉', '열', '열하나', '열둘', '열셋', '열넷', '열다섯', '열여섯', '열일곱', '열여덟', '열아홉', '스물'];
+  function rep(e, n) { var s = ''; for (var i = 0; i < n; i++) s += e; return s; }
+  function wrongs(ans, min, max, n) { var w = []; var guard = 0; while (w.length < n && guard++ < 200) { var x = K.randInt(min, max); if (x !== ans && w.indexOf(x) < 0) w.push(x); } return w; }
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '🔢', label: '숫자 배우기', color: '#fff3c4', run: learnNum },
+      { icon: '🍎', label: '몇 개일까?', mode: 'count', color: '#ffe9ee', run: countQuiz },
+      { icon: '👆', label: '하나씩 세기', mode: 'tap', color: '#e3f7cf', run: tapCount },
+      { icon: '➕', label: '더하기', mode: 'add', color: '#e9f3ff', run: addQuiz },
+      { icon: '➖', label: '빼기', mode: 'sub', color: '#ffe4a1', run: subQuiz },
+      { icon: '⚖️', label: '어느 쪽이 많을까?', mode: 'cmp', color: '#ece6f5', run: cmpQuiz },
+      { icon: '🔟', label: '10 만들기', mode: 'ten', color: '#d0f4de', run: tenQuiz },
+      { icon: '🪜', label: '빠진 숫자', mode: 'seq', color: '#ffd9e8', run: seqQuiz },
+      { icon: '📏', label: '크기 순서', mode: 'order', color: '#e2ece9', run: orderQuiz }
+    ]);
+  }
+  function quiz(mode, total, make) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: total, make: make, onFinish: home }); }
+
+  function learnNum() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    main.appendChild(el('div', { class: 'kl-hint', text: '숫자를 누르면 읽어주고 그림으로 보여줘요' }));
+    var show = el('div', { class: 'kl-card kl-center', html: '<div class="objs" id="objs" style="min-height:80px"></div><div id="numsay" style="font-size:40px;font-weight:900"></div>' });
+    var g = el('div', { class: 'kl-menu' });
+    for (var n = 1; n <= 20; n++) (function (n) {
+      var b = el('button', { class: 'kl-menu-item', style: 'min-height:110px;padding:10px' }, [el('div', { class: 'kl-menu-icon', text: String(n), style: 'color:#1982c4;font-weight:900' }), el('div', { class: 'kl-menu-label', text: KNUM[n] })]);
+      b.addEventListener('click', function () { K.sfx.pop(); var e = K.pick(OBJ); show.querySelector('#objs').textContent = rep(e, n); show.querySelector('#numsay').textContent = n + ' · ' + KNUM[n] + ' · ' + n + '개'; K.speak(KNUM[n] + '. ' + n + '개'); K.event('learn'); });
+      g.appendChild(b);
+    })(n);
+    main.appendChild(show); main.appendChild(g);
+  }
+  function countQuiz() {
+    quiz('count', 8, function (i, lv) {
+      var max = lv === 1 ? 5 : lv === 2 ? 10 : lv === 3 ? 15 : 20; var ans = K.randInt(1, max); var e = K.pick(OBJ);
+      return { prompt: '<div class="objs' + (ans > 10 ? ' small' : '') + '">' + rep(e, ans) + '</div>', say: '몇 개일까요?', cols: 4, choices: K.shuffle([ans].concat(wrongs(ans, Math.max(1, ans - 3), Math.min(max, ans + 3), 3))).map(function (x) { return { html: String(x), correct: x === ans, say: KNUM[x] }; }) };
+    });
+  }
+  function tapCount() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var lv = K.getLevel('tap'); var round = 0, total = 5, score = 0;
+    var box = el('div', { class: 'kl-stage' }); main.appendChild(box);
+    function next() {
+      if (round >= total) { box.innerHTML = ''; if (score >= 4 && lv < 5) K.setLevel('tap', lv + 1); box.appendChild(el('div', { class: 'kl-result' }, [el('div', { class: 'kl-result-emoji', text: '🎉' }), el('div', { class: 'kl-result-title', text: '잘 세었어요!' }), el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '🔁 한 번 더', onclick: tapCount }), el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: home })]) ])); K.sfx.win(); K.confetti(); return; }
+      var n = K.randInt(lv === 1 ? 2 : 4, lv === 1 ? 5 : lv === 2 ? 8 : 10); var e = K.pick(OBJ); var hit = 0;
+      box.innerHTML = '';
+      var p = el('div', { class: 'kl-prompt', text: '하나씩 눌러서 세어 보세요' });
+      var cnt = el('div', { style: 'text-align:center;font-size:70px;font-weight:900;color:#1982c4;min-height:90px', text: '' });
+      var board = el('div', { class: 'count-board' });
+      for (var k = 0; k < n; k++) { var b = el('button', { text: e }); b.addEventListener('click', function () { if (this.classList.contains('hit')) return; this.classList.add('hit'); hit++; cnt.textContent = hit; K.sfx.pop(); K.speak(KNUM[hit]); }); board.appendChild(b); }
+      var ask = el('div', { class: 'kl-prompt', text: '모두 몇 개?' });
+      var choices = el('div', { class: 'kl-choices cols4' });
+      K.shuffle([n].concat(wrongs(n, 1, 10, 3))).forEach(function (x) { var c = el('button', { class: 'kl-choice', text: String(x) }); c.addEventListener('click', function () { if (x === n) { c.classList.add('right'); K.sfx.correct(); K.addStar(1); K.event('correct'); score++; round++; setTimeout(next, 800); } else { c.classList.add('wrong'); K.sfx.wrong(); setTimeout(function () { c.classList.add('dim'); }, 400); } }); choices.appendChild(c); });
+      box.appendChild(p); box.appendChild(board); box.appendChild(cnt); box.appendChild(ask); box.appendChild(choices);
+      K.speak('하나씩 눌러서 세어 보세요');
+    }
+    next();
+  }
+  function addQuiz() {
+    quiz('add', 8, function (i, lv) {
+      var max = lv === 1 ? 3 : lv === 2 ? 5 : lv === 3 ? 9 : 10; var a = K.randInt(1, max), b = K.randInt(1, max); var ans = a + b; var e = K.pick(OBJ);
+      var visual = lv <= 3 ? '<div class="eq"><div class="grp">' + rep(e, a) + '</div><span class="op">+</span><div class="grp">' + rep(e, b) + '</div><span class="op">=</span><span class="op">?</span></div>' : '';
+      return { prompt: visual + '<div style="font-size:56px;margin-top:8px">' + a + ' + ' + b + ' = ?</div>', say: a + ' 더하기 ' + b + '는?', cols: 4, choices: K.shuffle([ans].concat(wrongs(ans, Math.max(1, ans - 3), ans + 3, 3))).map(function (x) { return { html: String(x), correct: x === ans }; }) };
+    });
+  }
+  function subQuiz() {
+    quiz('sub', 8, function (i, lv) {
+      var max = lv === 1 ? 5 : lv === 2 ? 8 : lv === 3 ? 10 : 15; var a = K.randInt(2, max), b = K.randInt(1, a - 1); var ans = a - b; var e = K.pick(OBJ);
+      var visual = lv <= 3 ? '<div class="eq"><div class="grp">' + rep(e, ans) + '<span style="opacity:.25">' + rep(e, b) + '</span></div></div>' : '';
+      return { prompt: visual + '<div style="font-size:56px;margin-top:8px">' + a + ' − ' + b + ' = ?</div>', say: a + ' 빼기 ' + b + '는?', cols: 4, choices: K.shuffle([ans].concat(wrongs(ans, Math.max(0, ans - 3), ans + 3, 3))).map(function (x) { return { html: String(x), correct: x === ans }; }) };
+    });
+  }
+  function cmpQuiz() {
+    quiz('cmp', 8, function (i, lv) {
+      var max = lv === 1 ? 5 : lv === 2 ? 10 : 20; var a = K.randInt(1, max), b = K.randInt(1, max); if (a === b) b = a === max ? a - 1 : a + 1;
+      var e1 = K.pick(OBJ), e2 = K.pick(OBJ); var more = i % 2 === 0;
+      if (lv >= 3) return { prompt: more ? '더 큰 수는?' : '더 작은 수는?', say: more ? '더 큰 수는?' : '더 작은 수는?', cols: 2, choices: [{ html: String(a), correct: more ? a > b : a < b }, { html: String(b), correct: more ? b > a : b < a }] };
+      return { prompt: more ? '어느 쪽이 더 많을까요?' : '어느 쪽이 더 적을까요?', say: more ? '어느 쪽이 더 많을까요?' : '어느 쪽이 더 적을까요?', cols: 2, choices: [{ html: '<div class="objs small">' + rep(e1, a) + '</div>', correct: more ? a > b : a < b }, { html: '<div class="objs small">' + rep(e2, b) + '</div>', correct: more ? b > a : b < a }] };
+    });
+  }
+  function tenQuiz() {
+    quiz('ten', 8, function (i, lv) {
+      var target = lv <= 2 ? 10 : K.pick([5, 10, 10, 10]); var a = K.randInt(1, target - 1); var ans = target - a;
+      var frame = '<div class="ten-frame">'; for (var k = 0; k < target; k++) frame += '<i>' + (k < a ? '🔵' : '') + '</i>'; frame += '</div>';
+      return { prompt: (lv <= 3 ? frame : '') + '<div style="font-size:50px">' + a + ' + ? = ' + target + '</div>', say: a + '에 몇을 더하면 ' + target + '이 될까요?', cols: 4, choices: K.shuffle([ans].concat(wrongs(ans, 1, target, 3))).map(function (x) { return { html: String(x), correct: x === ans }; }) };
+    });
+  }
+  function seqQuiz() {
+    quiz('seq', 8, function (i, lv) {
+      var start = K.randInt(1, lv === 1 ? 3 : lv === 2 ? 8 : 15); var len = 5; var missing = K.randInt(1, len - 2); var step = lv >= 4 ? K.pick([1, 1, 2]) : 1;
+      var seq = []; for (var k = 0; k < len; k++) seq.push(start + k * step);
+      var ans = seq[missing];
+      var html = '<div class="num-line">' + seq.map(function (x, j) { return '<span class="' + (j === missing ? 'q' : '') + '">' + (j === missing ? '?' : x) + '</span>'; }).join('') + '</div>';
+      return { prompt: html, say: '빠진 숫자는 무엇일까요?', cols: 4, choices: K.shuffle([ans].concat(wrongs(ans, Math.max(1, ans - 4), ans + 4, 3))).map(function (x) { return { html: String(x), correct: x === ans }; }) };
+    });
+  }
+  function orderQuiz() {
+    quiz('order', 8, function (i, lv) {
+      var e = K.pick(['🐻', '🌳', '🚗', '🎈', '🐘', '🏠']); var sizes = K.shuffle([40, 64, 96]); var biggest = i % 2 === 0;
+      var target = biggest ? Math.max.apply(null, sizes) : Math.min.apply(null, sizes);
+      if (lv >= 3) { sizes = K.shuffle([36, 52, 72, 96]); target = biggest ? 96 : 36; }
+      return { prompt: biggest ? '가장 큰 것은?' : '가장 작은 것은?', say: biggest ? '가장 큰 것은 어느 것일까요?' : '가장 작은 것은 어느 것일까요?', cols: sizes.length, choices: sizes.map(function (s) { return { html: '<span style="font-size:' + s + 'px">' + e + '</span>', correct: s === target }; }) };
+    });
+  }
+  home();
+})();
+</script>
+</body>
+</html>

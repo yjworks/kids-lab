@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>마음 알기</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .breath { width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(#b8e0d2, #8fd3f4); margin: 20px auto; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 900; color: #fff; transition: transform 4s ease-in-out; }
+  .breath.in { transform: scale(1.5); }
+  .mood-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+  .mood-grid button { background: #fff; border-radius: 22px; padding: 14px 6px; font-size: 56px; box-shadow: 0 5px 0 rgba(0,0,0,.08); }
+  .mood-grid button small { display: block; font-size: 18px; font-weight: 800; color: #444; }
+  .mood-grid button:hover { transform: scale(1.06); }
+</style>
+</head>
+<body data-app="feelings">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '마음 알기', icon: '😊', say: '마음 알기' });
+  var main = document.getElementById('main');
+  var EMO = [['😊', '기뻐요', '생일 선물을 받았어요'], ['😢', '슬퍼요', '좋아하는 장난감이 망가졌어요'], ['😡', '화나요', '친구가 내 블록을 무너뜨렸어요'], ['😨', '무서워요', '밤에 천둥 소리가 들려요'], ['😲', '놀랐어요', '갑자기 풍선이 터졌어요'], ['😴', '졸려요', '밤늦게까지 놀았어요'], ['🤢', '아파요', '배가 아파요'], ['😍', '사랑해요', '엄마가 꼭 안아줬어요'], ['😌', '편안해요', '따뜻한 이불 속에 있어요'], ['😤', '답답해요', '퍼즐이 잘 안 맞춰져요'], ['🥰', '고마워요', '친구가 도와줬어요'], ['😳', '부끄러워요', '사람들 앞에서 노래했어요']];
+  var SIT = [
+    ['친구가 내 장난감을 가져갔어요', ['🗣️ "돌려줘" 하고 말해요', '👊 때려요', '😭 소리 질러요'], 0],
+    ['화가 많이 나요', ['🌬️ 숨을 크게 쉬어요', '🧸 물건을 던져요', '🏃 친구를 밀어요'], 0],
+    ['친구가 넘어져서 울어요', ['🤗 괜찮아? 하고 도와줘요', '😆 웃어요', '🙈 모른 척해요'], 0],
+    ['새 친구가 혼자 있어요', ['👋 같이 놀자고 해요', '🙄 쳐다만 봐요', '🚫 오지 말라고 해요'], 0],
+    ['내가 원하는 걸 못 사요', ['😔 아쉽지만 괜찮아요', '😭 바닥에 누워 울어요', '🤬 소리 질러요'], 0],
+    ['친구가 놀려요', ['🛑 "하지 마" 하고 선생님께 말해요', '😢 아무 말도 안 해요', '👊 똑같이 놀려요'], 0],
+    ['무서운 꿈을 꿨어요', ['🫂 엄마 아빠에게 말해요', '😰 혼자 참아요', '😱 소리 질러요'], 0],
+    ['게임에서 졌어요', ['👏 "잘했어" 축하해요', '😡 게임판을 엎어요', '😤 다시는 안 놀아요'], 0],
+    ['실수로 물을 쏟았어요', ['🧻 "미안해" 하고 닦아요', '🙈 모른 척해요', '👉 친구 탓을 해요'], 0],
+    ['친구가 슬퍼 보여요', ['💬 왜 그래? 물어봐요', '🙄 신경 안 써요', '😂 웃어요'], 0]
+  ];
+  var CALM = [['🌬️', '풍선 숨쉬기', '코로 천천히 들이쉬고, 입으로 후~ 내쉬어요'], ['🔢', '열까지 세기', '하나, 둘, 셋... 열까지 천천히 세어요'], ['🤗', '나를 안아주기', '두 팔로 나를 꼭 안아줘요'], ['💧', '물 한 잔', '시원한 물을 천천히 마셔요'], ['🎨', '그림 그리기', '내 마음을 그림으로 그려요'], ['🗣️', '말로 하기', '"나 지금 화났어" 하고 말해요']];
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '💗', label: '지금 내 기분', color: '#ffe9ee', run: moodNow },
+      { icon: '🎭', label: '표정 읽기', mode: 'face', color: '#fff3c4', run: faceQuiz },
+      { icon: '💭', label: '어떤 기분일까?', mode: 'why', color: '#e9f3ff', run: whyQuiz },
+      { icon: '🤔', label: '어떻게 할까?', mode: 'sit', color: '#e3f7cf', run: sitQuiz },
+      { icon: '🌬️', label: '마음 진정하기', color: '#d0f4de', run: calm },
+      { icon: '🌟', label: '나의 좋은 점', color: '#ffe4a1', run: praise }
+    ]);
+  }
+  function quiz(mode, total, make) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: total, make: make, onFinish: home }); }
+  function moodNow() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    main.appendChild(el('div', { class: 'kl-prompt', text: '지금 기분이 어때요?' }));
+    var g = el('div', { class: 'mood-grid' });
+    EMO.slice(0, 8).forEach(function (e) {
+      var b = el('button', { html: e[0] + '<small>' + e[1] + '</small>' });
+      b.addEventListener('click', function () {
+        K.mutate(function (d) { var day = K.dayRec(d); day.moods = day.moods || []; day.moods.push({ t: Date.now(), e: e[0], l: e[1] }); });
+        K.sfx.pop(); K.addStar(1); K.event('mood');
+        var reply = { '기뻐요': '와, 정말 좋겠다! 무엇이 기뻤어요?', '슬퍼요': '슬플 수도 있어요. 괜찮아요, 안아줄게요', '화나요': '화가 날 땐 크게 숨을 쉬어봐요. 후~', '무서워요': '무서울 땐 엄마 아빠에게 말해요. 옆에 있어요', '놀랐어요': '깜짝 놀랐구나! 이제 괜찮아요', '졸려요': '오늘은 일찍 자요. 잘 자요', '아파요': '아프면 어른에게 꼭 말해요', '사랑해요': '나도 사랑해요!' }[e[1]] || '내 마음을 잘 말했어요';
+        main.querySelector('.kl-prompt').textContent = e[0] + ' ' + reply; K.speak(reply);
+      });
+      g.appendChild(b);
+    });
+    main.appendChild(g);
+    var d = K.data(); var hist = []; Object.keys(d.days).sort().slice(-5).forEach(function (k) { (d.days[k].moods || []).forEach(function (m) { hist.push(k.slice(5) + ' ' + m.e); }); });
+    main.appendChild(el('div', { class: 'kl-card', style: 'margin-top:18px', html: '<b>📅 내 기분 기록</b><div style="font-size:26px;margin-top:6px">' + (hist.slice(-12).join('  ') || '<span style="font-size:18px;color:#999">오늘 처음 기록해요</span>') + '</div>' }));
+    K.speak('지금 기분이 어때요?');
+  }
+  function faceQuiz() {
+    quiz('face', 8, function (i, lv) {
+      var n = lv === 1 ? 3 : 4; var opts = K.sample(EMO.slice(0, lv <= 2 ? 6 : 12), n); var ans = K.pick(opts);
+      if (lv >= 3 && i % 2) return { prompt: ans[1], say: ans[1] + '. 어떤 표정일까요?', cols: n, choices: opts.map(function (o) { return { html: o[0], correct: o === ans, say: o[1] }; }) };
+      return { prompt: ans[0], big: true, say: '어떤 기분일까요?', cols: n, choices: opts.map(function (o) { return { html: o[1], cls: 'text', correct: o === ans, say: o[1] }; }) };
+    });
+  }
+  function whyQuiz() {
+    quiz('why', 8, function (i, lv) {
+      var n = lv === 1 ? 3 : 4; var opts = K.sample(EMO, n); var ans = K.pick(opts);
+      return { prompt: ans[2], say: ans[2] + '. 어떤 기분일까요?', cols: n, choices: opts.map(function (o) { return { html: o[0] + '<div style="font-size:18px">' + o[1] + '</div>', correct: o === ans, say: o[1] }; }) };
+    });
+  }
+  function sitQuiz() {
+    quiz('sit', 8, function (i, lv) {
+      var s = K.pick(SIT); var opts = s[1].map(function (t, j) { return [t, j === s[2]]; }); if (lv === 1) opts = K.shuffle(opts.filter(function (o) { return o[1]; }).concat([K.pick(opts.filter(function (o) { return !o[1]; }))]));
+      return { prompt: s[0], say: s[0] + '. 어떻게 할까요?', cols: 1, choices: K.shuffle(opts).map(function (o) { return { html: o[0], cls: 'text', correct: o[1], say: o[0].replace(/^\S+\s/, '') }; }) };
+    });
+  }
+  function calm() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var card = el('div', { class: 'kl-card kl-center' }); main.appendChild(card);
+    card.appendChild(el('div', { class: 'kl-prompt', text: '풍선 숨쉬기 🎈' }));
+    var ball = el('div', { class: 'breath', text: '준비' }); card.appendChild(ball);
+    var cnt = 0, timer = null;
+    var btn = el('button', { class: 'kl-btn primary big', text: '시작' });
+    btn.addEventListener('click', function () {
+      if (timer) return; btn.disabled = true; cnt = 0;
+      function cycle() { if (cnt >= 4) { clearInterval(timer); timer = null; btn.disabled = false; ball.textContent = '잘했어요'; ball.className = 'breath'; K.addStar(1); K.event('calm'); K.speak('마음이 편안해졌어요'); return; } ball.textContent = '들이쉬고'; ball.className = 'breath in'; K.speak('코로 천천히 들이쉬고'); setTimeout(function () { ball.textContent = '내쉬고'; ball.className = 'breath'; K.speak('입으로 후 내쉬어요'); }, 4000); cnt++; }
+      cycle(); timer = setInterval(cycle, 8000);
+    });
+    card.appendChild(btn);
+    var list = el('div', { class: 'kl-menu', style: 'margin-top:16px' });
+    CALM.forEach(function (c) { var b = el('button', { class: 'kl-menu-item', style: 'min-height:140px' }, [el('div', { class: 'kl-menu-icon', text: c[0] }), el('div', { class: 'kl-menu-label', text: c[1] })]); b.addEventListener('click', function () { K.sfx.pop(); K.toast(c[2], 3500); K.speak(c[1] + '. ' + c[2]); K.event('calm'); }); list.appendChild(b); });
+    main.appendChild(list);
+  }
+  var PRAISE = ['나는 씩씩해요 💪', '나는 친구를 도와줘요 🤝', '나는 열심히 배워요 📚', '나는 웃는 게 예뻐요 😊', '나는 소중한 사람이에요 💖', '나는 할 수 있어요 🌟', '나는 용감해요 🦁', '나는 사랑받고 있어요 🥰', '나는 잘 듣는 사람이에요 👂', '나는 정리를 잘해요 ✨'];
+  function praise() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var p = K.requireProfile();
+    main.appendChild(el('div', { class: 'kl-prompt', text: p.name + '의 좋은 점을 따라 말해요!' }));
+    var g = el('div', { class: 'kl-menu' });
+    K.shuffle(PRAISE).slice(0, 6).forEach(function (t) { var b = el('button', { class: 'kl-menu-item', style: 'min-height:120px;background:#fff8ec' }, el('div', { class: 'kl-menu-label', text: t, style: 'font-size:24px' })); b.addEventListener('click', function () { K.speak(t.replace(/\s\S+$/, '')); K.sfx.star(); K.addStar(1); K.event('praise'); b.style.background = '#e3f7cf'; }); g.appendChild(b); });
+    main.appendChild(g);
+  }
+  home();
+})();
+</script>
+</body>
+</html>

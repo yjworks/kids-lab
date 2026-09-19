@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>시계 놀이</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .clock { width: 260px; height: 260px; display: block; margin: 0 auto; }
+  .kl-choice .clock { width: 150px; height: 150px; }
+  .live { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: center; }
+  .digital { font-size: 64px; font-weight: 900; color: #6a4c93; font-variant-numeric: tabular-nums; }
+  .sched { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+  .sched div { background: #fff; border-radius: 18px; padding: 14px; text-align: center; box-shadow: 0 4px 0 rgba(0,0,0,.08); font-weight: 800; }
+  .sched .e { font-size: 44px; }
+  .knob { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+</style>
+</head>
+<body data-app="clock">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '시계 놀이', icon: '⏰', say: '시계 놀이' });
+  var main = document.getElementById('main');
+  var KH = ['열두', '한', '두', '세', '네', '다섯', '여섯', '일곱', '여덟', '아홉', '열', '열한', '열두'];
+  function clockSVG(h, m, opts) {
+    opts = opts || {}; var s = '';
+    for (var i = 1; i <= 12; i++) { var a = i * 30 * Math.PI / 180; s += '<text x="' + (100 + 78 * Math.sin(a)) + '" y="' + (100 - 78 * Math.cos(a) + 7) + '" text-anchor="middle" font-size="20" font-weight="900" fill="#333">' + i + '</text>'; }
+    for (var k = 0; k < 60; k++) { var b = k * 6 * Math.PI / 180; var r1 = k % 5 === 0 ? 88 : 92; s += '<line x1="' + (100 + r1 * Math.sin(b)) + '" y1="' + (100 - r1 * Math.cos(b)) + '" x2="' + (100 + 95 * Math.sin(b)) + '" y2="' + (100 - 95 * Math.cos(b)) + '" stroke="#999" stroke-width="' + (k % 5 === 0 ? 3 : 1) + '"/>'; }
+    var ha = ((h % 12) + m / 60) * 30, ma = m * 6;
+    s += '<line x1="100" y1="100" x2="' + (100 + 50 * Math.sin(ha * Math.PI / 180)) + '" y2="' + (100 - 50 * Math.cos(ha * Math.PI / 180)) + '" stroke="#d6336c" stroke-width="9" stroke-linecap="round"/>';
+    s += '<line x1="100" y1="100" x2="' + (100 + 72 * Math.sin(ma * Math.PI / 180)) + '" y2="' + (100 - 72 * Math.cos(ma * Math.PI / 180)) + '" stroke="#1982c4" stroke-width="6" stroke-linecap="round"/>';
+    if (opts.sec != null) { var sa = opts.sec * 6; s += '<line x1="100" y1="100" x2="' + (100 + 80 * Math.sin(sa * Math.PI / 180)) + '" y2="' + (100 - 80 * Math.cos(sa * Math.PI / 180)) + '" stroke="#ffca3a" stroke-width="2"/>'; }
+    s += '<circle cx="100" cy="100" r="7" fill="#333"/>';
+    return '<svg class="clock" viewBox="0 0 200 200"><circle cx="100" cy="100" r="98" fill="#fff" stroke="#333" stroke-width="4"/>' + s + '</svg>';
+  }
+  function say(h, m) { var hh = h % 12; return KH[hh] + ' 시' + (m ? ' ' + m + ' 분' : ''); }
+  function label(h, m) { return (h % 12 === 0 ? 12 : h % 12) + '시' + (m ? ' ' + m + '분' : ''); }
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '🕐', label: '지금 몇 시?', color: '#ece6f5', run: live },
+      { icon: '🔄', label: '바늘 돌려보기', color: '#e9f3ff', run: playClock },
+      { icon: '❓', label: '몇 시일까?', mode: 'read', color: '#fff3c4', run: readQuiz },
+      { icon: '🔍', label: '시계 찾기', mode: 'find', color: '#e3f7cf', run: findQuiz },
+      { icon: '🌅', label: '하루의 시간', mode: 'day', color: '#ffe4a1', run: dayQuiz },
+      { icon: '⏳', label: '뭐가 더 길까?', mode: 'dur', color: '#ffd9e8', run: durQuiz }
+    ]);
+  }
+  function quiz(mode, total, make) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: total, make: make, onFinish: home }); }
+  function live() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var card = el('div', { class: 'kl-card live' }); main.appendChild(card);
+    var svgBox = el('div'), dig = el('div', { class: 'digital' }), txt = el('div', { style: 'font-size:28px;font-weight:800' });
+    card.appendChild(svgBox); card.appendChild(el('div', { class: 'kl-center' }, [dig, txt]));
+    function upd() { var d = new Date(); svgBox.innerHTML = clockSVG(d.getHours(), d.getMinutes(), { sec: d.getSeconds() }); dig.textContent = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); var h = d.getHours(); txt.textContent = (h < 12 ? '오전 ' : '오후 ') + label(h, d.getMinutes()) + (h < 6 ? ' 🌙 아직 밤이에요' : h < 12 ? ' 🌅 아침이에요' : h < 18 ? ' ☀️ 낮이에요' : ' 🌆 저녁이에요'); }
+    upd(); var t = setInterval(function () { if (!document.body.contains(card)) clearInterval(t); else upd(); }, 1000);
+    card.appendChild(el('button', { class: 'speak-btn', text: '🔊 몇 시인지 들어요', onclick: function () { var d = new Date(); var h = d.getHours(); K.speak('지금은 ' + (h < 12 ? '오전 ' : '오후 ') + say(h, d.getMinutes()) + '이에요'); K.event('learn'); } }));
+  }
+  function playClock() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var h = 3, m = 0; var card = el('div', { class: 'kl-card kl-center' }); main.appendChild(card);
+    var box = el('div'), t = el('div', { class: 'digital' }); card.appendChild(box); card.appendChild(t);
+    function upd() { box.innerHTML = clockSVG(h, m); t.textContent = label(h, m); }
+    var row = el('div', { class: 'knob' });
+    row.appendChild(el('button', { class: 'kl-btn red', text: '시 −', onclick: function () { h = (h + 11) % 12 || 12; upd(); K.sfx.pop(); } }));
+    row.appendChild(el('button', { class: 'kl-btn red', text: '시 +', onclick: function () { h = h % 12 + 1; upd(); K.sfx.pop(); } }));
+    row.appendChild(el('button', { class: 'kl-btn blue', text: '분 −5', onclick: function () { m = (m + 55) % 60; upd(); K.sfx.pop(); } }));
+    row.appendChild(el('button', { class: 'kl-btn blue', text: '분 +5', onclick: function () { m = (m + 5) % 60; upd(); K.sfx.pop(); } }));
+    row.appendChild(el('button', { class: 'speak-btn', text: '🔊 읽어줘', onclick: function () { K.speak(say(h, m)); K.event('learn'); } }));
+    card.appendChild(row); card.appendChild(el('div', { class: 'kl-hint', text: '빨간 짧은 바늘 = 시, 파란 긴 바늘 = 분' })); upd();
+  }
+  function randTime(lv) { var h = K.randInt(1, 12); var m = lv === 1 ? 0 : lv === 2 ? K.pick([0, 30]) : lv === 3 ? K.pick([0, 15, 30, 45]) : K.randInt(0, 11) * 5; return [h, m]; }
+  function readQuiz() {
+    quiz('read', 8, function (i, lv) {
+      var t = randTime(lv); var opts = [t]; var guard = 0;
+      while (opts.length < 4 && guard++ < 100) { var o = randTime(lv); if (!opts.some(function (x) { return x[0] === o[0] && x[1] === o[1]; })) opts.push(o); }
+      return { prompt: clockSVG(t[0], t[1]), say: '몇 시일까요?', cols: 4, choices: K.shuffle(opts).map(function (o) { return { html: label(o[0], o[1]), cls: 'text', correct: o === t, say: say(o[0], o[1]) }; }) };
+    });
+  }
+  function findQuiz() {
+    quiz('find', 8, function (i, lv) {
+      var t = randTime(lv); var opts = [t]; var guard = 0;
+      while (opts.length < 3 && guard++ < 100) { var o = randTime(lv); if (!opts.some(function (x) { return x[0] === o[0] && x[1] === o[1]; })) opts.push(o); }
+      return { prompt: label(t[0], t[1]) + '는 어느 시계?', say: say(t[0], t[1]) + '는 어느 시계일까요?', cols: 3, choices: K.shuffle(opts).map(function (o) { return { html: clockSVG(o[0], o[1]), correct: o === t }; }) };
+    });
+  }
+  var DAY = [['🌅', '아침 7시', '일어나기', 7], ['🥣', '아침 8시', '아침 먹기', 8], ['🏫', '아침 9시', '유치원 가기', 9], ['🍱', '낮 12시', '점심 먹기', 12], ['🎈', '낮 3시', '놀이 시간', 15], ['🍽️', '저녁 6시', '저녁 먹기', 18], ['🛁', '저녁 8시', '목욕하기', 20], ['🛏️', '밤 9시', '잠자기', 21]];
+  function dayQuiz() {
+    quiz('day', 8, function (i, lv) {
+      var d = K.pick(DAY); var wrong = K.sample(DAY, lv === 1 ? 2 : 3, [d]);
+      if (i % 2) return { prompt: d[0] + ' ' + d[2], say: d[2] + '는 언제 할까요?', cols: wrong.length + 1, choices: K.shuffle([d].concat(wrong)).map(function (o) { return { html: (lv >= 3 ? clockSVG(o[3], 0) : '') + '<div style="font-size:24px">' + o[1] + '</div>', correct: o === d, say: o[1] }; }) };
+      return { prompt: (lv >= 3 ? clockSVG(d[3], 0) : '') + '<div>' + d[1] + '에는?</div>', say: d[1] + '에는 무엇을 할까요?', cols: wrong.length + 1, choices: K.shuffle([d].concat(wrong)).map(function (o) { return { html: o[0] + '<div style="font-size:20px">' + o[2] + '</div>', correct: o === d, say: o[2] }; }) };
+    });
+  }
+  var DUR = [['👁️ 눈 깜빡이기', 1], ['🪥 이 닦기', 3], ['🍽️ 밥 먹기', 20], ['😴 밤에 자기', 600], ['🏫 유치원 하루', 300], ['🎬 만화 한 편', 15], ['🚗 할머니 집 가기', 60], ['🖐️ 손 씻기', 1], ['🛁 목욕하기', 15], ['📖 책 한 권 읽기', 10]];
+  function durQuiz() {
+    quiz('dur', 6, function (i, lv) {
+      var pair = K.sample(DUR, 2); var longer = i % 2 === 0; var target = pair.reduce(function (a, b) { return longer ? (a[1] > b[1] ? a : b) : (a[1] < b[1] ? a : b); });
+      return { prompt: longer ? '더 오래 걸리는 것은?' : '더 빨리 끝나는 것은?', say: longer ? '더 오래 걸리는 것은 무엇일까요?' : '더 빨리 끝나는 것은 무엇일까요?', cols: 2, choices: pair.map(function (p) { return { html: p[0], cls: 'text', correct: p === target }; }) };
+    });
+  }
+  home();
+})();
+</script>
+</body>
+</html>

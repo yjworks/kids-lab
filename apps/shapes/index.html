@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>모양·색깔</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .shape { width: 110px; height: 110px; display: inline-block; }
+  .pattern { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; align-items: center; }
+  .pattern .cell { width: 80px; height: 80px; border-radius: 16px; background: #f4f1ea; display: flex; align-items: center; justify-content: center; font-size: 54px; }
+  .pattern .cell.q { border: 4px dashed #d6336c; font-size: 40px; color: #d6336c; }
+  .kl-choice .shape { width: 90px; height: 90px; }
+  .chip { display: inline-block; width: 100px; height: 100px; border-radius: 24px; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,.2); }
+  .learn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+  .learn-grid button { background: #fff; border-radius: 22px; padding: 18px 8px; box-shadow: 0 5px 0 rgba(0,0,0,.08); font-size: 22px; font-weight: 800; }
+  .learn-grid button:hover { transform: scale(1.05); }
+</style>
+</head>
+<body data-app="shapes">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '모양·색깔', icon: '🔷', say: '모양과 색깔' });
+  var main = document.getElementById('main');
+  function svg(shape, color) {
+    var c = color || '#1982c4'; var inner = '';
+    switch (shape) {
+      case 'circle': inner = '<circle cx="50" cy="50" r="44" fill="' + c + '"/>'; break;
+      case 'square': inner = '<rect x="8" y="8" width="84" height="84" rx="6" fill="' + c + '"/>'; break;
+      case 'triangle': inner = '<polygon points="50,6 94,92 6,92" fill="' + c + '"/>'; break;
+      case 'rect': inner = '<rect x="4" y="24" width="92" height="52" rx="6" fill="' + c + '"/>'; break;
+      case 'star': inner = '<polygon points="50,5 61,38 96,38 68,58 79,92 50,72 21,92 32,58 4,38 39,38" fill="' + c + '"/>'; break;
+      case 'heart': inner = '<path d="M50 90 L14 52 C0 36 14 10 34 14 C42 16 48 22 50 28 C52 22 58 16 66 14 C86 10 100 36 86 52 Z" fill="' + c + '"/>'; break;
+      case 'oval': inner = '<ellipse cx="50" cy="50" rx="46" ry="30" fill="' + c + '"/>'; break;
+      case 'diamond': inner = '<polygon points="50,4 96,50 50,96 4,50" fill="' + c + '"/>'; break;
+      case 'pentagon': inner = '<polygon points="50,4 96,38 78,94 22,94 4,38" fill="' + c + '"/>'; break;
+      case 'hexagon': inner = '<polygon points="27,6 73,6 96,50 73,94 27,94 4,50" fill="' + c + '"/>'; break;
+      case 'moon': inner = '<path d="M62 6 A44 44 0 1 0 62 94 A34 34 0 1 1 62 6 Z" fill="' + c + '"/>'; break;
+    }
+    return '<svg class="shape" viewBox="0 0 100 100">' + inner + '</svg>';
+  }
+  var SHAPES = [['circle', '동그라미'], ['square', '네모'], ['triangle', '세모'], ['star', '별'], ['heart', '하트'], ['rect', '직사각형'], ['oval', '타원'], ['diamond', '마름모'], ['pentagon', '오각형'], ['hexagon', '육각형'], ['moon', '초승달']];
+  var COLORS = [['#e63946', '빨강'], ['#ff8c42', '주황'], ['#ffca3a', '노랑'], ['#4caf50', '초록'], ['#1982c4', '파랑'], ['#8e44ad', '보라'], ['#ff8fa3', '분홍'], ['#8d5524', '갈색'], ['#222', '검정'], ['#f2f2f2', '하양'], ['#8fd3f4', '하늘색'], ['#9e9e9e', '회색']];
+  var THINGS = [['🍎', '빨강'], ['🍌', '노랑'], ['🥦', '초록'], ['🍇', '보라'], ['🍊', '주황'], ['🐸', '초록'], ['🌊', '파랑'], ['🌸', '분홍'], ['☀️', '노랑'], ['🍓', '빨강'], ['🐻', '갈색'], ['🐧', '검정'], ['❄️', '하양'], ['🐬', '파랑'], ['🍆', '보라'], ['🥕', '주황']];
+  var PAT_EMO = ['🍎', '🍌', '⭐', '🐸', '🌸', '🔵', '🟥', '🔺'];
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '🔺', label: '모양 배우기', color: '#e9f3ff', run: learnShapes },
+      { icon: '🌈', label: '색깔 배우기', color: '#ffe9ee', run: learnColors },
+      { icon: '🔍', label: '모양 찾기', mode: 'shape', color: '#fff3c4', run: shapeQuiz },
+      { icon: '🎨', label: '색깔 찾기', mode: 'color', color: '#e3f7cf', run: colorQuiz },
+      { icon: '🍎', label: '무슨 색일까?', mode: 'thing', color: '#ffe4a1', run: thingQuiz },
+      { icon: '🔁', label: '패턴 이어가기', mode: 'pattern', color: '#ece6f5', run: patternQuiz },
+      { icon: '🏠', label: '생활 속 모양', mode: 'real', color: '#d0f4de', run: realQuiz },
+      { icon: '👯', label: '다른 것 찾기', mode: 'odd', color: '#ffd9e8', run: oddQuiz }
+    ]);
+  }
+  function quiz(mode, total, make) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: total, make: make, onFinish: home }); }
+  function learnShapes() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var g = el('div', { class: 'learn-grid' });
+    SHAPES.forEach(function (s) { var b = el('button', { html: svg(s[0], K.pick(COLORS)[0]) + '<div>' + s[1] + '</div>' }); b.addEventListener('click', function () { K.sfx.pop(); K.speak(s[1]); K.event('learn'); }); g.appendChild(b); });
+    main.appendChild(g);
+  }
+  function learnColors() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var g = el('div', { class: 'learn-grid' });
+    COLORS.forEach(function (c) { var b = el('button', { html: '<span class="chip" style="background:' + c[0] + '"></span><div>' + c[1] + '</div>' }); b.addEventListener('click', function () { K.sfx.pop(); K.speak(c[1]); K.event('learn'); }); g.appendChild(b); });
+    main.appendChild(g);
+  }
+  function shapeQuiz() {
+    quiz('shape', 8, function (i, lv) {
+      var pool = SHAPES.slice(0, lv === 1 ? 4 : lv === 2 ? 6 : lv === 3 ? 8 : 11); var n = lv === 1 ? 3 : 4;
+      var opts = K.sample(pool, n); var ans = K.pick(opts);
+      if (lv >= 3 && i % 2) return { prompt: svg(ans[0], K.pick(COLORS)[0]), say: '이 모양의 이름은?', cols: n, choices: opts.map(function (o) { return { html: o[1], cls: 'text', correct: o === ans, say: o[1] }; }) };
+      return { prompt: ans[1] + '를 찾아요', say: ans[1] + '를 찾아요', cols: n, choices: opts.map(function (o) { return { html: svg(o[0], K.pick(COLORS)[0]), correct: o === ans, say: o[1] }; }) };
+    });
+  }
+  function colorQuiz() {
+    quiz('color', 8, function (i, lv) {
+      var pool = COLORS.slice(0, lv === 1 ? 5 : lv === 2 ? 8 : 12); var n = lv === 1 ? 3 : 4;
+      var opts = K.sample(pool, n); var ans = K.pick(opts);
+      if (lv >= 3 && i % 2) return { prompt: '<span class="chip" style="background:' + ans[0] + '"></span>', say: '무슨 색일까요?', cols: n, choices: opts.map(function (o) { return { html: o[1], cls: 'text', correct: o === ans, say: o[1] }; }) };
+      return { prompt: ans[1] + '을 찾아요', say: ans[1] + '색을 찾아요', cols: n, choices: opts.map(function (o) { return { html: '<span class="chip" style="background:' + o[0] + '"></span>', correct: o === ans, say: o[1] }; }) };
+    });
+  }
+  function thingQuiz() {
+    quiz('thing', 8, function (i, lv) {
+      var t = K.pick(THINGS); var ans = COLORS.filter(function (c) { return c[1] === t[1]; })[0];
+      var wrong = K.sample(COLORS.slice(0, lv === 1 ? 6 : 12), 3, [ans]);
+      return { prompt: t[0], big: true, say: '무슨 색일까요?', cols: 4, choices: K.shuffle([ans].concat(wrong)).map(function (o) { return { html: '<span class="chip" style="background:' + o[0] + '"></span>', correct: o === ans, say: o[1] }; }) };
+    });
+  }
+  function patternQuiz() {
+    quiz('pattern', 8, function (i, lv) {
+      var items = K.sample(PAT_EMO, lv >= 3 ? 3 : 2);
+      var unit = lv === 1 ? [items[0], items[1]] : lv === 2 ? [items[0], items[0], items[1]] : lv === 3 ? [items[0], items[1], items[2]] : K.shuffle([items[0], items[1], items[1], items[2]]);
+      var seq = []; for (var k = 0; k < unit.length * 2 + 1; k++) seq.push(unit[k % unit.length]);
+      var qIdx = seq.length - 1; var ans = seq[qIdx];
+      var html = '<div class="pattern">' + seq.map(function (x, j) { return '<div class="cell' + (j === qIdx ? ' q' : '') + '">' + (j === qIdx ? '?' : x) + '</div>'; }).join('') + '</div>';
+      var choices = K.shuffle(items.concat(K.sample(PAT_EMO, 4 - items.length, items)));
+      return { prompt: html, say: '다음에 올 것은 무엇일까요?', cols: 4, choices: choices.map(function (x) { return { html: x, correct: x === ans }; }) };
+    });
+  }
+  var REAL = [['⚽', 'circle'], ['🍕', 'triangle'], ['📦', 'square'], ['🌕', 'circle'], ['📱', 'rect'], ['🍩', 'circle'], ['⛺', 'triangle'], ['🎲', 'square'], ['🥚', 'oval'], ['⭐', 'star'], ['❤️', 'heart'], ['🚪', 'rect'], ['🍉', 'triangle'], ['🕰️', 'circle'], ['🪁', 'diamond'], ['🌙', 'moon']];
+  function realQuiz() {
+    quiz('real', 8, function (i, lv) {
+      var r = K.pick(REAL); var ans = SHAPES.filter(function (s) { return s[0] === r[1]; })[0];
+      var wrong = K.sample(SHAPES.slice(0, lv === 1 ? 5 : 11), 3, [ans]);
+      return { prompt: r[0], big: true, say: '어떤 모양과 닮았을까요?', cols: 4, choices: K.shuffle([ans].concat(wrong)).map(function (o) { return { html: svg(o[0], '#6a4c93'), correct: o === ans, say: o[1] }; }) };
+    });
+  }
+  function oddQuiz() {
+    quiz('odd', 8, function (i, lv) {
+      var n = lv === 1 ? 3 : 4;
+      if (lv >= 3 && i % 2) { var sh = K.pick(SHAPES); var c1 = K.pick(COLORS), c2 = K.pick(COLORS.filter(function (c) { return c !== c1; })); var oddI = K.randInt(0, n - 1); var ch = []; for (var k = 0; k < n; k++) ch.push({ html: svg(sh[0], k === oddI ? c2[0] : c1[0]), correct: k === oddI }); return { prompt: '색깔이 다른 하나는?', say: '색깔이 다른 하나는?', cols: n, choices: ch }; }
+      var s1 = K.pick(SHAPES), s2 = K.pick(SHAPES.filter(function (s) { return s !== s1; })); var col = K.pick(COLORS)[0]; var oi = K.randInt(0, n - 1); var cs = []; for (var j = 0; j < n; j++) cs.push({ html: svg(j === oi ? s2[0] : s1[0], col), correct: j === oi });
+      return { prompt: '모양이 다른 하나는?', say: '모양이 다른 하나는?', cols: n, choices: cs };
+    });
+  }
+  home();
+})();
+</script>
+</body>
+</html>

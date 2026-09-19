@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>나의 하루</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .row-pick { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .row-pick button { font-size: 44px; background: #fff; border-radius: 18px; padding: 8px 14px; box-shadow: 0 4px 0 rgba(0,0,0,.08); }
+  .row-pick button small { display: block; font-size: 14px; font-weight: 800; color: #555; }
+  .row-pick button.sel { background: #ffca3a; outline: 4px solid #ffb703; }
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .cal div { aspect-ratio: 1; background: #fff; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; box-shadow: 0 3px 0 rgba(0,0,0,.06); }
+  .cal div .e { font-size: 26px; }
+  .cal div.head { background: none; box-shadow: none; aspect-ratio: auto; color: #777; }
+  .cal div.today { outline: 4px solid #ffca3a; }
+  .cal div.empty { background: none; box-shadow: none; }
+  .cal div.has { cursor: pointer; }
+  .cal div.has:hover { background: #fff3c4; }
+  textarea { width: 100%; font-family: inherit; font-size: 22px; border: 3px solid #ddd; border-radius: 16px; padding: 12px; min-height: 90px; resize: vertical; }
+  .stickers { display: flex; gap: 8px; flex-wrap: wrap; }
+  .stickers button { font-size: 32px; background: #f7f7f7; border-radius: 12px; padding: 4px 8px; }
+  .stickers button.sel { background: #c9f0a8; }
+</style>
+</head>
+<body data-app="diary">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '나의 하루', icon: '📔', say: '나의 하루' });
+  var main = document.getElementById('main');
+  var MOODS = [['😊', '기뻐요'], ['😄', '신나요'], ['😌', '편안해요'], ['😐', '그냥 그래요'], ['😢', '슬퍼요'], ['😡', '화나요'], ['😴', '피곤해요'], ['🤒', '아파요']];
+  var WEATHER = [['☀️', '맑음'], ['⛅', '구름'], ['🌧️', '비'], ['❄️', '눈'], ['🌬️', '바람'], ['🌈', '무지개']];
+  var DID = ['🏫', '🛝', '📚', '🎨', '🎵', '⚽', '🚗', '🍕', '🎂', '👨‍👩‍👧', '🧸', '🛁', '🦷', '🌳', '🎮', '🐶', '🛒', '🏊', '🎪', '💤'];
+  var QUESTIONS = ['오늘 가장 재미있었던 일은?', '오늘 누구와 놀았나요?', '오늘 무엇을 먹었나요?', '오늘 고마운 사람은 누구?', '내일 하고 싶은 것은?', '오늘 새로 배운 것은?', '오늘 웃었던 순간은?'];
+  function home(dateKey) {
+    dateKey = dateKey || K.todayKey(); var isToday = dateKey === K.todayKey();
+    main.innerHTML = '';
+    var d = K.data(); var entry = d.diary[dateKey] || {};
+    var mood = entry.mood, weather = entry.weather, did = (entry.did || []).slice(), text = entry.text || '';
+    var q = QUESTIONS[new Date(dateKey).getDay()];
+    var dt = new Date(dateKey + 'T00:00:00'); var days = ['일', '월', '화', '수', '목', '금', '토'];
+    var card = el('div', { class: 'kl-card' });
+    card.appendChild(el('div', { class: 'kl-prompt', text: (isToday ? '오늘 ' : '') + (dt.getMonth() + 1) + '월 ' + dt.getDate() + '일 ' + days[dt.getDay()] + '요일', style: 'font-size:28px;margin-bottom:12px' }));
+    function pickRow(list, cur, setter) { var r = el('div', { class: 'row-pick' }); list.forEach(function (m) { var b = el('button', { html: m[0] + '<small>' + m[1] + '</small>', class: cur === m[0] ? 'sel' : '' }); b.addEventListener('click', function () { setter(m[0]); r.querySelectorAll('button').forEach(function (x) { x.classList.remove('sel'); }); b.classList.add('sel'); K.sfx.pop(); K.speak(m[1]); }); r.appendChild(b); }); return r; }
+    card.appendChild(el('div', { text: '오늘 기분은?', style: 'font-weight:800;margin:10px 0 6px' }));
+    card.appendChild(pickRow(MOODS, mood, function (v) { mood = v; }));
+    card.appendChild(el('div', { text: '오늘 날씨는?', style: 'font-weight:800;margin:14px 0 6px' }));
+    card.appendChild(pickRow(WEATHER, weather, function (v) { weather = v; }));
+    card.appendChild(el('div', { text: '오늘 한 일 (여러 개 골라요)', style: 'font-weight:800;margin:14px 0 6px' }));
+    var st = el('div', { class: 'stickers' }); DID.forEach(function (s) { var b = el('button', { text: s, class: did.indexOf(s) >= 0 ? 'sel' : '' }); b.addEventListener('click', function () { var i = did.indexOf(s); if (i >= 0) did.splice(i, 1); else did.push(s); b.classList.toggle('sel'); K.sfx.pop(); }); st.appendChild(b); }); card.appendChild(st);
+    card.appendChild(el('div', { text: '💬 ' + q, style: 'font-weight:800;margin:14px 0 6px' }));
+    var ta = el('textarea', { placeholder: '부모님과 함께 써 봐요 (안 써도 괜찮아요)' }); ta.value = text; card.appendChild(ta);
+    card.appendChild(el('div', { class: 'kl-row' }, [
+      el('button', { class: 'speak-btn', text: '🔊 질문 듣기', onclick: function () { K.speak(q); } }),
+      el('button', { class: 'kl-btn green big', text: '💾 저장하기', onclick: function () { if (!mood) { K.toast('오늘 기분을 골라요 😊'); K.speak('오늘 기분을 골라요'); return; } var isNew = !d.diary[dateKey]; K.mutate(function (dd) { dd.diary[dateKey] = { mood: mood, weather: weather, did: did, text: ta.value.trim(), t: Date.now() }; }); if (isNew) { K.addStar(2); K.event('save'); } else { K.event('edit'); } K.sfx.win(); K.confetti(); K.speak('일기를 저장했어요. 잘했어요'); setTimeout(function () { home(dateKey); }, 800); } })
+    ]));
+    main.appendChild(card);
+    /* 달력 */
+    var cal = el('div', { class: 'kl-card' }); var now = new Date(dateKey + 'T00:00:00'); var y = now.getFullYear(), m = now.getMonth();
+    var head = el('div', { class: 'kl-row', style: 'margin:0 0 10px;justify-content:space-between' }, [el('button', { class: 'kl-btn', text: '◀', onclick: function () { home(K.todayKey(new Date(y, m - 1, 1))); } }), el('div', { text: y + '년 ' + (m + 1) + '월 일기 달력', style: 'font-weight:900;font-size:24px' }), el('button', { class: 'kl-btn', text: '▶', onclick: function () { home(K.todayKey(new Date(y, m + 1, 1))); } })]);
+    cal.appendChild(head);
+    var grid = el('div', { class: 'cal' }); days.forEach(function (x) { grid.appendChild(el('div', { class: 'head', text: x })); });
+    var first = new Date(y, m, 1).getDay(); var last = new Date(y, m + 1, 0).getDate();
+    for (var i = 0; i < first; i++) grid.appendChild(el('div', { class: 'empty' }));
+    for (var day = 1; day <= last; day++) (function (day) { var k = K.todayKey(new Date(y, m, day)); var e = d.diary[k]; var c = el('div', { class: (k === K.todayKey() ? 'today ' : '') + (e ? 'has' : ''), html: '<span>' + day + '</span>' + (e ? '<span class="e">' + e.mood + (e.weather || '') + '</span>' : '') }); if (e || k <= K.todayKey()) c.addEventListener('click', function () { K.sfx.click(); home(k); }); grid.appendChild(c); })(day);
+    cal.appendChild(grid);
+    var cnt = Object.keys(d.diary).length; cal.appendChild(el('div', { class: 'kl-hint', text: '지금까지 쓴 일기: ' + cnt + '편 · 연속 출석 ' + K.streak(d) + '일 🔥' }));
+    main.appendChild(cal);
+    if (isToday && !entry.mood) K.speak('오늘 기분이 어땠어요?');
+  }
+  home();
+})();
+</script>
+</body>
+</html>

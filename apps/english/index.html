@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>영어 놀이</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .abc { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+  .abc button { background: #fff; border-radius: 18px; padding: 10px 4px; box-shadow: 0 5px 0 rgba(0,0,0,.08); }
+  .abc button:hover { background: #e9f3ff; transform: scale(1.05); }
+  .abc .ch { font-size: 44px; font-weight: 900; color: #1982c4; }
+  .abc .em { font-size: 34px; }
+  .abc .wd { font-size: 16px; color: #666; }
+  .color-chip { display: inline-block; width: 90px; height: 90px; border-radius: 20px; border: 4px solid #fff; box-shadow: 0 3px 8px rgba(0,0,0,.2); }
+</style>
+</head>
+<body data-app="english">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '영어 놀이', icon: '🔤', say: 'English' });
+  var main = document.getElementById('main');
+  var ABC = [['A', 'apple', '🍎', '사과'], ['B', 'bear', '🐻', '곰'], ['C', 'cat', '🐱', '고양이'], ['D', 'dog', '🐶', '강아지'], ['E', 'egg', '🥚', '달걀'], ['F', 'fish', '🐟', '물고기'], ['G', 'grapes', '🍇', '포도'], ['H', 'hat', '🎩', '모자'], ['I', 'ice cream', '🍦', '아이스크림'], ['J', 'juice', '🧃', '주스'], ['K', 'kite', '🪁', '연'], ['L', 'lion', '🦁', '사자'], ['M', 'moon', '🌙', '달'], ['N', 'nose', '👃', '코'], ['O', 'orange', '🍊', '오렌지'], ['P', 'pig', '🐷', '돼지'], ['Q', 'queen', '👸', '여왕'], ['R', 'rabbit', '🐰', '토끼'], ['S', 'sun', '☀️', '해'], ['T', 'tiger', '🐯', '호랑이'], ['U', 'umbrella', '☂️', '우산'], ['V', 'violin', '🎻', '바이올린'], ['W', 'water', '💧', '물'], ['X', 'x-ray', '🩻', '엑스레이'], ['Y', 'yellow', '💛', '노랑'], ['Z', 'zebra', '🦓', '얼룩말']];
+  var WORDS = ABC.map(function (a) { return [a[1], a[2], a[3]]; }).concat([['banana', '🍌', '바나나'], ['car', '🚗', '자동차'], ['book', '📖', '책'], ['ball', '⚽', '공'], ['house', '🏠', '집'], ['tree', '🌳', '나무'], ['flower', '🌸', '꽃'], ['star', '⭐', '별'], ['bird', '🐦', '새'], ['cow', '🐮', '소'], ['duck', '🦆', '오리'], ['frog', '🐸', '개구리'], ['milk', '🥛', '우유'], ['bread', '🍞', '빵'], ['cake', '🎂', '케이크'], ['bus', '🚌', '버스'], ['train', '🚂', '기차'], ['airplane', '✈️', '비행기'], ['hand', '✋', '손'], ['eye', '👁️', '눈'], ['ear', '👂', '귀'], ['mouth', '👄', '입'], ['heart', '❤️', '하트'], ['rain', '🌧️', '비'], ['snow', '❄️', '눈'], ['monkey', '🐵', '원숭이'], ['elephant', '🐘', '코끼리'], ['strawberry', '🍓', '딸기'], ['pizza', '🍕', '피자'], ['robot', '🤖', '로봇']]);
+  var COLORS = [['red', '#e63946', '빨강'], ['blue', '#1982c4', '파랑'], ['yellow', '#ffca3a', '노랑'], ['green', '#4caf50', '초록'], ['orange', '#ff8c42', '주황'], ['purple', '#8e44ad', '보라'], ['pink', '#ff8fa3', '분홍'], ['black', '#222', '검정'], ['white', '#fafafa', '하양'], ['brown', '#8d5524', '갈색']];
+  var NUMS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+  var ANIMAL_EMO = { cat: '🐱', dog: '🐶', bear: '🐻', lion: '🦁', pig: '🐷', rabbit: '🐰', tiger: '🐯', zebra: '🦓', fish: '🐟', cow: '🐮', duck: '🦆', frog: '🐸', bird: '🐦', monkey: '🐵', elephant: '🐘' };
+  var GREET = [['Hello!', '안녕!', '👋'], ['Good morning!', '좋은 아침!', '🌅'], ['Good night!', '잘 자!', '🌙'], ['Thank you!', '고마워!', '🙏'], ['I\'m sorry.', '미안해.', '😢'], ['I love you!', '사랑해!', '❤️'], ['Let\'s play!', '같이 놀자!', '🎈'], ['I\'m hungry.', '배고파.', '🍽️'], ['Good job!', '잘했어!', '👍'], ['See you!', '또 만나!', '🚪']];
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '🅰️', label: 'ABC 배우기', color: '#e9f3ff', run: learnABC },
+      { icon: '👂', label: '알파벳 듣고 찾기', mode: 'abc', color: '#fff3c4', run: abcQuiz },
+      { icon: '🍎', label: '그림 낱말', mode: 'word', color: '#ffe9ee', run: wordQuiz },
+      { icon: '🔤', label: '첫 글자 찾기', mode: 'first', color: '#e3f7cf', run: firstLetter },
+      { icon: '🎨', label: '색깔 영어', mode: 'color', color: '#ffe4a1', run: colorQuiz },
+      { icon: '🔢', label: '숫자 영어', mode: 'num', color: '#ece6f5', run: numQuiz },
+      { icon: '🔡', label: '대문자·소문자', mode: 'case', color: '#d0f4de', run: caseQuiz },
+      { icon: '👋', label: '인사말', mode: 'greet', color: '#ffd9e8', run: greetQuiz }
+    ]);
+  }
+  function learnABC() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    main.appendChild(el('div', { class: 'kl-hint', text: '글자를 누르면 영어로 읽어줘요' }));
+    var g = el('div', { class: 'abc' });
+    ABC.forEach(function (a) {
+      var b = el('button', {}, [el('div', { class: 'ch', text: a[0] + a[0].toLowerCase() }), el('div', { class: 'em', text: a[2] }), el('div', { class: 'wd', text: a[1] })]);
+      b.addEventListener('click', function () { K.sfx.pop(); K.speakEn(a[0] + '. ' + a[0] + ' is for ' + a[1] + '.'); K.event('learn'); });
+      g.appendChild(b);
+    });
+    main.appendChild(g);
+  }
+  function quiz(mode, total, make) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: total, make: make, onFinish: home }); }
+  function abcQuiz() {
+    quiz('abc', 8, function (i, lv) {
+      var pool = ABC.slice(0, lv === 1 ? 8 : lv === 2 ? 16 : 26); var n = lv === 1 ? 3 : 4;
+      var opts = K.sample(pool, n); var ans = K.pick(opts);
+      var lower = lv >= 4;
+      return { prompt: '🔊 어떤 글자일까요?', say: ans[0], sayLang: 'en-US', cols: n, choices: K.shuffle(opts).map(function (o) { return { html: lower ? o[0].toLowerCase() : o[0], correct: o === ans, say: o[0], sayLang: 'en-US' }; }) };
+    });
+  }
+  function wordQuiz() {
+    quiz('word', 8, function (i, lv) {
+      var n = lv === 1 ? 2 : lv === 2 ? 3 : 4;
+      var opts = K.sample(WORDS, n); var ans = K.pick(opts);
+      if (lv >= 4 && i % 2) return { prompt: ans[1], big: true, say: 'What is this?', sayLang: 'en-US', cols: n, choices: opts.map(function (o) { return { html: o[0], correct: o === ans, cls: 'text', say: o[0], sayLang: 'en-US' }; }) };
+      return { prompt: ans[0], sub: lv <= 2 ? ans[2] : '', say: ans[0], sayLang: 'en-US', cols: n, choices: opts.map(function (o) { return { html: o[1], correct: o === ans, say: o[0], sayLang: 'en-US' }; }) };
+    });
+  }
+  function firstLetter() {
+    quiz('first', 8, function (i, lv) {
+      var w = K.pick(WORDS); var first = w[0][0].toUpperCase();
+      var letters = ABC.map(function (a) { return a[0]; });
+      var wrong = K.sample(letters, lv === 1 ? 2 : 3, [first]);
+      return { prompt: w[1] + '<div style="font-size:30px;color:#777">_' + w[0].slice(1) + '</div>', big: true, say: w[0], sayLang: 'en-US', cols: wrong.length + 1, choices: K.shuffle([first].concat(wrong)).map(function (x) { return { html: lv >= 3 ? x.toLowerCase() : x, correct: x === first, say: x, sayLang: 'en-US' }; }) };
+    });
+  }
+  function colorQuiz() {
+    quiz('color', 8, function (i, lv) {
+      var n = lv === 1 ? 3 : 4; var opts = K.sample(COLORS, n); var ans = K.pick(opts);
+      if (lv >= 3 && i % 2) return { prompt: '<span class="color-chip" style="background:' + ans[1] + '"></span>', say: 'What color is this?', sayLang: 'en-US', cols: n, choices: opts.map(function (o) { return { html: o[0], correct: o === ans, cls: 'text', say: o[0], sayLang: 'en-US' }; }) };
+      return { prompt: ans[0], sub: lv === 1 ? ans[2] : '', say: ans[0], sayLang: 'en-US', cols: n, choices: opts.map(function (o) { return { html: '<span class="color-chip" style="background:' + o[1] + '"></span>', correct: o === ans, say: o[0], sayLang: 'en-US' }; }) };
+    });
+  }
+  function numQuiz() {
+    quiz('num', 8, function (i, lv) {
+      var max = lv === 1 ? 5 : 10; var ans = K.randInt(1, max);
+      var wrong = []; while (wrong.length < 3) { var w = K.randInt(1, max); if (w !== ans && wrong.indexOf(w) < 0) wrong.push(w); }
+      var emo = K.pick(['🍎', '⭐', '🐥', '🎈', '🍪']);
+      if (lv >= 3) return { prompt: NUMS[ans], say: NUMS[ans], sayLang: 'en-US', cols: 4, choices: K.shuffle([ans].concat(wrong)).map(function (x) { return { html: lv >= 4 ? emo.repeat(x) : String(x), correct: x === ans, cls: lv >= 4 ? 'small' : '', say: NUMS[x], sayLang: 'en-US' }; }) };
+      return { prompt: emo.repeat(ans), say: 'How many?', sayLang: 'en-US', cols: 4, choices: K.shuffle([ans].concat(wrong)).map(function (x) { return { html: lv === 1 ? x + '<div style="font-size:18px">' + NUMS[x] + '</div>' : NUMS[x], cls: lv === 1 ? '' : 'text', correct: x === ans, say: NUMS[x], sayLang: 'en-US' }; }) };
+    });
+  }
+  function caseQuiz() {
+    quiz('case', 8, function (i, lv) {
+      var a = K.pick(ABC); var wrong = K.sample(ABC, 3, [a]);
+      var toUpper = i % 2 === 0;
+      return { prompt: toUpper ? a[0].toLowerCase() : a[0], big: true, sub: toUpper ? '짝꿍 대문자를 찾아요' : '짝꿍 소문자를 찾아요', say: a[0], sayLang: 'en-US', cols: 4, choices: K.shuffle([a].concat(wrong)).map(function (x) { return { html: toUpper ? x[0] : x[0].toLowerCase(), correct: x === a, say: x[0], sayLang: 'en-US' }; }) };
+    });
+  }
+  function greetQuiz() {
+    quiz('greet', 8, function (i, lv) {
+      var opts = K.sample(GREET, lv === 1 ? 2 : 3); var ans = K.pick(opts);
+      return { prompt: ans[2] + ' ' + ans[0], say: ans[0], sayLang: 'en-US', cols: opts.length, choices: opts.map(function (o) { return { html: o[1], cls: 'text', correct: o === ans, say: o[0], sayLang: 'en-US' }; }) };
+    });
+  }
+  home();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>생활 습관</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .seq-target { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+  .seq-target .slot { width: 120px; height: 120px; border-radius: 20px; border: 4px dashed #bbb; background: #fafafa; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 50px; position: relative; }
+  .seq-target .slot .n { position: absolute; top: 4px; left: 10px; font-size: 16px; color: #999; font-weight: 800; }
+  .seq-target .slot.filled { border-style: solid; border-color: #8ac926; background: #f0fbe5; }
+  .seq-pool { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .seq-pool button { width: 130px; height: 130px; border-radius: 22px; background: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.08); font-size: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .seq-pool button small { font-size: 15px; font-weight: 800; color: #555; }
+  .seq-pool button.used { opacity: .2; pointer-events: none; }
+  .seq-pool button.wrong { animation: shake .4s; background: #ffc9c9; }
+  .room { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+  .bin { background: #fff; border-radius: 20px; padding: 12px; min-height: 130px; text-align: center; box-shadow: 0 5px 0 rgba(0,0,0,.08); font-weight: 800; }
+  .bin .items { font-size: 34px; min-height: 44px; }
+  .bin.target { outline: 5px solid #ffca3a; }
+  .checklist { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .chk { background: #fff; border-radius: 20px; padding: 16px; display: flex; align-items: center; gap: 12px; font-weight: 800; box-shadow: 0 5px 0 rgba(0,0,0,.08); font-size: 20px; }
+  .chk .e { font-size: 40px; }
+  .chk.done { background: #e3f7cf; }
+</style>
+</head>
+<body data-app="daily">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '생활 습관', icon: '🪥', say: '생활 습관' });
+  var main = document.getElementById('main');
+  var SEQS = [
+    { title: '이 닦기 순서', steps: [['🪥', '칫솔에 치약'], ['😬', '이 닦기'], ['💧', '물로 헹구기'], ['😁', '반짝반짝']] },
+    { title: '손 씻기 순서', steps: [['🚰', '물 틀기'], ['🧼', '비누칠'], ['🫧', '거품 문지르기'], ['💧', '헹구기'], ['🧻', '수건으로 닦기']] },
+    { title: '하루 일과', steps: [['🌅', '일어나기'], ['🥣', '아침 먹기'], ['🏫', '유치원'], ['🍽️', '저녁 먹기'], ['🛏️', '잠자기']] },
+    { title: '옷 입기', steps: [['🩲', '속옷'], ['👕', '윗옷'], ['👖', '바지'], ['🧦', '양말'], ['👟', '신발']] },
+    { title: '씨앗 키우기', steps: [['🌰', '씨앗 심기'], ['💧', '물 주기'], ['🌱', '싹이 나요'], ['🌷', '꽃이 펴요']] },
+    { title: '밥 먹기', steps: [['🧼', '손 씻기'], ['🪑', '자리에 앉기'], ['🍚', '맛있게 먹기'], ['🧽', '그릇 정리']] },
+    { title: '외출 준비', steps: [['🧥', '옷 입기'], ['🎒', '가방 메기'], ['👟', '신발 신기'], ['🚪', '문 열고 나가기']] },
+    { title: '잠자기 전', steps: [['🛁', '목욕하기'], ['🪥', '이 닦기'], ['📖', '책 읽기'], ['😴', '잘 자요']] }
+  ];
+  var CLOTHES = [['☀️ 더운 여름날', [['👕', '반팔', true], ['🩳', '반바지', true], ['🧢', '모자', true], ['🧥', '두꺼운 외투', false], ['🧤', '장갑', false], ['🧣', '목도리', false]]], ['❄️ 추운 겨울날', [['🧥', '두꺼운 외투', true], ['🧤', '장갑', true], ['🧣', '목도리', true], ['🩳', '반바지', false], ['🩴', '슬리퍼', false], ['👙', '수영복', false]]], ['🌧️ 비 오는 날', [['☂️', '우산', true], ['🥾', '장화', true], ['🧥', '비옷', true], ['🕶️', '선글라스', false], ['🩴', '슬리퍼', false], ['🪁', '연', false]]], ['🏊 수영장 가는 날', [['👙', '수영복', true], ['🥽', '물안경', true], ['🩴', '슬리퍼', true], ['🧥', '외투', false], ['🧤', '장갑', false], ['👞', '구두', false]]]];
+  var TIDY = { bins: [['🧸 장난감 상자', 'toy'], ['📚 책꽂이', 'book'], ['👕 옷장', 'cloth'], ['🍽️ 부엌', 'kitchen']], items: [['🧸', 'toy'], ['🚗', 'toy'], ['🪀', 'toy'], ['🧩', 'toy'], ['📖', 'book'], ['📕', 'book'], ['📗', 'book'], ['👕', 'cloth'], ['🧦', 'cloth'], ['🧢', 'cloth'], ['🥄', 'kitchen'], ['🍽️', 'kitchen'], ['🥛', 'kitchen']] };
+  var MANNERS = [['친구가 장난감을 빌려줬어요', '🙏 고마워', '😡 싫어'], ['실수로 친구를 밀었어요', '😢 미안해', '🤷 몰라'], ['아침에 선생님을 만났어요', '👋 안녕하세요', '🙈 숨어요'], ['밥을 다 먹었어요', '🙏 잘 먹었습니다', '🏃 그냥 가요'], ['할머니가 선물을 주셨어요', '🙏 감사합니다', '😐 아무 말 안 해요'], ['친구가 울고 있어요', '🤗 괜찮아? 물어봐요', '😆 놀려요'], ['장난감을 다 가지고 놀았어요', '📦 제자리에 정리해요', '🛋️ 그냥 둬요'], ['기침이 나와요', '🤧 팔로 입 가리기', '😮 그냥 해요'], ['친구가 놀자고 해요', '😊 좋아, 같이 놀자', '🙄 무시해요'], ['화장실을 다녀왔어요', '🧼 손을 씻어요', '🍪 바로 과자 먹기']];
+  var HEALTH = [['🥦', '채소', true], ['🍎', '과일', true], ['🥛', '우유', true], ['🍬', '사탕 많이', false], ['🥤', '탄산음료 많이', false], ['🍟', '감자튀김 매일', false], ['🐟', '생선', true], ['🥚', '달걀', true], ['🍩', '도넛 매일', false], ['💧', '물', true]];
+  var CHECK = [['🪥', '이 닦았어요'], ['🧼', '손 씻었어요'], ['🥣', '아침 먹었어요'], ['🧸', '장난감 정리했어요'], ['📖', '책 읽었어요'], ['🏃', '밖에서 놀았어요'], ['🥦', '채소 먹었어요'], ['😴', '일찍 잤어요']];
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '✅', label: '오늘의 습관 체크', color: '#e3f7cf', run: checklist },
+      { icon: '🔢', label: '순서 맞추기', mode: 'seq', color: '#fff3c4', run: seqGame },
+      { icon: '🧥', label: '무엇을 입을까?', mode: 'cloth', color: '#e9f3ff', run: clothQuiz },
+      { icon: '🧹', label: '정리 정돈', mode: 'tidy', color: '#ffe4a1', run: tidyGame },
+      { icon: '🙏', label: '바른 말 바른 행동', mode: 'manner', color: '#ffe9ee', run: mannerQuiz },
+      { icon: '🥦', label: '몸에 좋은 음식', mode: 'health', color: '#d0f4de', run: healthQuiz }
+    ]);
+  }
+  function quiz(mode, total, make) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: total, make: make, onFinish: home }); }
+
+  function checklist() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var d = K.data(); var day = d.days[K.todayKey()] || {}; var done = (day.habits || []).slice();
+    main.appendChild(el('div', { class: 'kl-prompt', text: '오늘 한 일을 눌러요! (하나에 ⭐1)' }));
+    var g = el('div', { class: 'checklist' });
+    CHECK.forEach(function (c) {
+      var b = el('button', { class: 'chk' + (done.indexOf(c[1]) >= 0 ? ' done' : '') }, [el('span', { class: 'e', text: c[0] }), el('span', { text: c[1] }), el('span', { text: done.indexOf(c[1]) >= 0 ? '✔' : '', style: 'margin-left:auto;font-size:26px' })]);
+      b.addEventListener('click', function () {
+        if (done.indexOf(c[1]) >= 0) return;
+        done.push(c[1]); K.mutate(function (dd) { var dy = K.dayRec(dd); dy.habits = dy.habits || []; dy.habits.push(c[1]); });
+        b.classList.add('done'); b.lastChild.textContent = '✔'; K.sfx.correct(); K.addStar(1); K.event('habit'); K.speak(c[1] + '! 잘했어요');
+        if (done.length === CHECK.length) { K.confetti(); K.sfx.win(); K.speak('와, 오늘 습관을 모두 지켰어요!'); }
+      });
+      g.appendChild(b);
+    });
+    main.appendChild(g);
+    var hist = el('div', { class: 'kl-card', style: 'margin-top:18px' }); var keys = Object.keys(d.days).sort().slice(-7);
+    hist.appendChild(el('div', { text: '📅 지난 7일 습관 기록', style: 'font-weight:800;margin-bottom:8px' }));
+    hist.appendChild(el('div', { html: keys.map(function (k) { return '<div style="font-size:18px">' + k.slice(5) + ' : ' + '✔'.repeat((d.days[k].habits || []).length) + ' <small style="color:#999">' + (d.days[k].habits || []).length + '/' + CHECK.length + '</small></div>'; }).join('') || '<div style="color:#999">아직 기록이 없어요</div>' }));
+    main.appendChild(hist);
+    K.speak('오늘 한 일을 눌러요');
+  }
+  function seqGame() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var lv = K.getLevel('seq'); var rounds = K.shuffle(SEQS).slice(0, 4); var r = 0, score = 0;
+    var box = el('div', { class: 'kl-stage' }); main.appendChild(box);
+    function next() {
+      if (r >= rounds.length) { box.innerHTML = ''; if (score >= 3 && lv < 5) K.setLevel('seq', lv + 1); box.appendChild(el('div', { class: 'kl-result' }, [el('div', { class: 'kl-result-emoji', text: '🎉' }), el('div', { class: 'kl-result-title', text: '순서를 잘 알아요!' }), el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '🔁 한 번 더', onclick: seqGame }), el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: home })])])); K.sfx.win(); K.confetti(); return; }
+      var s = rounds[r]; var steps = lv <= 2 ? s.steps.slice(0, Math.min(s.steps.length, lv === 1 ? 3 : 4)) : s.steps; var pos = 0, mistakes = 0;
+      box.innerHTML = ''; box.appendChild(el('div', { class: 'kl-prompt', text: s.title + ' - 순서대로 눌러요' }));
+      var target = el('div', { class: 'seq-target' }); steps.forEach(function (_, i) { target.appendChild(el('div', { class: 'slot' }, el('span', { class: 'n', text: String(i + 1) }))); });
+      var pool = el('div', { class: 'seq-pool' });
+      K.shuffle(steps).forEach(function (st) {
+        var b = el('button', {}, [el('span', { text: st[0] }), el('small', { text: st[1] })]);
+        b.addEventListener('click', function () {
+          if (st === steps[pos]) { b.classList.add('used'); var slot = target.children[pos]; slot.classList.add('filled'); slot.innerHTML = st[0] + '<small style="font-size:14px">' + st[1] + '</small>'; pos++; K.sfx.pop(); K.speak(st[1]); if (pos === steps.length) { if (mistakes === 0) score++; K.addStar(1); K.event('correct'); K.sfx.correct(); r++; setTimeout(next, 1200); } }
+          else { mistakes++; b.classList.add('wrong'); K.sfx.wrong(); setTimeout(function () { b.classList.remove('wrong'); }, 500); }
+        });
+        pool.appendChild(b);
+      });
+      box.appendChild(target); box.appendChild(pool); K.speak(s.title + '. 첫 번째로 할 일은?');
+    }
+    next();
+  }
+  function clothQuiz() {
+    quiz('cloth', 8, function (i, lv) {
+      var c = K.pick(CLOTHES); var good = c[1].filter(function (x) { return x[2]; }), bad = c[1].filter(function (x) { return !x[2]; });
+      var ans = K.pick(good); var opts = K.shuffle([ans].concat(K.sample(bad, lv === 1 ? 2 : 3)));
+      return { prompt: c[0], say: c[0].replace(/^\S+\s/, '') + '. 무엇을 입을까요?', cols: opts.length, choices: opts.map(function (o) { return { html: o[0] + '<div style="font-size:18px">' + o[1] + '</div>', correct: o === ans, say: o[1] }; }) };
+    });
+  }
+  function tidyGame() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var lv = K.getLevel('tidy'); var bins = TIDY.bins.slice(0, lv === 1 ? 2 : lv === 2 ? 3 : 4);
+    var items = K.shuffle(TIDY.items.filter(function (it) { return bins.some(function (b) { return b[1] === it[1]; }); })).slice(0, lv === 1 ? 5 : 8);
+    var idx = 0, mistakes = 0;
+    var box = el('div', { class: 'kl-stage' }); main.appendChild(box);
+    var prompt = el('div', { class: 'kl-prompt' }); var cur = el('div', { style: 'text-align:center;font-size:90px;min-height:110px' });
+    var room = el('div', { class: 'room', style: 'grid-template-columns:repeat(' + bins.length + ',1fr)' });
+    var binEls = {};
+    bins.forEach(function (b) { var e = el('div', { class: 'bin' }, [el('div', { text: b[0] }), el('div', { class: 'items' })]); e.addEventListener('click', function () { drop(b[1], e); }); binEls[b[1]] = e; room.appendChild(e); });
+    box.appendChild(prompt); box.appendChild(cur); box.appendChild(room);
+    function show() { if (idx >= items.length) { box.innerHTML = ''; if (mistakes <= 1 && lv < 5) K.setLevel('tidy', lv + 1); box.appendChild(el('div', { class: 'kl-result' }, [el('div', { class: 'kl-result-emoji', text: '✨' }), el('div', { class: 'kl-result-title', text: '방이 깨끗해졌어요!' }), el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '🔁 한 번 더', onclick: tidyGame }), el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: home })])])); K.sfx.win(); K.confetti(); K.event('win'); return; } prompt.textContent = '이건 어디에 넣을까요? (' + (idx + 1) + '/' + items.length + ')'; cur.textContent = items[idx][0]; }
+    function drop(kind, e) { if (idx >= items.length) return; if (items[idx][1] === kind) { e.querySelector('.items').textContent += items[idx][0]; K.sfx.correct(); K.addStar(1); K.event('correct'); idx++; show(); } else { mistakes++; e.classList.add('target'); K.sfx.wrong(); setTimeout(function () { e.classList.remove('target'); }, 400); } }
+    show(); K.speak('물건을 알맞은 곳에 정리해요');
+  }
+  function mannerQuiz() {
+    quiz('manner', 8, function (i, lv) {
+      var m = K.pick(MANNERS); var opts = K.shuffle([[m[1], true], [m[2], false]]);
+      return { prompt: m[0], say: m[0] + '. 어떻게 할까요?', cols: 2, choices: opts.map(function (o) { return { html: o[0], cls: 'text', correct: o[1], say: o[0].replace(/^\S+\s/, '') }; }) };
+    });
+  }
+  function healthQuiz() {
+    quiz('health', 8, function (i, lv) {
+      var good = HEALTH.filter(function (x) { return x[2]; }), bad = HEALTH.filter(function (x) { return !x[2]; });
+      var pickGood = i % 2 === 0; var ans = K.pick(pickGood ? good : bad); var opts = K.shuffle([ans].concat(K.sample(pickGood ? bad : good, 3)));
+      return { prompt: pickGood ? '💪 몸에 좋은 것은?' : '⚠️ 너무 많이 먹으면 안 되는 것은?', say: pickGood ? '몸에 좋은 것은 무엇일까요?' : '너무 많이 먹으면 안 되는 것은?', cols: 4, choices: opts.map(function (o) { return { html: o[0] + '<div style="font-size:16px">' + o[1] + '</div>', correct: o === ans, say: o[1] }; }) };
+    });
+  }
+  home();
+})();
+</script>
+</body>
+</html>

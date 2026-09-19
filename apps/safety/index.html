@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>안전 지킴이</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .light { display: inline-flex; flex-direction: column; gap: 10px; background: #333; padding: 14px; border-radius: 30px; }
+  .light i { width: 70px; height: 70px; border-radius: 50%; background: #555; display: block; }
+  .light i.r.on { background: #ff2d2d; box-shadow: 0 0 30px #ff2d2d; }
+  .light i.y.on { background: #ffd400; box-shadow: 0 0 30px #ffd400; }
+  .light i.g.on { background: #22d13c; box-shadow: 0 0 30px #22d13c; }
+  .keypad { display: grid; grid-template-columns: repeat(3, 90px); gap: 10px; justify-content: center; }
+  .keypad button { height: 80px; font-size: 36px; border-radius: 18px; background: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.1); font-weight: 900; }
+  .dial { font-size: 60px; font-weight: 900; letter-spacing: 8px; text-align: center; min-height: 80px; color: #d6336c; }
+  .road { position: relative; height: 220px; background: #888; border-radius: 16px; overflow: hidden; margin: 10px 0; }
+  .road .zebra { position: absolute; left: 45%; top: 0; bottom: 0; width: 10%; background: repeating-linear-gradient(#fff 0 20px, #888 20px 40px); }
+  .road .car { position: absolute; top: 80px; font-size: 60px; transition: left 2.5s linear; }
+  .road .kid { position: absolute; left: 47%; bottom: -10px; font-size: 60px; transition: bottom 2s linear; }
+</style>
+</head>
+<body data-app="safety">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '안전 지킴이', icon: '🚦', say: '안전 지킴이' });
+  var main = document.getElementById('main');
+  var DANGER = [['🔪', '칼', false], ['🧸', '인형', true], ['🔥', '불', false], ['📖', '책', true], ['💊', '약 (혼자 먹기)', false], ['🍎', '사과', true], ['🔌', '콘센트에 손', false], ['⚽', '공', true], ['🧴', '세제 마시기', false], ['🖍️', '크레파스', true], ['🪟', '창문에 매달리기', false], ['🧩', '퍼즐', true], ['🚗 도로', '도로에서 뛰기', false], ['🎈', '풍선', true], ['🔥', '뜨거운 냄비 만지기', false], ['🚲 헬멧', '헬멧 쓰고 자전거', true]];
+  var SIGNS = [['🚦 빨간불', '⛔ 멈춰요', '🏃 건너요'], ['🚦 초록불', '👀 좌우 살피고 건너요', '⛔ 멈춰요'], ['🚦 초록불이 깜빡여요', '⏳ 다음 초록불을 기다려요', '🏃 빨리 뛰어요'], ['🚗 차가 와요', '✋ 멈추고 기다려요', '🏃 빨리 건너요'], ['🚸 횡단보도', '🙋 손을 들고 건너요', '🚫 아무 데서나 건너요'], ['🚌 버스에서', '🪑 자리에 앉아요', '🏃 뛰어다녀요'], ['🚗 차 안에서', '🔒 안전벨트 매요', '🪟 창문 밖으로 손 내밀기'], ['🛗 엘리베이터', '🧍 조용히 서 있어요', '🦘 뛰어요']];
+  var STRANGER = [['모르는 사람이 과자를 줘요', '🚫 싫어요, 안 받아요', '🍬 받아요'], ['모르는 사람이 같이 가자고 해요', '🏃 "싫어요!" 하고 어른에게 가요', '🚶 따라가요'], ['길을 잃었어요', '👮 경찰 아저씨나 가게 어른에게 말해요', '🚶 혼자 계속 걸어요'], ['누가 내 몸을 만지려고 해요', '🛑 "안 돼요!" 크게 말하고 도망가요', '🤫 가만히 있어요'], ['엄마와 마트에서 헤어졌어요', '🧍 그 자리에서 기다리거나 직원에게 말해요', '🚪 밖으로 나가요'], ['모르는 사람이 이름을 물어봐요', '🤐 대답하지 않고 어른에게 가요', '💬 다 말해줘요'], ['집에 혼자 있는데 벨이 울려요', '🚫 문을 열지 않아요', '🚪 문을 열어요'], ['친구가 위험한 곳에 가자고 해요', '🙅 "안 돼" 하고 어른에게 말해요', '🚶 같이 가요']];
+  var CALL = [['🔥 불이 났어요', '119'], ['🤕 크게 다쳤어요', '119'], ['👮 나쁜 사람을 봤어요', '112'], ['🚑 아픈 사람이 있어요', '119'], ['🔓 도둑이 들었어요', '112']];
+  var PLACES = [['🏊 물놀이', ['🦺 구명조끼 입기', '🏃 물가에서 뛰기']], ['🔥 불이 났을 때', ['🧎 낮게 엎드려 코 막고 나가기', '🛗 엘리베이터 타기']], ['🌍 지진이 났을 때', ['🪑 책상 밑으로 들어가기', '🪟 창문 옆에 서기']], ['🚲 자전거 탈 때', ['⛑️ 헬멧 쓰기', '📱 폰 보면서 타기']], ['🍽️ 밥 먹을 때', ['🪑 앉아서 천천히 먹기', '🏃 뛰면서 먹기']], ['🛝 놀이터', ['🙌 차례 지키기', '🫸 친구 밀기']], ['⚡ 천둥 번개', ['🏠 집 안에 있기', '🌳 나무 밑에 서기']], ['🐕 모르는 개', ['🧍 가만히 있기', '🏃 뛰어서 도망가기']]];
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '🚦', label: '신호등 건너기', mode: 'light', color: '#e3f7cf', run: lightGame },
+      { icon: '⚠️', label: '위험할까?', mode: 'danger', color: '#ffe9ee', run: dangerQuiz },
+      { icon: '🚸', label: '길에서는?', mode: 'sign', color: '#fff3c4', run: signQuiz },
+      { icon: '🙅', label: '싫어요! 안 돼요!', mode: 'stranger', color: '#ffe4a1', run: strangerQuiz },
+      { icon: '📞', label: '119 · 112', mode: 'call', color: '#e9f3ff', run: callGame },
+      { icon: '🛟', label: '이럴 땐 어떻게?', mode: 'place', color: '#d0f4de', run: placeQuiz }
+    ]);
+  }
+  function quiz(mode, total, make) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: total, make: make, onFinish: home }); }
+  function lightGame() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var box = el('div', { class: 'kl-stage kl-center' }); main.appendChild(box);
+    var round = 0, score = 0, total = 5, state = 'red', busy = false;
+    var light = el('div', { class: 'light' }, [el('i', { class: 'r on' }), el('i', { class: 'y' }), el('i', { class: 'g' })]);
+    var road = el('div', { class: 'road' }, [el('div', { class: 'zebra' }), el('div', { class: 'car', text: '🚗', style: 'left:-80px' }), el('div', { class: 'kid', text: '🧒' })]);
+    var msg = el('div', { class: 'kl-prompt', text: '초록불일 때만 건너요!' });
+    var btn = el('button', { class: 'kl-btn green big', text: '🚶 건너기' });
+    box.appendChild(msg); box.appendChild(el('div', { style: 'display:flex;gap:20px;align-items:center;justify-content:center' }, [light, el('div', { style: 'flex:1;max-width:600px' }, road)])); box.appendChild(btn);
+    function setLight(s) { state = s; light.querySelectorAll('i').forEach(function (i) { i.classList.remove('on'); }); light.querySelector('.' + s[0]).classList.add('on'); if (s === 'red') { var car = road.querySelector('.car'); car.style.transition = 'none'; car.style.left = '-80px'; setTimeout(function () { car.style.transition = 'left 2.5s linear'; car.style.left = '110%'; }, 50); } }
+    var timer = setInterval(function () { if (busy) return; setLight(K.pick(['red', 'red', 'green', 'green', 'yellow'])); K.speak(state === 'red' ? '빨간불' : state === 'green' ? '초록불' : '노란불'); }, 3000);
+    btn.addEventListener('click', function () {
+      if (busy) return; busy = true; var kid = road.querySelector('.kid');
+      if (state === 'green') { kid.style.bottom = '160px'; K.sfx.correct(); K.addStar(1); K.event('correct'); score++; msg.textContent = '잘 건넜어요! 👏'; K.speak('잘 건넜어요'); }
+      else { K.sfx.wrong(); msg.textContent = state === 'red' ? '빨간불! 멈춰야 해요 ⛔' : '노란불은 기다려요 ⏳'; K.speak(msg.textContent); }
+      round++;
+      setTimeout(function () { kid.style.transition = 'none'; kid.style.bottom = '-10px'; setTimeout(function () { kid.style.transition = 'bottom 2s linear'; }, 50); busy = false; msg.textContent = '초록불일 때만 건너요! (' + round + '/' + total + ')'; if (round >= total) { clearInterval(timer); box.innerHTML = ''; var lv = K.getLevel('light'); if (score >= 4 && lv < 5) K.setLevel('light', lv + 1); box.appendChild(el('div', { class: 'kl-result' }, [el('div', { class: 'kl-result-emoji', text: score >= 4 ? '🏆' : '🙂' }), el('div', { class: 'kl-result-title', text: score + ' / ' + total + ' 안전하게 건넜어요' }), el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '🔁 한 번 더', onclick: lightGame }), el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: home })])])); if (score >= 4) { K.sfx.win(); K.confetti(); } } }, 2200);
+    });
+    K.speak('초록불일 때만 건너기 버튼을 눌러요');
+    var obs = new MutationObserver(function () { if (!document.body.contains(box)) { clearInterval(timer); obs.disconnect(); } }); obs.observe(main, { childList: true });
+  }
+  function dangerQuiz() {
+    quiz('danger', 8, function (i, lv) {
+      var d = K.pick(DANGER);
+      if (lv >= 3 && i % 2) { var bad = K.pick(DANGER.filter(function (x) { return !x[2]; })); var opts = K.shuffle([bad].concat(K.sample(DANGER.filter(function (x) { return x[2]; }), 3))); return { prompt: '위험한 것은?', say: '위험한 것은 무엇일까요?', cols: 4, choices: opts.map(function (o) { return { html: o[0].split(' ')[0] + '<div style="font-size:16px">' + o[1] + '</div>', correct: o === bad, say: o[1] }; }) }; }
+      return { prompt: d[0].split(' ')[0] + ' ' + d[1], say: d[1] + '. 안전할까요, 위험할까요?', cols: 2, choices: [{ html: '✅ 안전해요', cls: 'text', correct: d[2] }, { html: '⚠️ 위험해요', cls: 'text', correct: !d[2] }] };
+    });
+  }
+  function signQuiz() {
+    quiz('sign', 8, function (i, lv) { var s = K.pick(SIGNS); return { prompt: s[0], say: s[0].replace(/^\S+\s/, '') + '. 어떻게 할까요?', cols: 2, choices: K.shuffle([[s[1], true], [s[2], false]]).map(function (o) { return { html: o[0], cls: 'text', correct: o[1], say: o[0].replace(/^\S+\s/, '') }; }) }; });
+  }
+  function strangerQuiz() {
+    quiz('stranger', 8, function (i, lv) { var s = K.pick(STRANGER); return { prompt: s[0], say: s[0] + '. 어떻게 할까요?', cols: 1, choices: K.shuffle([[s[1], true], [s[2], false]]).map(function (o) { return { html: o[0], cls: 'text', correct: o[1], say: o[0].replace(/^\S+\s/, '') }; }) }; });
+  }
+  function callGame() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var box = el('div', { class: 'kl-stage kl-center' }); main.appendChild(box);
+    var round = 0, score = 0;
+    function next() {
+      if (round >= 5) { box.innerHTML = ''; var lv = K.getLevel('call'); if (score >= 4 && lv < 5) K.setLevel('call', lv + 1); box.appendChild(el('div', { class: 'kl-result' }, [el('div', { class: 'kl-result-emoji', text: '📞' }), el('div', { class: 'kl-result-title', text: score + ' / 5 잘 눌렀어요!' }), el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '🔁 한 번 더', onclick: callGame }), el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: home })])])); if (score >= 4) { K.sfx.win(); K.confetti(); } return; }
+      var c = K.pick(CALL); var typed = ''; box.innerHTML = '';
+      box.appendChild(el('div', { class: 'kl-prompt', text: c[0] + ' 어디에 전화할까요?' }));
+      box.appendChild(el('div', { class: 'kl-hint', text: '🚒 불·다침 = 119 / 👮 경찰 = 112' }));
+      var dial = el('div', { class: 'dial', text: '' }); box.appendChild(dial);
+      var pad = el('div', { class: 'keypad' });
+      ['1', '2', '3', '4', '5', '6', '7', '8', '9', '지우기', '0', '📞'].forEach(function (k) {
+        var b = el('button', { text: k, style: k.length > 1 ? 'font-size:20px' : '' });
+        b.addEventListener('click', function () {
+          K.sfx.pop();
+          if (k === '지우기') { typed = typed.slice(0, -1); }
+          else if (k === '📞') { if (typed === c[1]) { K.sfx.correct(); K.addStar(1); K.event('correct'); score++; K.speak(c[1] + ' 맞아요! 잘했어요'); round++; setTimeout(next, 1200); } else { K.sfx.wrong(); K.speak('다시 눌러봐요. ' + c[0].replace(/^\S+\s/, '') + '. ' + c[1].split('').join(' ')); typed = ''; } }
+          else if (typed.length < 3) { typed += k; K.speak(k); }
+          dial.textContent = typed;
+        });
+        pad.appendChild(b);
+      });
+      box.appendChild(pad); K.speak(c[0].replace(/^\S+\s/, '') + '. 어디에 전화할까요?');
+    }
+    next();
+  }
+  function placeQuiz() {
+    quiz('place', 8, function (i, lv) { var p = K.pick(PLACES); return { prompt: p[0], say: p[0].replace(/^\S+\s/, '') + '. 어떻게 할까요?', cols: 2, choices: K.shuffle([[p[1][0], true], [p[1][1], false]]).map(function (o) { return { html: o[0], cls: 'text', correct: o[1], say: o[0].replace(/^\S+\s/, '') }; }) }; });
+  }
+  home();
+})();
+</script>
+</body>
+</html>
