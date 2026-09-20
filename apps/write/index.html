@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>따라 쓰기</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
+  .pick button { background: #fff; border-radius: 16px; padding: 10px 4px; box-shadow: 0 4px 0 rgba(0,0,0,.08); position: relative; }
+  .pick button .ch { font-size: 34px; font-weight: 900; color: #333; line-height: 1.1; }
+  .pick button .ok { position: absolute; top: 3px; right: 6px; font-size: 14px; }
+  .pick button.done { background: #eaf7dc; }
+  .pick button:hover { transform: scale(1.06); }
+  .pad { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .sheet { position: relative; background: #fff; border-radius: 20px; box-shadow: 0 6px 0 rgba(0,0,0,.08); touch-action: none; }
+  .sheet canvas { position: absolute; left: 0; top: 0; border-radius: 20px; }
+  .sheet canvas.ink { touch-action: none; }
+  .bar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; }
+  .meter { width: 100%; max-width: 420px; height: 16px; border-radius: 10px; background: #e8e8e8; overflow: hidden; }
+  .meter i { display: block; height: 100%; background: linear-gradient(90deg, #8ac926, #4caf50); width: 0; transition: width .35s; }
+  .verdict { font-size: 22px; font-weight: 800; min-height: 30px; text-align: center; }
+  .cur { font-size: 26px; font-weight: 900; }
+  body.fixed { overflow: hidden; }
+  body.fixed main { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 8px 10px; gap: 6px; }
+  body.fixed .kl-back { align-self: flex-start; margin: 0; }
+  body.fixed .pad { flex: 1; min-height: 0; justify-content: center; }
+  @media (max-width: 760px) {
+    .pick { grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 6px; }
+    .pick button .ch { font-size: 28px; }
+    .bar button { font-size: 16px; padding: 8px 12px; }
+    .verdict { font-size: 18px; min-height: 24px; }
+    .cur { font-size: 20px; }
+  }
+</style>
+</head>
+<body data-app="write">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script src="glyphs.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el, G = window.GLYPHS;
+  K.header({ title: '따라 쓰기', icon: '✏️', say: '따라 쓰기' });
+  var main = document.getElementById('main');
+
+  var SETS = [
+    { id: 'digits', icon: '🔢', label: '숫자 0~9', color: '#fff3c4', lang: 'ko' },
+    { id: 'cons',   icon: 'ㄱ',  label: '한글 자음', color: '#ffe9ee', lang: 'ko' },
+    { id: 'vow',    icon: 'ㅏ',  label: '한글 모음', color: '#e9f3ff', lang: 'ko' },
+    { id: 'syl',    icon: '가',  label: '한글 글자', color: '#e3f7cf', lang: 'ko' },
+    { id: 'upper',  icon: 'A',  label: '영어 대문자', color: '#d0f4de', lang: 'en' },
+    { id: 'lower',  icon: 'a',  label: '영어 소문자', color: '#ece6f5', lang: 'en' }
+  ];
+  var NAME = {
+    'ㄱ': '기역', 'ㄴ': '니은', 'ㄷ': '디귿', 'ㄹ': '리을', 'ㅁ': '미음', 'ㅂ': '비읍', 'ㅅ': '시옷',
+    'ㅇ': '이응', 'ㅈ': '지읒', 'ㅊ': '치읓', 'ㅋ': '키읔', 'ㅌ': '티읕', 'ㅍ': '피읖', 'ㅎ': '히읗',
+    'ㅏ': '아', 'ㅑ': '야', 'ㅓ': '어', 'ㅕ': '여', 'ㅗ': '오', 'ㅛ': '요', 'ㅜ': '우', 'ㅠ': '유', 'ㅡ': '으', 'ㅣ': '이'
+  };
+  function sayOf(set, ch) {
+    if (set === 'digits') return { text: K.numToKo(ch), lang: 'ko-KR' };
+    if (set === 'upper' || set === 'lower') return { text: ch, lang: 'en-US' };
+    return { text: NAME[ch] || ch, lang: 'ko-KR' };
+  }
+  function doneList(set) { var p = K.progress(); return (p.done && p.done[set]) || []; }
+  function markDone(set, ch) {
+    K.mutate(function (d) {
+      var pr = d.progress.write || (d.progress.write = {});
+      var done = pr.done || (pr.done = {});
+      var arr = done[set] || (done[set] = []);
+      if (arr.indexOf(ch) < 0) arr.push(ch);
+    });
+  }
+
+  function home() {
+    document.body.classList.remove('fixed');
+    main.innerHTML = '';
+    var items = SETS.map(function (s) {
+      var done = doneList(s.id).length, all = G.order[s.id].length;
+      return { icon: s.icon, label: s.label + ' (' + done + '/' + all + ')', color: s.color, run: function () { picker(s); } };
+    });
+    K.menu(main, items);
+    main.appendChild(el('div', { class: 'kl-hint', text: '회색 글자를 따라 그리면 얼마나 잘 썼는지 알려줘요' }));
+  }
+
+  function picker(set) {
+    document.body.classList.remove('fixed');
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    main.appendChild(el('div', { class: 'kl-prompt', text: set.label, style: 'font-size:24px;margin-bottom:10px' }));
+    var done = doneList(set.id);
+    var grid = el('div', { class: 'pick' });
+    G.order[set.id].forEach(function (ch, i) {
+      var b = el('button', { class: done.indexOf(ch) >= 0 ? 'done' : '' }, [
+        el('div', { class: 'ch', text: ch }),
+        done.indexOf(ch) >= 0 ? el('span', { class: 'ok', text: '✔' }) : null
+      ]);
+      b.addEventListener('click', function () { K.sfx.click(); trace(set, i); });
+      grid.appendChild(b);
+    });
+    main.appendChild(grid);
+  }
+
+  /* ---------- 따라 쓰기 화면 ---------- */
+  function trace(set, idx) {
+    document.body.classList.add('fixed');
+    main.innerHTML = '';
+    var list = G.order[set.id];
+    var ch = list[idx];
+    var strokes = G[set.id][ch];
+    var back = K.backButton(function () { picker(set); });
+    main.appendChild(back);
+
+    var pad = el('div', { class: 'pad' });
+    var title = el('div', { class: 'cur' });
+    var sheet = el('div', { class: 'sheet' });
+    var guide = el('canvas', { class: 'guide' });       /* 회색 본보기 + 획 번호 */
+    var ink = el('canvas', { class: 'ink' });           /* 아이가 그리는 층 */
+    sheet.appendChild(guide); sheet.appendChild(ink);
+    var meter = el('div', { class: 'meter' }, el('i'));
+    var verdict = el('div', { class: 'verdict', text: '회색 글자를 따라 그려요' });
+    var bar = el('div', { class: 'bar' });
+    pad.appendChild(title); pad.appendChild(sheet); pad.appendChild(meter); pad.appendChild(verdict); pad.appendChild(bar);
+    main.appendChild(pad);
+
+    /* 화면에 맞는 크기 정하기 */
+    var size = 320;
+    function layout() {
+      var availH = window.innerHeight - back.offsetHeight - 210;
+      var availW = Math.min(window.innerWidth - 32, 420);
+      size = Math.max(180, Math.min(availW, availH, 420));
+      sheet.style.width = size + 'px'; sheet.style.height = size + 'px';
+      [guide, ink].forEach(function (c) { c.width = size; c.height = size; c.style.width = size + 'px'; c.style.height = size + 'px'; });
+      drawGuide(); redrawInk();
+    }
+    var S = function (v) { return v / 100 * size; };
+    var gc = guide.getContext('2d'), ic = ink.getContext('2d');
+    var GUIDE_W = 0.15, INK_W = 0.13;   /* 글자 크기 대비 선 굵기 */
+
+    function pathStroke(ctx, st) {
+      ctx.beginPath();
+      ctx.moveTo(S(st[0][0]), S(st[0][1]));
+      for (var i = 1; i < st.length; i++) ctx.lineTo(S(st[i][0]), S(st[i][1]));
+    }
+    function drawGuide() {
+      gc.clearRect(0, 0, size, size);
+      gc.fillStyle = '#fff'; gc.fillRect(0, 0, size, size);
+      /* 안내선 */
+      gc.strokeStyle = '#f0f0f0'; gc.lineWidth = 2;
+      gc.beginPath(); gc.moveTo(size / 2, 0); gc.lineTo(size / 2, size); gc.moveTo(0, size / 2); gc.lineTo(size, size / 2); gc.stroke();
+      /* 회색 본보기 */
+      gc.strokeStyle = '#e2e2e2'; gc.lineWidth = size * GUIDE_W; gc.lineCap = 'round'; gc.lineJoin = 'round';
+      strokes.forEach(function (st) { pathStroke(gc, st); gc.stroke(); });
+      /* 획 번호와 시작점 */
+      strokes.forEach(function (st, i) {
+        var x = S(st[0][0]), y = S(st[0][1]);
+        gc.fillStyle = '#ff595e'; gc.beginPath(); gc.arc(x, y, size * 0.045, 0, Math.PI * 2); gc.fill();
+        gc.fillStyle = '#fff'; gc.font = '900 ' + Math.round(size * 0.055) + 'px sans-serif';
+        gc.textAlign = 'center'; gc.textBaseline = 'middle'; gc.fillText(String(i + 1), x, y + 1);
+      });
+    }
+
+    /* 그린 선 보관 (크기가 바뀌어도 다시 그린다) */
+    var drawn = [], cur = null, drawing = false;
+    function redrawInk() {
+      ic.clearRect(0, 0, size, size);
+      ic.strokeStyle = '#1982c4'; ic.lineWidth = size * INK_W; ic.lineCap = 'round'; ic.lineJoin = 'round';
+      drawn.forEach(function (st) {
+        if (st.length < 2) { ic.beginPath(); ic.arc(st[0][0] * size, st[0][1] * size, size * INK_W / 2, 0, Math.PI * 2); ic.fillStyle = '#1982c4'; ic.fill(); return; }
+        ic.beginPath(); ic.moveTo(st[0][0] * size, st[0][1] * size);
+        for (var i = 1; i < st.length; i++) ic.lineTo(st[i][0] * size, st[i][1] * size);
+        ic.stroke();
+      });
+    }
+    function pos(e) {
+      var r = ink.getBoundingClientRect();
+      return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height];
+    }
+    ink.addEventListener('pointerdown', function (e) {
+      drawing = true; cur = [pos(e)]; drawn.push(cur); ink.setPointerCapture(e.pointerId);
+      redrawInk(); verdict.textContent = '';
+    });
+    ink.addEventListener('pointermove', function (e) { if (!drawing) return; cur.push(pos(e)); redrawInk(); });
+    ink.addEventListener('pointerup', function () { drawing = false; });
+    ink.addEventListener('pointercancel', function () { drawing = false; });
+
+    /* ---------- 채점 ---------- */
+    function score() {
+      if (!drawn.length) return null;
+      var n = 100;                                   /* 100x100 격자로 비교 */
+      var t = document.createElement('canvas'); t.width = t.height = n;
+      var u = document.createElement('canvas'); u.width = u.height = n;
+      var tc = t.getContext('2d'), uc = u.getContext('2d');
+      /* 본보기 안쪽 심지만 기준으로 삼아, 제대로 따라 그리면 100%가 되게 한다 */
+      tc.strokeStyle = '#000'; tc.lineWidth = n * GUIDE_W * 0.8; tc.lineCap = 'round'; tc.lineJoin = 'round';
+      strokes.forEach(function (st) {
+        tc.beginPath(); tc.moveTo(st[0][0] / 100 * n, st[0][1] / 100 * n);
+        for (var i = 1; i < st.length; i++) tc.lineTo(st[i][0] / 100 * n, st[i][1] / 100 * n);
+        tc.stroke();
+      });
+      uc.strokeStyle = '#000'; uc.lineWidth = n * INK_W; uc.lineCap = 'round'; uc.lineJoin = 'round';
+      drawn.forEach(function (st) {
+        if (st.length < 2) { uc.beginPath(); uc.arc(st[0][0] * n, st[0][1] * n, n * INK_W / 2, 0, Math.PI * 2); uc.fillStyle = '#000'; uc.fill(); return; }
+        uc.beginPath(); uc.moveTo(st[0][0] * n, st[0][1] * n);
+        for (var i = 1; i < st.length; i++) uc.lineTo(st[i][0] * n, st[i][1] * n);
+        uc.stroke();
+      });
+      var td = tc.getImageData(0, 0, n, n).data, ud = uc.getImageData(0, 0, n, n).data;
+      var target = 0, user = 0, hit = 0, spill = 0;
+      for (var p = 3; p < td.length; p += 4) {
+        var a = td[p] > 40, b = ud[p] > 40;
+        if (a) target++;
+        if (b) user++;
+        if (a && b) hit++;
+        if (b && !a) spill++;
+      }
+      if (!target || !user) return null;
+      /* 획을 하나라도 통째로 빼먹지 않았는지 따로 본다 (대각선 낙서 거르기) */
+      var minCover = 1;
+      strokes.forEach(function (st) {
+        var one = document.createElement('canvas'); one.width = one.height = n;
+        var oc = one.getContext('2d');
+        oc.strokeStyle = '#000'; oc.lineWidth = n * GUIDE_W * 0.8; oc.lineCap = 'round'; oc.lineJoin = 'round';
+        oc.beginPath(); oc.moveTo(st[0][0] / 100 * n, st[0][1] / 100 * n);
+        for (var i = 1; i < st.length; i++) oc.lineTo(st[i][0] / 100 * n, st[i][1] / 100 * n);
+        oc.stroke();
+        var od = oc.getImageData(0, 0, n, n).data;
+        var tot = 0, got = 0;
+        for (var q = 3; q < od.length; q += 4) { if (od[q] > 40) { tot++; if (ud[q] > 40) got++; } }
+        if (tot) minCover = Math.min(minCover, got / tot);
+      });
+      return { cover: hit / target, spill: spill / user, minCover: minCover, strokes: drawn.length, want: strokes.length };
+    }
+    function check() {
+      var s = score();
+      if (!s) { verdict.textContent = '먼저 글자를 따라 그려 보세요 ✏️'; K.sfx.wrong(); return; }
+      var pct = Math.round(Math.max(0, s.cover * 100 - s.spill * 55));
+      meter.querySelector('i').style.width = Math.min(100, pct) + '%';
+      var say = sayOf(set.id, ch);
+      if (s.minCover < 0.45) {
+        verdict.textContent = '빠뜨린 획이 있어요. 번호 순서대로 그려 봐요';
+        K.sfx.wrong(); K.speak('빠뜨린 획이 있어요');
+      } else if (s.cover >= 0.82 && s.spill <= 0.32) {
+        verdict.textContent = '🌟 아주 잘 썼어요! (' + pct + '점)';
+        K.addStar(2); K.event('trace'); K.sfx.win(); K.confetti(); markDone(set.id, ch);
+        K.speak(say.text + '. 아주 잘 썼어요', { lang: say.lang });
+        setTimeout(nextChar, 1600);
+      } else if (s.cover >= 0.6 && s.spill <= 0.5) {
+        verdict.textContent = '👍 잘했어요! (' + pct + '점)';
+        K.addStar(1); K.event('trace'); K.sfx.correct(); markDone(set.id, ch);
+        K.speak(say.text + '. 잘했어요', { lang: say.lang });
+        setTimeout(nextChar, 1600);
+      } else if (s.cover < 0.6) {
+        verdict.textContent = '조금 더 채워 볼까요? (' + pct + '점)';
+        K.sfx.wrong(); K.speak('조금 더 채워 볼까요?');
+      } else {
+        verdict.textContent = '회색 글자 안쪽으로 그려 봐요 (' + pct + '점)';
+        K.sfx.wrong(); K.speak('회색 글자 안쪽으로 그려 봐요');
+      }
+    }
+    function nextChar() { if (idx + 1 < list.length) trace(set, idx + 1); else picker(set); }
+
+    /* ---------- 시범 보이기 ---------- */
+    var playing = false;
+    function demo() {
+      if (playing) return; playing = true;
+      drawn = []; redrawInk();
+      var si = 0;
+      function one() {
+        if (si >= strokes.length) { playing = false; verdict.textContent = '이제 따라 그려 봐요 ✏️'; return; }
+        var st = strokes[si], i = 1;
+        ic.strokeStyle = '#ffb703'; ic.lineWidth = size * INK_W; ic.lineCap = 'round'; ic.lineJoin = 'round';
+        ic.beginPath(); ic.moveTo(S(st[0][0]), S(st[0][1]));
+        var timer = setInterval(function () {
+          if (i >= st.length) { clearInterval(timer); si++; setTimeout(one, 280); return; }
+          ic.lineTo(S(st[i][0]), S(st[i][1])); ic.stroke();
+          ic.beginPath(); ic.moveTo(S(st[i][0]), S(st[i][1]));
+          K.sfx.note(520 + i * 12, 0.05);
+          i++;
+        }, Math.max(24, 420 / st.length));
+      }
+      verdict.textContent = '획 순서를 잘 봐요 👀';
+      one();
+    }
+
+    title.textContent = ch + ' · ' + sayOf(set.id, ch).text + '  (' + (idx + 1) + '/' + list.length + ')';
+    bar.appendChild(el('button', { class: 'kl-btn', text: '◀', title: '앞 글자', onclick: function () { if (idx > 0) trace(set, idx - 1); } }));
+    bar.appendChild(el('button', { class: 'speak-btn', text: '🔊 듣기', onclick: function () { var s = sayOf(set.id, ch); K.speak(s.text, { lang: s.lang }); } }));
+    bar.appendChild(el('button', { class: 'kl-btn blue', text: '👀 보여줘', onclick: function () { K.sfx.click(); demo(); } }));
+    bar.appendChild(el('button', { class: 'kl-btn', text: '🧽 지우기', onclick: function () { drawn = []; redrawInk(); meter.querySelector('i').style.width = '0'; verdict.textContent = '다시 그려 봐요'; K.sfx.pop(); } }));
+    bar.appendChild(el('button', { class: 'kl-btn green', text: '✔ 다 썼어요', onclick: check }));
+    bar.appendChild(el('button', { class: 'kl-btn', text: '▶', title: '다음 글자', onclick: nextChar }));
+
+    layout();
+    window.addEventListener('resize', layout);
+    var s0 = sayOf(set.id, ch); K.speak(s0.text, { lang: s0.lang });
+    setTimeout(function () { if (document.body.contains(sheet)) demo(); }, 700);
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

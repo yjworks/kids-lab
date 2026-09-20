@@ -56,7 +56,7 @@
       { icon: '🧩', label: '글자 만들기', mode: 'combo', color: '#e3f7cf', run: comboGame },
       { icon: '🍎', label: '낱말과 그림', mode: 'word', color: '#ffe4a1', run: wordQuiz },
       { icon: '🔍', label: '첫소리 찾기', mode: 'first', color: '#ece6f5', run: firstSoundQuiz },
-      { icon: '✏️', label: '따라 쓰기', color: '#e2ece9', run: trace }
+      { icon: '✏️', label: '따라 쓰기', color: '#e2ece9', run: function () { location.href = '../write/index.html'; } }
     ]);
   }
 
@@ -130,33 +130,6 @@
     }, onFinish: home });
   }
 
-  function trace() {
-    main.innerHTML = ''; main.appendChild(K.backButton(home));
-    var all = CONS.map(function (c) { return c[0]; }).concat(VOW.map(function (v) { return v[0]; })).concat(['가', '나', '다', '라', '마', '바', '사', '아', '자', '차', '카', '타', '파', '하']);
-    var idx = 0;
-    var top = el('div', { class: 'kl-row', style: 'margin:0 0 12px' });
-    var cv = el('canvas', { class: 'trace', width: 420, height: 420 });
-    var ctx = cv.getContext('2d');
-    function draw() {
-      ctx.clearRect(0, 0, 420, 420); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 420, 420);
-      ctx.strokeStyle = '#eee'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(210, 0); ctx.lineTo(210, 420); ctx.moveTo(0, 210); ctx.lineTo(420, 210); ctx.stroke();
-      ctx.fillStyle = '#e8e8e8'; ctx.font = '900 300px "Malgun Gothic", "Apple SD Gothic Neo", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(all[idx], 210, 225);
-    }
-    draw();
-    var drawing = false, lastX, lastY, strokes = 0;
-    function pos(e) { var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * 420 / r.width, (e.clientY - r.top) * 420 / r.height]; }
-    cv.addEventListener('pointerdown', function (e) { drawing = true; var p = pos(e); lastX = p[0]; lastY = p[1]; cv.setPointerCapture(e.pointerId); strokes++; });
-    cv.addEventListener('pointermove', function (e) { if (!drawing) return; var p = pos(e); ctx.strokeStyle = '#d6336c'; ctx.lineWidth = 22; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(p[0], p[1]); ctx.stroke(); lastX = p[0]; lastY = p[1]; });
-    cv.addEventListener('pointerup', function () { drawing = false; });
-    top.appendChild(el('button', { class: 'kl-btn', text: '◀', onclick: function () { idx = (idx - 1 + all.length) % all.length; strokes = 0; draw(); K.speak(all[idx]); } }));
-    top.appendChild(el('button', { class: 'speak-btn', text: '🔊 듣기', onclick: function () { K.speak(all[idx]); } }));
-    top.appendChild(el('button', { class: 'kl-btn', text: '지우기', onclick: function () { strokes = 0; draw(); } }));
-    top.appendChild(el('button', { class: 'kl-btn green', text: '다 썼어요 ✔', onclick: function () { if (strokes === 0) { K.toast('글자를 따라 써 보세요 ✏️'); return; } K.addStar(1); K.event('trace'); K.sfx.correct(); idx = (idx + 1) % all.length; strokes = 0; draw(); K.speak(all[idx]); } }));
-    top.appendChild(el('button', { class: 'kl-btn', text: '▶', onclick: function () { idx = (idx + 1) % all.length; strokes = 0; draw(); K.speak(all[idx]); } }));
-    main.appendChild(top); main.appendChild(cv);
-    main.appendChild(el('div', { class: 'kl-hint', text: '회색 글자를 따라 그려 보세요' }));
-    K.speak(all[idx]);
-  }
   home();
 })();
 </script>

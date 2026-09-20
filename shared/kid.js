@@ -141,7 +141,8 @@
     { app: 'coding', key: 'win', n: 1, label: '로봇 코딩 1단계 성공하기', icon: '🤖' },
     { app: 'shop', key: 'correct', n: 3, label: '가게 놀이에서 3번 계산하기', icon: '🛒' },
     { app: 'calc', key: 'correct', n: 4, label: '숫자 읽기 4문제 맞히기', icon: '🧮' },
-    { app: 'blocks', key: 'correct', n: 5, label: '숫자 블록 5문제 맞히기', icon: '🧱' }
+    { app: 'blocks', key: 'correct', n: 5, label: '숫자 블록 5문제 맞히기', icon: '🧱' },
+    { app: 'write', key: 'trace', n: 4, label: '글자 4개 따라 쓰기', icon: '✏️' }
   ];
   var DAILY_FIXED = { app: 'diary', key: 'save', n: 1, label: '오늘의 일기 쓰기', icon: '📔' };
   function missions(d) {
