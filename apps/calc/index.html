@@ -18,19 +18,19 @@
   body.fixed .kl-back { align-self: flex-start; margin-bottom: 0; }
   body.fixed .keys { grid-auto-rows: minmax(52px, 1fr); }
   body.fixed .screen { padding: 10px 16px; }
-  body.fixed .screen .num { font-size: 40px; }
+
   @media (max-width: 760px) {
     body.fixed .toolbar button { font-size: 14px; padding: 8px 9px; }
     body.fixed .screen .expr, body.fixed .screen .read { font-size: 16px; }
   }
   .screen { background: #2b2b33; color: #fff; border-radius: 22px; padding: 14px 18px; text-align: right; box-shadow: inset 0 3px 10px rgba(0,0,0,.35); }
   .screen .expr { font-size: 20px; color: #a9b0c0; min-height: 26px; word-break: break-all; }
-  .screen .num { font-size: 46px; font-weight: 800; line-height: 1.15; word-break: break-all; font-variant-numeric: tabular-nums; }
-  .screen .num.small { font-size: 32px; }
-  .screen .num.tiny { font-size: 24px; }
-  .screen .read { font-size: 19px; color: #ffd166; min-height: 24px; margin-top: 4px; word-break: keep-all; }
+  .screen .num { font-size: 46px; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums;
+                 white-space: nowrap; overflow: hidden; }
+  .screen .read { font-size: 19px; color: #ffd166; min-height: 24px; margin-top: 4px; word-break: keep-all;
+                  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .screen.err { background: #6b2020; animation: shake .4s; }
-  .screen.err .num { font-size: 26px; color: #ffd8d8; }
+  .screen.err .num { font-size: 26px !important; color: #ffd8d8; white-space: normal; }
   .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
   .keys button { height: 72px; border-radius: 20px; font-size: 30px; font-weight: 800; background: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.12); color: #333; }
   .keys button:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.12); }
@@ -120,14 +120,25 @@
     var pr = K.progress();
     var speakOn = pr.speak !== false;
 
+    /* 긴 수도 한 줄에 들어오도록 글자 크기를 줄인다 */
+    function fitNum() {
+      var size = Math.min(46, Math.max(22, Math.round(screen.clientWidth / 11)));
+      numEl.style.fontSize = size + 'px';
+      var guard = 0;
+      while (numEl.scrollWidth > numEl.clientWidth + 1 && size > 14 && guard++ < 30) {
+        size -= 2; numEl.style.fontSize = size + 'px';
+      }
+    }
     function render() {
       screen.classList.toggle('err', err);
-      if (err) { numEl.textContent = err; readEl.textContent = '← 나 AC를 눌러요'; exprEl.textContent = ''; return; }
-      var t = show(cur);
-      numEl.className = 'num' + (t.length > 12 ? (t.length > 17 ? ' tiny' : ' small') : '');
-      numEl.textContent = t;
+      if (err) {
+        numEl.style.fontSize = ''; numEl.textContent = err;
+        readEl.textContent = '← 나 AC를 눌러요'; exprEl.textContent = ''; return;
+      }
+      numEl.textContent = show(cur);
       readEl.textContent = K.numToKo(cur);
       exprEl.textContent = acc === null ? '' : show(acc) + ' ' + op + ' ';
+      fitNum();
     }
     function setErr(msg, say) {
       err = msg; render(); K.sfx.wrong();
