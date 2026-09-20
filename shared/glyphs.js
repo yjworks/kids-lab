@@ -148,7 +148,7 @@
   var SYL = {};
   '가나다라마바사아자차카타파하'.split('').forEach(function (ch, i) {
     var c = 'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ'.charAt(i);
-    SYL[ch] = place(CONS[c], 0.52, 0.70, 2, 13).concat(place(VOW['ㅏ'], 0.52, 0.92, 46, 3));
+    SYL[ch] = place(CONS[c], 0.50, 0.70, 3, 13).concat(place(VOW['ㅏ'], 0.50, 0.92, 48, 3));
   });
 
   global.GLYPHS = {
