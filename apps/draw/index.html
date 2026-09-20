@@ -6,6 +6,20 @@
 <link rel="stylesheet" href="../../shared/app.css">
 <style>
   .studio { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  @media (max-width: 760px) {
+    canvas { max-height: 32vh; }
+    main > .kl-prompt { font-size: 18px !important; margin-bottom: 6px; }
+    .studio { gap: 8px; }
+    .tools { min-width: 0; width: 100%; gap: 6px; }
+    .tools > div.label { display: none; }          /* 색깔·굵기 같은 안내 글은 접는다 */
+    .palette { grid-template-columns: repeat(12, 1fr); gap: 4px; }
+    .palette button { width: 100%; height: 30px; border-radius: 8px; border-width: 2px; }
+    .sizes { gap: 5px; }
+    .sizes button { height: 40px; font-size: 14px; }
+    .stamps { grid-template-columns: repeat(12, 1fr); gap: 3px; }
+    .stamps button { font-size: 18px; padding: 2px; }
+    .gallery { grid-template-columns: repeat(2, 1fr); }
+  }
   canvas { background: #fff; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,.1); touch-action: none; max-width: 100%; cursor: crosshair; }
   .tools { display: flex; flex-direction: column; gap: 10px; min-width: 200px; }
   .palette { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
@@ -83,9 +97,9 @@
       el('button', { class: 'kl-btn green', text: '💾 저장', style: 'font-size:18px;padding:10px 16px', onclick: function () { if (strokes < 2) { K.toast('조금 더 그려볼까요? ✏️'); return; } var small = document.createElement('canvas'); small.width = 320; small.height = 240; small.getContext('2d').drawImage(cv, 0, 0, 320, 240); var url = small.toDataURL('image/jpeg', 0.7); K.mutate(function (d) { d.drawings.push({ t: Date.now(), title: title || '내 그림', img: url }); if (d.drawings.length > 40) d.drawings.shift(); }); K.addStar(2); K.event('save'); K.sfx.win(); K.confetti(); K.speak('멋진 그림이에요! 갤러리에 저장했어요'); strokes = 0; } }),
       el('button', { class: 'kl-btn blue', text: '⬇ 파일로', style: 'font-size:18px;padding:10px 16px', onclick: function () { var a = el('a', { href: cv.toDataURL('image/png'), download: 'kidlab-drawing.png' }); document.body.appendChild(a); a.click(); a.remove(); } })
     ]);
-    tools.appendChild(el('div', { style: 'font-weight:800', text: '색깔' })); tools.appendChild(pal);
-    tools.appendChild(el('div', { style: 'font-weight:800', text: '굵기' })); tools.appendChild(sizes);
-    tools.appendChild(el('div', { style: 'font-weight:800', text: '도구' })); tools.appendChild(toolRow); tools.appendChild(stampBox);
+    tools.appendChild(el('div', { class: 'label', style: 'font-weight:800', text: '색깔' })); tools.appendChild(pal);
+    tools.appendChild(el('div', { class: 'label', style: 'font-weight:800', text: '굵기' })); tools.appendChild(sizes);
+    tools.appendChild(el('div', { class: 'label', style: 'font-weight:800', text: '도구' })); tools.appendChild(toolRow); tools.appendChild(stampBox);
     main.appendChild(el('div', { class: 'studio' }, [cv, tools])); main.appendChild(el('div', { style: 'margin-top:12px' }, actions));
     setTool('pen');
   }

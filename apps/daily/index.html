@@ -22,6 +22,12 @@
   .chk { background: #fff; border-radius: 20px; padding: 16px; display: flex; align-items: center; gap: 12px; font-weight: 800; box-shadow: 0 5px 0 rgba(0,0,0,.08); font-size: 20px; }
   .chk .e { font-size: 40px; }
   .chk.done { background: #e3f7cf; }
+  @media (max-width: 760px) {
+    .seq-target .slot { width: 84px; height: 84px; font-size: 36px; }
+    .seq-pool button { width: 96px; height: 96px; font-size: 36px; }
+    .seq-pool button small { font-size: 12px; }
+    .checklist { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  }
 </style>
 </head>
 <body data-app="daily">

@@ -16,6 +16,16 @@
   .paybox { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 12px 0; }
   .paybox button { background: #fff; border-radius: 20px; padding: 8px 12px; box-shadow: 0 4px 0 rgba(0,0,0,.1); }
   .paid { min-height: 80px; background: #f7f7f7; border-radius: 16px; padding: 8px; text-align: center; }
+  @media (max-width: 760px) {
+    .coin { margin: 2px; }
+    .c10 { width: 32px; height: 32px; font-size: 13px; }
+    .c50 { width: 36px; height: 36px; font-size: 13px; }
+    .c100 { width: 42px; height: 42px; font-size: 14px; }
+    .c500 { width: 48px; height: 48px; font-size: 14px; }
+    .b1000 { width: 84px; height: 40px; font-size: 15px; margin: 2px; }
+    .item .e { font-size: 38px; }
+    .shelf { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); }
+  }
 </style>
 </head>
 <body data-app="shop">

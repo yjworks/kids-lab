@@ -5,7 +5,24 @@
 <title>계산기</title>
 <link rel="stylesheet" href="../../shared/app.css">
 <style>
-  .calc { max-width: 520px; margin: 0 auto; }
+  .calc { max-width: 520px; margin: 0 auto; width: 100%; }
+  /* 계산기를 쓰는 동안에는 화면이 스크롤되지 않게 해 버튼이 제자리를 지킨다 */
+  body.fixed main { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 10px 12px; }
+  body.fixed { overflow: hidden; }
+  body.fixed .calc { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
+  body.fixed .screen { flex: none; }
+  body.fixed .keys { flex: 1; min-height: 0; grid-template-rows: repeat(5, 1fr); margin-top: 0; }
+  body.fixed .keys button { height: auto; min-height: 0; }
+  body.fixed .toolbar { flex: none; margin: 0; flex-wrap: nowrap; gap: 6px; }
+  body.fixed .toolbar button { font-size: 16px; padding: 9px 12px; white-space: nowrap; }
+  body.fixed .kl-back { align-self: flex-start; margin-bottom: 0; }
+  body.fixed .keys { grid-auto-rows: minmax(52px, 1fr); }
+  body.fixed .screen { padding: 10px 16px; }
+  body.fixed .screen .num { font-size: 40px; }
+  @media (max-width: 760px) {
+    body.fixed .toolbar button { font-size: 14px; padding: 8px 9px; }
+    body.fixed .screen .expr, body.fixed .screen .read { font-size: 16px; }
+  }
   .screen { background: #2b2b33; color: #fff; border-radius: 22px; padding: 14px 18px; text-align: right; box-shadow: inset 0 3px 10px rgba(0,0,0,.35); }
   .screen .expr { font-size: 20px; color: #a9b0c0; min-height: 26px; word-break: break-all; }
   .screen .num { font-size: 46px; font-weight: 800; line-height: 1.15; word-break: break-all; font-variant-numeric: tabular-nums; }
@@ -22,7 +39,15 @@
   .keys button.fn { background: #e6e8ef; color: #444; font-size: 24px; }
   .keys button.zero { grid-column: span 2; }
   .toolbar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 12px 0; }
-  .tape { margin-top: 14px; background: #fff; border-radius: 18px; padding: 10px 14px; max-height: 190px; overflow: auto; }
+  /* 계산 기록은 평소에 접혀 있다가 눌렀을 때 아래에서 올라온다 */
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-radius: 24px 24px 0 0;
+           box-shadow: 0 -12px 36px rgba(0,0,0,.28); transform: translateY(102%); transition: transform .26s ease;
+           z-index: 60; display: flex; flex-direction: column; max-height: 62%; }
+  .sheet.open { transform: none; }
+  .sheet .head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 6px; font-weight: 800; font-size: 20px; }
+  .sheet .head button { background: #ff595e; color: #fff; border-radius: 12px; width: 52px; height: 40px; font-size: 22px; font-weight: 900; }
+  .sheet .grip { width: 44px; height: 5px; border-radius: 3px; background: #ddd; margin: 8px auto 0; }
+  .tape { background: #fff; border-radius: 0; padding: 4px 16px 16px; overflow: auto; flex: 1; }
   .tape .row { display: flex; justify-content: space-between; gap: 10px; padding: 7px 4px; border-bottom: 1px dashed #eee; font-size: 19px; }
   .tape .row:last-child { border-bottom: none; }
   .tape .row b { color: #1982c4; }
@@ -49,7 +74,12 @@
   var LIMIT = 999999999999999;       /* 15자리 최대값 */
   var OPW = { '+': '더하기', '-': '빼기', '×': '곱하기', '÷': '나누기' };
 
+  function leaveFixed() {
+    document.body.classList.remove('fixed');
+    var sh = document.querySelector('.sheet'); if (sh) sh.remove();
+  }
   function home() {
+    leaveFixed();
     main.innerHTML = '';
     K.menu(main, [
       { icon: '🧮', label: '계산기', color: '#e9f3ff', run: function () { calc(false); } },
@@ -76,6 +106,7 @@
 
   /* ---------- 계산기 ---------- */
   function calc(easy) {
+    leaveFixed();
     main.innerHTML = ''; main.appendChild(K.backButton(home));
     var wrap = el('div', { class: 'calc' + (easy ? ' easy' : '') });
     var screen = el('div', { class: 'screen' });
@@ -188,29 +219,39 @@
     wrap.appendChild(keys);
 
     var tools = el('div', { class: 'toolbar' }, [
-      el('button', { class: 'speak-btn', text: '🔊 읽어주기', onclick: function () { K.speak(err ? err : K.numToKo(cur)); } }),
+      el('button', { class: 'speak-btn', text: '🔊 읽기', onclick: function () { K.speak(err ? err : K.numToKo(cur)); } }),
       (function () {
-        var b = el('button', { class: 'kl-btn' + (speakOn ? ' green' : ''), text: speakOn ? '🗣️ 말하기 켜짐' : '🤫 말하기 꺼짐' });
+        var b = el('button', { class: 'kl-btn' + (speakOn ? ' green' : ''), title: '말하기 켜고 끄기', text: speakOn ? '🗣️ 켜짐' : '🤫 꺼짐' });
         b.addEventListener('click', function () {
           speakOn = !speakOn; K.setProgress({ speak: speakOn });
           b.className = 'kl-btn' + (speakOn ? ' green' : '');
-          b.textContent = speakOn ? '🗣️ 말하기 켜짐' : '🤫 말하기 꺼짐';
+          b.textContent = speakOn ? '🗣️ 켜짐' : '🤫 꺼짐';
           K.sfx.click();
         });
         return b;
       })(),
-      el('button', { class: 'kl-btn', text: easy ? '🧮 보통 계산기' : '🐣 쉬운 계산기', onclick: function () { K.sfx.click(); calc(!easy); } })
+      el('button', { class: 'kl-btn', title: easy ? '보통 계산기로' : '쉬운 계산기로', text: easy ? '🧮 보통' : '🐣 쉬움', onclick: function () { K.sfx.click(); calc(!easy); } })
     ]);
     wrap.appendChild(tools);
 
+    var sheet = el('div', { class: 'sheet' });
     var tape = el('div', { class: 'tape' });
+    var tapeBtn = el('button', { class: 'kl-btn', title: '계산 기록 보기', text: '📜 기록' });
+    sheet.appendChild(el('div', { class: 'grip' }));
+    sheet.appendChild(el('div', { class: 'head' }, [
+      el('span', { text: '📜 계산 기록' }),
+      el('button', { text: '✕', onclick: function () { sheet.classList.remove('open'); K.sfx.click(); } })
+    ]));
+    sheet.appendChild(tape);
+    tapeBtn.addEventListener('click', function () { sheet.classList.toggle('open'); K.sfx.click(); });
     var history = (K.progress().tape || []).slice();
     function drawTape() {
+      tapeBtn.textContent = '📜 기록' + (history.length ? ' ' + history.length : '');
       tape.innerHTML = '';
       if (!history.length) { tape.appendChild(el('div', { class: 'kl-hint', text: '계산한 것이 여기에 쌓여요' })); return; }
       history.slice().reverse().forEach(function (h) {
         var row = el('div', { class: 'row' }, [el('span', { text: h.line.split(' = ')[0] }), el('b', { text: '= ' + h.line.split(' = ')[1] })]);
-        row.addEventListener('click', function () { K.speak(K.numToKo(h.a) + ' ' + OPW[h.op] + ' ' + K.numToKo(h.b) + '는 ' + K.numToKo(h.r)); cur = String(h.r); fresh = true; err = false; render(); });
+        row.addEventListener('click', function () { K.speak(K.numToKo(h.a) + ' ' + OPW[h.op] + ' ' + K.numToKo(h.b) + '는 ' + K.numToKo(h.r)); cur = String(h.r); fresh = true; err = false; render(); sheet.classList.remove('open'); });
         tape.appendChild(row);
       });
     }
@@ -221,8 +262,10 @@
       drawTape();
     }
     drawTape();
-    wrap.appendChild(tape);
+    tools.appendChild(tapeBtn);
+    document.body.appendChild(sheet);
     main.appendChild(wrap);
+    document.body.classList.add('fixed');
     render();
 
     /* PC 키보드 */
@@ -251,7 +294,7 @@
     if (lv === 4) return K.randInt(1000, 9999);
     return K.pick([K.randInt(10000, 99999), K.randInt(100000, 999999), K.randInt(1000000, 99999999)]);
   }
-  function quiz(mode, total, make) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: total, make: make, onFinish: home }); }
+  function quiz(mode, total, make) { leaveFixed(); main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: total, make: make, onFinish: home }); }
 
   function readQuiz() {
     quiz('read', 8, function (i, lv) {
