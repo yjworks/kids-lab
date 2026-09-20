@@ -103,7 +103,7 @@
         var b = el('button', {}, [el('span', { text: st[0] }), el('small', { text: st[1] })]);
         b.addEventListener('click', function () {
           if (st === steps[pos]) { b.classList.add('used'); var slot = target.children[pos]; slot.classList.add('filled'); slot.innerHTML = st[0] + '<small style="font-size:14px">' + st[1] + '</small>'; pos++; K.sfx.pop(); K.speak(st[1]); if (pos === steps.length) { if (mistakes === 0) score++; K.addStar(1); K.event('correct'); K.sfx.correct(); r++; setTimeout(next, 1200); } }
-          else { mistakes++; b.classList.add('wrong'); K.sfx.wrong(); setTimeout(function () { b.classList.remove('wrong'); }, 500); }
+          else { mistakes++; b.classList.add('wrong'); K.nope('아니에요', '그 다음이 아니에요'); setTimeout(function () { b.classList.remove('wrong'); }, 500); }
         });
         pool.appendChild(b);
       });
@@ -130,7 +130,7 @@
     bins.forEach(function (b) { var e = el('div', { class: 'bin' }, [el('div', { text: b[0] }), el('div', { class: 'items' })]); e.addEventListener('click', function () { drop(b[1], e); }); binEls[b[1]] = e; room.appendChild(e); });
     box.appendChild(prompt); box.appendChild(cur); box.appendChild(room);
     function show() { if (idx >= items.length) { box.innerHTML = ''; if (mistakes <= 1 && lv < 5) K.setLevel('tidy', lv + 1); box.appendChild(el('div', { class: 'kl-result' }, [el('div', { class: 'kl-result-emoji', text: '✨' }), el('div', { class: 'kl-result-title', text: '방이 깨끗해졌어요!' }), el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '🔁 한 번 더', onclick: tidyGame }), el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: home })])])); K.sfx.win(); K.confetti(); K.event('win'); return; } prompt.textContent = '이건 어디에 넣을까요? (' + (idx + 1) + '/' + items.length + ')'; cur.textContent = items[idx][0]; }
-    function drop(kind, e) { if (idx >= items.length) return; if (items[idx][1] === kind) { e.querySelector('.items').textContent += items[idx][0]; K.sfx.correct(); K.addStar(1); K.event('correct'); idx++; show(); } else { mistakes++; e.classList.add('target'); K.sfx.wrong(); setTimeout(function () { e.classList.remove('target'); }, 400); } }
+    function drop(kind, e) { if (idx >= items.length) return; if (items[idx][1] === kind) { e.querySelector('.items').textContent += items[idx][0]; K.sfx.correct(); K.addStar(1); K.event('correct'); idx++; show(); } else { mistakes++; e.classList.add('target'); K.nope('아니에요', '여기가 아니에요'); setTimeout(function () { e.classList.remove('target'); }, 400); } }
     show(); K.speak('물건을 알맞은 곳에 정리해요');
   }
   function mannerQuiz() {

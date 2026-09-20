@@ -87,7 +87,7 @@
           item.style.top = it[2] ? '30px' : '180px';
           setTimeout(function () {
             if (c[1] === it[2]) { b.classList.add('right'); K.sfx.correct(); K.addStar(1); K.event('correct'); score++; K.speak(it[1] + '은 ' + (it[2] ? '떠요!' : '가라앉아요!')); }
-            else { b.classList.add('wrong'); K.sfx.wrong(); K.speak('아쉬워요. ' + it[1] + '은 ' + (it[2] ? '떠요' : '가라앉아요')); }
+            else { b.classList.add('wrong', 'wrong-mark'); K.nope('아니에요', false); K.speak('아니에요. ' + it[1] + '은 ' + (it[2] ? '떠요' : '가라앉아요')); }
             idx++; setTimeout(next, 1600);
           }, 1300);
         });

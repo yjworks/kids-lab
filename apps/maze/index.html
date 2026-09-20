@@ -5,21 +5,29 @@
 <title>미로 탐험</title>
 <link rel="stylesheet" href="../../shared/app.css">
 <style>
-  .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; align-items: center; }
-  canvas { background: #fff; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,.08); max-width: 100%; touch-action: none; }
-  .dpad { display: grid; grid-template-columns: repeat(3, 84px); grid-template-rows: repeat(3, 84px); gap: 8px; }
-  @media (max-width: 760px) {
-    .dpad { grid-template-columns: repeat(3, 66px); grid-template-rows: repeat(3, 66px); gap: 6px; }
-    .dpad button { font-size: 30px; border-radius: 16px; }
-    .dpad .c { font-size: 24px; }
-    .info { padding: 6px 12px; font-size: 17px; }
-    .side { gap: 8px; }
-  }
-  .dpad button { font-size: 40px; border-radius: 20px; background: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.1); }
+  /* 미로는 남는 공간을 전부 쓰고, 방향키는 화면 아래에 고정된다 */
+  .mzwrap { flex: 1 1 0; min-height: 0; display: flex; align-items: center; justify-content: center; gap: 14px; }
+  .mzwrap canvas { background: #fff; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,.08); touch-action: none; display: block; }
+  .dpad { display: grid; grid-template-columns: repeat(3, var(--pad, 84px)); grid-template-rows: repeat(3, var(--pad, 84px)); gap: 8px; flex: 0 0 auto; }
+  .dpad button { font-size: calc(var(--pad, 84px) * 0.45); border-radius: 20px; background: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.1); padding: 0; }
   .dpad button:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.1); }
-  .dpad .c { background: #ffca3a; font-size: 34px; }
-  .side { display: flex; flex-direction: column; gap: 12px; align-items: center; }
-  .info { background: #fff; border-radius: 16px; padding: 10px 16px; font-weight: 800; text-align: center; }
+  .dpad .c { background: #ffca3a; }
+  .dpad span { display: block; }
+  /* 화면이 작으면 십자 방향키 대신 한 줄짜리 방향키를 쓴다. 미로에 자리를 더 준다 */
+  .padrow { display: flex; gap: 8px; width: 100%; max-width: 520px; margin: 0 auto; flex: 0 0 auto; }
+  .padrow button { flex: 1 1 0; height: var(--rowh, 62px); border-radius: 18px; background: #fff;
+    box-shadow: 0 5px 0 rgba(0,0,0,.1); font-size: calc(var(--rowh, 62px) * 0.5); padding: 0; }
+  .padrow button:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.1); }
+  .padrow button.c { background: #ffca3a; flex: 0 0 auto; width: var(--rowh, 62px); }
+  /* 가로로 누운 화면에서는 방향키를 미로 오른쪽에 세로로 세운다 */
+  .padrow.vert { flex-direction: column; width: auto; max-width: none; height: 100%; }
+  .padrow.vert button { width: var(--rowh, 62px); height: auto; flex: 1 1 0; }
+  .padrow.vert button.c { height: var(--rowh, 62px); flex: 0 0 auto; }
+  .side { display: flex; flex-direction: column; gap: 10px; align-items: center; flex: 0 0 auto; }
+  .info { background: #fff; border-radius: 16px; padding: 8px 14px; font-weight: 800; text-align: center; font-size: 18px; }
+  .inforow { display: flex; gap: 8px; justify-content: center; align-items: center; flex: 0 0 auto; flex-wrap: wrap; }
+  .toprow { display: flex; gap: 8px; align-items: center; flex: 0 0 auto; }
+  @media (max-width: 760px) { .info { font-size: 16px; padding: 6px 10px; } }
 </style>
 </head>
 <body data-app="maze">
@@ -31,7 +39,11 @@
   K.header({ title: '미로 탐험', icon: '🧭', say: '미로 탐험' });
   var main = document.getElementById('main');
   var THEMES = [['🐰', '🥕', '토끼가 당근을 찾아가요'], ['🐶', '🦴', '강아지가 뼈다귀를 찾아가요'], ['🐝', '🌸', '벌이 꽃을 찾아가요'], ['🚀', '🌙', '로켓이 달까지 가요'], ['🐟', '🏠', '물고기가 집으로 가요'], ['🧒', '🍦', '아이스크림을 찾아가요'], ['🤖', '🔋', '로봇이 배터리를 찾아가요']];
+  var relayout = null;
+  window.addEventListener('resize', function () { if (relayout) relayout(); });
   function home() {
+    relayout = null;
+    document.body.classList.remove('fixed');
     main.innerHTML = '';
     K.menu(main, [
       { icon: '🐣', label: '작은 미로', color: '#e3f7cf', run: play.bind(null, 'small') },
@@ -48,24 +60,87 @@
     return cells;
   }
   function play(size) {
-    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    document.body.classList.add('fixed');
+    main.innerHTML = '';
     var w = size === 'small' ? 5 : size === 'mid' ? 8 : size === 'big' ? 12 : 8, h = size === 'small' ? 5 : size === 'mid' ? 7 : size === 'big' ? 9 : 7;
-    /* 방향키와 안내가 들어갈 자리를 빼고 남는 공간에 미로를 맞춘다 */
-    var wide = window.innerWidth >= 760;
-    var availW = Math.max(200, window.innerWidth - 32 - (wide ? 320 : 0));
-    var availH = Math.max(180, window.innerHeight - (wide ? 120 : 330));
-    var cellPx = Math.max(16, Math.floor(Math.min(availW / w, availH / h, 64)));
     var cells = gen(w, h); var theme = K.pick(THEMES);
     var px = 0, py = 0, moves = 0, stars = [], collected = 0, done = false;
     if (size === 'stars') { while (stars.length < 5) { var s = [K.randInt(0, w - 1), K.randInt(0, h - 1)]; if ((s[0] || s[1]) && !(s[0] === w - 1 && s[1] === h - 1) && !stars.some(function (t) { return t[0] === s[0] && t[1] === s[1]; })) stars.push(s); } }
-    var cv = el('canvas', { width: w * cellPx + 8, height: h * cellPx + 8 }); var ctx = cv.getContext('2d');
+
+    var cv = el('canvas'); var ctx = cv.getContext('2d');
+    var cellPx = 40;
     var info = el('div', { class: 'info', text: theme[2] });
-    var moveInfo = el('div', { class: 'info', text: '움직인 횟수: 0' });
+    var moveInfo = el('div', { class: 'info', text: '0번' });
+    var mzwrap = el('div', { class: 'mzwrap' }, cv);
+    var dpad = el('div', { class: 'dpad' });
+    [['', ''], ['⬆️', 0], ['', ''], ['⬅️', 3], ['🧭', 'c'], ['➡️', 1], ['', ''], ['⬇️', 2], ['', '']].forEach(function (b) {
+      if (b[0] === '') { dpad.appendChild(el('span')); return; }
+      var bt = el('button', { text: b[0], class: b[1] === 'c' ? 'c' : '' });
+      if (b[1] !== 'c') bt.addEventListener('click', function () { move(b[1]); });
+      else bt.addEventListener('click', function () { K.speak(theme[2]); });
+      dpad.appendChild(bt);
+    });
+    var padRow = el('div', { class: 'padrow' });
+    [['⬅️', 3], ['⬆️', 0], ['⬇️', 2], ['➡️', 1], ['🧭', 'c']].forEach(function (b) {
+      var bt = el('button', { text: b[0], class: b[1] === 'c' ? 'c' : '' });
+      if (b[1] !== 'c') bt.addEventListener('click', function () { move(b[1]); });
+      else bt.addEventListener('click', function () { K.speak(theme[2]); });
+      padRow.appendChild(bt);
+    });
+    var side = el('div', { class: 'side' });
+    var padBox = el('div', { class: 'inforow' }, [dpad, padRow]);
+    main.appendChild(el('div', { class: 'toprow' }, [K.backButton(home), info, moveInfo]));
+    main.appendChild(mzwrap);
+    main.appendChild(side);
+    main.appendChild(padBox);
+
+    /* 남는 자리를 재서 칸 크기를 정한다. 화면이 넓으면 방향키를 미로 오른쪽에 둔다 */
+    function layout() {
+      /* 넓고 높은 화면에서만 십자 방향키를 미로 옆에 둔다 */
+      var wide = window.innerWidth >= 900 && window.innerHeight >= 560;
+      /* 누운 화면: 방향키를 오른쪽에 세로로 */
+      var vert = !wide && window.innerWidth >= 600 && window.innerHeight < 520;
+      var beside = wide || vert;
+      if (beside && padBox.parentNode !== mzwrap) mzwrap.appendChild(padBox);
+      if (!beside && padBox.parentNode !== main) main.appendChild(padBox);
+      padBox.style.height = vert ? '100%' : '';
+      dpad.style.display = wide ? '' : 'none';
+      padRow.style.display = wide ? 'none' : '';
+      padRow.classList.toggle('vert', vert);
+      var pad = 84;
+      dpad.style.setProperty('--pad', pad + 'px');
+      var rowh = vert ? Math.max(40, Math.min(62, Math.floor(window.innerHeight * 0.16)))
+                      : Math.max(46, Math.min(70, Math.floor(window.innerHeight * 0.11)));
+      padRow.style.setProperty('--rowh', rowh + 'px');
+      var r = mzwrap.getBoundingClientRect();
+      var availW = r.width - (wide ? pad * 3 + 30 : vert ? rowh + 22 : 0) - 8;
+      var availH = r.height - 8;
+      cellPx = Math.max(18, Math.floor(Math.min(availW / w, availH / h)));
+      var cw = w * cellPx + 8, ch = h * cellPx + 8;
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.style.width = cw + 'px'; cv.style.height = ch + 'px';
+      cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      draw();
+    }
+    relayout = layout;
     function draw() {
-      ctx.clearRect(0, 0, cv.width, cv.height); ctx.save(); ctx.translate(4, 4);
+      ctx.save();
+      ctx.setTransform(cv.width / (w * cellPx + 8), 0, 0, cv.width / (w * cellPx + 8), 0, 0);
+      ctx.clearRect(0, 0, w * cellPx + 8, h * cellPx + 8);
+      ctx.translate(4, 4);
       ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w * cellPx, h * cellPx);
-      ctx.strokeStyle = '#6a4c93'; ctx.lineWidth = 5; ctx.lineCap = 'round';
-      for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) { var c = cells[y][x]; var X = x * cellPx, Y = y * cellPx; ctx.beginPath(); if (c.walls[0]) { ctx.moveTo(X, Y); ctx.lineTo(X + cellPx, Y); } if (c.walls[1]) { ctx.moveTo(X + cellPx, Y); ctx.lineTo(X + cellPx, Y + cellPx); } if (c.walls[2]) { ctx.moveTo(X, Y + cellPx); ctx.lineTo(X + cellPx, Y + cellPx); } if (c.walls[3]) { ctx.moveTo(X, Y); ctx.lineTo(X, Y + cellPx); } ctx.stroke(); }
+      ctx.strokeStyle = '#6a4c93'; ctx.lineWidth = Math.max(3, Math.round(cellPx * 0.12)); ctx.lineCap = 'round';
+      for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+        var c = cells[y][x]; var X = x * cellPx, Y = y * cellPx; ctx.beginPath();
+        if (c.walls[0]) { ctx.moveTo(X, Y); ctx.lineTo(X + cellPx, Y); }
+        if (c.walls[1]) { ctx.moveTo(X + cellPx, Y); ctx.lineTo(X + cellPx, Y + cellPx); }
+        if (c.walls[2]) { ctx.moveTo(X, Y + cellPx); ctx.lineTo(X + cellPx, Y + cellPx); }
+        if (c.walls[3]) { ctx.moveTo(X, Y); ctx.lineTo(X, Y + cellPx); }
+        ctx.stroke();
+      }
+      /* 도착 칸을 눈에 띄게 칠한다 */
+      ctx.fillStyle = '#fff3c4'; ctx.fillRect((w - 1) * cellPx + 3, (h - 1) * cellPx + 3, cellPx - 6, cellPx - 6);
       ctx.font = Math.floor(cellPx * 0.7) + 'px "Segoe UI Emoji","Apple Color Emoji",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       stars.forEach(function (s) { ctx.fillText('⭐', s[0] * cellPx + cellPx / 2, s[1] * cellPx + cellPx / 2 + 2); });
       ctx.fillText(theme[1], (w - 1) * cellPx + cellPx / 2, (h - 1) * cellPx + cellPx / 2 + 2);
@@ -74,30 +149,26 @@
     }
     function move(d) {
       if (done) return; var c = cells[py][px]; var dd = [[0, -1], [1, 0], [0, 1], [-1, 0]][d];
-      if (c.walls[d]) { K.sfx.wrong(); return; }
-      px += dd[0]; py += dd[1]; moves++; moveInfo.textContent = '움직인 횟수: ' + moves; K.sfx.pop();
+      if (c.walls[d]) { K.sfx.wrong(); cv.style.transform = 'translateX(4px)'; setTimeout(function () { cv.style.transform = ''; }, 120); return; }
+      px += dd[0]; py += dd[1]; moves++; moveInfo.textContent = moves + '번'; K.sfx.pop();
       stars = stars.filter(function (s) { if (s[0] === px && s[1] === py) { collected++; K.sfx.star(); K.addStar(1); return false; } return true; });
       draw();
-      if (px === w - 1 && py === h - 1) { if (size === 'stars' && stars.length) { K.toast('별을 모두 모아야 해요! ⭐ ' + stars.length + '개 남음'); K.speak('별을 모두 모아야 해요'); return; } done = true; K.event('win'); K.addStar(2); K.sfx.win(); K.confetti(); K.setProgress({ wins: (K.progress().wins || 0) + 1 }); info.textContent = '🎉 도착했어요! ' + moves + '번 만에!'; K.speak('도착했어요! 잘했어요'); side.appendChild(el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '🔁 새 미로', onclick: function () { play(size); } }), el('button', { class: 'kl-btn', text: '🏠', onclick: home })])); }
+      if (px === w - 1 && py === h - 1) {
+        if (size === 'stars' && stars.length) { K.toast('별을 모두 모아야 해요! ⭐ ' + stars.length + '개 남음'); K.speak('별을 모두 모아야 해요'); return; }
+        done = true; K.event('win'); K.addStar(2); K.sfx.win(); K.confetti(); K.setProgress({ wins: (K.progress().wins || 0) + 1 });
+        info.textContent = '🎉 도착! ' + moves + '번 만에!'; K.speak('도착했어요! 잘했어요');
+        side.appendChild(el('div', { class: 'kl-row', style: 'margin:0' }, [
+          el('button', { class: 'kl-btn primary', text: '🔁 새 미로', onclick: function () { play(size); } }),
+          el('button', { class: 'kl-btn', text: '🏠', onclick: home })
+        ]));
+        layout();
+      }
     }
-    var dpad = el('div', { class: 'dpad' });
-    [['', ''], ['⬆️', 0], ['', ''], ['⬅️', 3], ['🧭', 'c'], ['➡️', 1], ['', ''], ['⬇️', 2], ['', '']].forEach(function (b) { if (b[0] === '') { dpad.appendChild(el('span')); return; } var bt = el('button', { text: b[0], class: b[1] === 'c' ? 'c' : '' }); if (b[1] !== 'c') bt.addEventListener('click', function () { move(b[1]); }); else bt.addEventListener('click', function () { K.speak(theme[2]); }); dpad.appendChild(bt); });
-    var side = el('div', { class: 'side' }, [info, moveInfo, dpad, el('div', { class: 'kl-hint', text: '키보드 방향키로도 움직여요' })]);
-    main.appendChild(el('div', { class: 'wrap' }, [cv, side]));
     var keyH = function (e) { var m = { ArrowUp: 0, ArrowRight: 1, ArrowDown: 2, ArrowLeft: 3 }[e.key]; if (m != null) { e.preventDefault(); if (document.body.contains(cv)) move(m); else window.removeEventListener('keydown', keyH); } };
     window.addEventListener('keydown', keyH);
     var sx, sy; cv.addEventListener('pointerdown', function (e) { sx = e.clientX; sy = e.clientY; });
     cv.addEventListener('pointerup', function (e) { if (sx == null) return; var dx = e.clientX - sx, dy = e.clientY - sy; if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return; move(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 1 : 3) : (dy > 0 ? 2 : 0)); sx = null; });
-    draw();
-    /* 방향키까지 한 화면에 들어오도록 실제 높이를 재서 줄인다 */
-    (function fit() {
-      var guard = 0;
-      while (document.documentElement.scrollHeight > document.documentElement.clientHeight + 2 && cellPx > 16 && guard++ < 40) {
-        cellPx -= 3;
-        cv.width = w * cellPx + 8; cv.height = h * cellPx + 8;
-        draw();
-      }
-    })();
+    layout();
     K.speak(theme[2]); try { cv.focus(); } catch (e) { }
   }
   home();

@@ -287,6 +287,31 @@
     requestAnimationFrame(function () { t.classList.add('show'); });
     setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 400); }, ms || 2200);
   }
+  /* 5세 아이는 빨간색만으로는 틀린 줄 모른다.
+     화면 가운데에 큰 ✗ 를 띄우고, 소리와 말로도 알려 준다. */
+  var nopeAt = 0;
+  function nope(msg, say) {
+    var b = el('div', { class: 'kl-nope' }, [
+      el('div', { class: 'mark', text: '✗' }),
+      el('div', { class: 'txt', text: msg || '아니에요' })
+    ]);
+    document.body.appendChild(b);
+    requestAnimationFrame(function () { b.classList.add('show'); });
+    setTimeout(function () { b.classList.remove('show'); setTimeout(function () { b.remove(); }, 300); }, 850);
+    sfx.wrong();
+    var now = Date.now();
+    if (say !== false && now - nopeAt > 1200) { nopeAt = now; speak(typeof say === 'string' ? say : '아니에요'); }
+  }
+  function yep(msg, say) {
+    var b = el('div', { class: 'kl-nope good' }, [
+      el('div', { class: 'mark', text: '○' }),
+      el('div', { class: 'txt', text: msg || '맞았어요!' })
+    ]);
+    document.body.appendChild(b);
+    requestAnimationFrame(function () { b.classList.add('show'); });
+    setTimeout(function () { b.classList.remove('show'); setTimeout(function () { b.remove(); }, 300); }, 750);
+    if (say) speak(typeof say === 'string' ? say : '맞았어요');
+  }
   function floatStar(n) {
     var s = el('div', { class: 'kl-floatstar', text: '+' + n + ' ⭐' });
     document.body.appendChild(s);
@@ -389,6 +414,8 @@
       if (q.say) { promptEl.classList.add('speakable'); promptEl.addEventListener('click', function () { speak(q.say, { lang: q.sayLang || 'ko-KR' }); }); }
       stage.appendChild(promptEl);
       if (q.sub) stage.appendChild(el('div', { class: 'kl-sub', html: q.sub }));
+      var fb = el('div', { class: 'kl-feedback' });
+      stage.appendChild(fb);
       var grid = el('div', { class: 'kl-choices cols' + (q.cols || Math.min(q.choices.length, 4)) });
       q.choices.forEach(function (c) {
         var b = el('button', { class: 'kl-choice' + (c.cls ? ' ' + c.cls : ''), html: c.html });
@@ -397,14 +424,27 @@
           if (c.say) speak(c.say, { lang: c.sayLang || q.sayLang || 'ko-KR' });
           if (c.correct) {
             locked = true; sfx.correct(); b.classList.add('right');
+            b.classList.add('right-mark');
+            fb.className = 'kl-feedback good'; fb.textContent = tries === 0 ? '⭕ 맞았어요!' : '⭕ 이제 맞았어요!';
             dots.children[idx].className = tries === 0 ? 'ok' : 'ok2';
             if (tries === 0) score++;
             addStar(1); event(APP_ID, "correct");
             if (q.onCorrect) q.onCorrect();
             setTimeout(function () { idx++; next(); }, 900);
           } else {
-            tries++; sfx.wrong(); b.classList.add('wrong');
+            tries++;
+            b.classList.add('wrong', 'wrong-mark');
+            nope('아니에요', tries === 1 ? '아니에요. 다시 한번 골라 볼까요?' : '아니에요');
+            fb.className = 'kl-feedback bad';
+            fb.textContent = '❌ 아니에요. 다시 골라 보세요' + (tries >= 2 ? ' (노란 칸을 보세요)' : '');
             if (q.onWrong) q.onWrong(c);
+            /* 두 번 틀리면 정답 칸을 살짝 알려 준다 */
+            if (tries >= 2) {
+              var kids = grid.children;
+              for (var gi = 0; gi < kids.length; gi++) {
+                if (q.choices[gi] && q.choices[gi].correct) kids[gi].classList.add('hintme');
+              }
+            }
             setTimeout(function () { b.classList.add('dim'); b.classList.remove('wrong'); }, 500);
           }
         });
@@ -465,7 +505,7 @@
     missions: missions, checkMissions: checkMissions, MISSION_POOL: MISSION_POOL,
     STICKERS: STICKERS, STICKER_COST: STICKER_COST,
     sfx: sfx, speak: speak, speakEn: speakEn,
-    toast: toast, confetti: confetti, header: header, runQuiz: runQuiz, buildRound: buildRound, qkey: qkey, menu: menu, backButton: backButton,
+    toast: toast, nope: nope, yep: yep, confetti: confetti, header: header, runQuiz: runQuiz, buildRound: buildRound, qkey: qkey, menu: menu, backButton: backButton,
     numToKo: numToKo, comma: comma, josa: josa,
     el: el, esc: esc, randInt: randInt, pick: pick, shuffle: shuffle, sample: sample, notify: notify, APP_ID: APP_ID
   };

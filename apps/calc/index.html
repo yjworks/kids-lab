@@ -44,6 +44,8 @@
            box-shadow: 0 -12px 36px rgba(0,0,0,.28); transform: translateY(102%); transition: transform .26s ease;
            z-index: 60; display: flex; flex-direction: column; max-height: 62%; }
   .sheet.open { transform: none; }
+  .sheet-back { position: fixed; inset: 0; background: rgba(0,0,0,.28); z-index: 55; opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .sheet-back.on { opacity: 1; pointer-events: auto; }
   .sheet .head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 6px; font-weight: 800; font-size: 20px; }
   .sheet .head button { background: #ff595e; color: #fff; border-radius: 12px; width: 52px; height: 40px; font-size: 22px; font-weight: 900; }
   .sheet .grip { width: 44px; height: 5px; border-radius: 3px; background: #ddd; margin: 8px auto 0; }
@@ -77,6 +79,7 @@
   function leaveFixed() {
     document.body.classList.remove('fixed');
     var sh = document.querySelector('.sheet'); if (sh) sh.remove();
+    var bd = document.querySelector('.sheet-back'); if (bd) bd.remove();
   }
   function home() {
     leaveFixed();
@@ -140,7 +143,7 @@
       screen.classList.toggle('err', err);
       if (err) {
         numEl.style.fontSize = ''; numEl.textContent = err;
-        readEl.textContent = '← 나 AC를 눌러요'; exprEl.textContent = ''; return;
+        readEl.textContent = '아무 숫자나 눌러서 다시 시작해요'; exprEl.textContent = ''; return;
       }
       numEl.textContent = show(cur);
       readEl.textContent = K.numToKo(cur);
@@ -152,8 +155,15 @@
       if (speakOn) K.speak(say || msg);
       K.toast('⚠️ ' + msg, 3000);
     }
+    /* 오류가 난 뒤 숫자를 눌러도 아무 반응이 없어 먹통처럼 보였다.
+       이제는 어떤 키든 누르면 오류를 풀고 새로 시작한다. */
+    function clearErr() {
+      if (!err) return false;
+      err = false; cur = '0'; acc = null; op = null; fresh = true; render();
+      return true;
+    }
     function pressDigit(d) {
-      if (err) return;
+      clearErr();
       if (fresh) { cur = (d === '.') ? '0.' : d; fresh = false; }
       else {
         if (d === '.' && cur.indexOf('.') >= 0) return;
@@ -165,7 +175,7 @@
       render();
     }
     function setOp(o) {
-      if (err) return;
+      clearErr();
       if (acc !== null && !fresh) { if (!equals(true)) return; }
       acc = parseFloat(cur); op = o; fresh = true;
       K.sfx.click();
@@ -173,7 +183,8 @@
       render();
     }
     function equals(chain) {
-      if (err || acc === null || op === null) return true;
+      if (clearErr()) return true;
+      if (acc === null || op === null) return true;
       var a = acc, b = parseFloat(cur), r;
       if (op === '÷' && b === 0) {
         setErr('0으로 나눌 수 없어요', '영으로는 나눌 수 없어요. 다른 수로 나눠 볼까요?');
@@ -200,14 +211,14 @@
     }
     function clearAll() { cur = '0'; acc = null; op = null; fresh = true; err = false; K.sfx.click(); render(); }
     function back() {
-      if (err) { err = false; render(); return; }
+      if (clearErr()) return;
       if (fresh) return;
       cur = cur.length > 1 ? cur.slice(0, -1) : '0';
       if (cur === '-' || cur === '') cur = '0';
       K.sfx.pop(); render();
     }
-    function negate() { if (err) return; cur = String(clean(-parseFloat(cur))); K.sfx.pop(); render(); }
-    function percent() { if (err) return; cur = String(clean(parseFloat(cur) / 100)); K.sfx.pop(); render(); }
+    function negate() { clearErr(); cur = String(clean(-parseFloat(cur))); K.sfx.pop(); render(); }
+    function percent() { clearErr(); cur = String(clean(parseFloat(cur) / 100)); K.sfx.pop(); render(); }
 
     var keys = el('div', { class: 'keys' });
     var layout = easy
@@ -252,16 +263,18 @@
     ]);
     wrap.appendChild(tools);
 
+    var backdrop = el('div', { class: 'sheet-back' });
+    backdrop.addEventListener('click', function () { sheet.classList.remove('open'); backdrop.classList.remove('on'); });
     var sheet = el('div', { class: 'sheet' });
     var tape = el('div', { class: 'tape' });
     var tapeBtn = el('button', { class: 'kl-btn', title: '계산 기록 보기', text: '📜 기록' });
     sheet.appendChild(el('div', { class: 'grip' }));
     sheet.appendChild(el('div', { class: 'head' }, [
       el('span', { text: '📜 계산 기록' }),
-      el('button', { text: '✕', onclick: function () { sheet.classList.remove('open'); K.sfx.click(); } })
+      el('button', { text: '✕', onclick: function () { sheet.classList.remove('open'); backdrop.classList.remove('on'); K.sfx.click(); } })
     ]));
     sheet.appendChild(tape);
-    tapeBtn.addEventListener('click', function () { sheet.classList.toggle('open'); K.sfx.click(); });
+    tapeBtn.addEventListener('click', function () { var on = !sheet.classList.contains('open'); sheet.classList.toggle('open', on); backdrop.classList.toggle('on', on); K.sfx.click(); });
     var history = (K.progress().tape || []).slice();
     function drawTape() {
       tapeBtn.textContent = '📜 기록' + (history.length ? ' ' + history.length : '');
@@ -269,7 +282,7 @@
       if (!history.length) { tape.appendChild(el('div', { class: 'kl-hint', text: '계산한 것이 여기에 쌓여요' })); return; }
       history.slice().reverse().forEach(function (h) {
         var row = el('div', { class: 'row' }, [el('span', { text: h.line.split(' = ')[0] }), el('b', { text: '= ' + h.line.split(' = ')[1] })]);
-        row.addEventListener('click', function () { K.speak(K.numToKo(h.a) + ' ' + OPW[h.op] + ' ' + K.numToKo(h.b) + '는 ' + K.numToKo(h.r)); cur = String(h.r); fresh = true; err = false; render(); sheet.classList.remove('open'); });
+        row.addEventListener('click', function () { K.speak(K.numToKo(h.a) + ' ' + OPW[h.op] + ' ' + K.numToKo(h.b) + '는 ' + K.numToKo(h.r)); cur = String(h.r); fresh = true; err = false; render(); sheet.classList.remove('open'); backdrop.classList.remove('on'); });
         tape.appendChild(row);
       });
     }
@@ -281,7 +294,7 @@
     }
     drawTape();
     tools.appendChild(tapeBtn);
-    document.body.appendChild(sheet);
+    document.body.appendChild(backdrop); document.body.appendChild(sheet);
     main.appendChild(wrap);
     document.body.classList.add('fixed');
     render();

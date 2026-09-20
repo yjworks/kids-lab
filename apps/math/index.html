@@ -85,7 +85,7 @@
       for (var k = 0; k < n; k++) { var b = el('button', { text: e }); b.addEventListener('click', function () { if (this.classList.contains('hit')) return; this.classList.add('hit'); hit++; cnt.textContent = hit; K.sfx.pop(); K.speak(KNUM[hit]); }); board.appendChild(b); }
       var ask = el('div', { class: 'kl-prompt', text: '모두 몇 개?' });
       var choices = el('div', { class: 'kl-choices cols4' });
-      K.shuffle([n].concat(wrongs(n, 1, 10, 3))).forEach(function (x) { var c = el('button', { class: 'kl-choice', text: String(x) }); c.addEventListener('click', function () { if (x === n) { c.classList.add('right'); K.sfx.correct(); K.addStar(1); K.event('correct'); score++; round++; setTimeout(next, 800); } else { c.classList.add('wrong'); K.sfx.wrong(); setTimeout(function () { c.classList.add('dim'); }, 400); } }); choices.appendChild(c); });
+      K.shuffle([n].concat(wrongs(n, 1, 10, 3))).forEach(function (x) { var c = el('button', { class: 'kl-choice', text: String(x) }); c.addEventListener('click', function () { if (x === n) { c.classList.add('right'); K.sfx.correct(); K.addStar(1); K.event('correct'); score++; round++; setTimeout(next, 800); } else { c.classList.add('wrong', 'wrong-mark'); K.nope('아니에요'); setTimeout(function () { c.classList.add('dim'); }, 400); } }); choices.appendChild(c); });
       box.appendChild(p); box.appendChild(board); box.appendChild(cnt); box.appendChild(ask); box.appendChild(choices);
       K.speak('하나씩 눌러서 세어 보세요');
     }

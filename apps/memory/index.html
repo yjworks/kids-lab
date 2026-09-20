@@ -106,7 +106,7 @@
         box.querySelector('.kl-prompt').textContent = '무엇이 사라졌을까요?';
         K.speak('무엇이 사라졌을까요?');
         var ch = el('div', { class: 'kl-choices cols4', style: 'margin-top:14px' });
-        K.shuffle([goneItem].concat(K.sample(SETS.animals.concat(SETS.fruits, SETS.vehicles), 3, items))).forEach(function (x) { var b = el('button', { class: 'kl-choice', text: x }); b.addEventListener('click', function () { if (x === goneItem) { b.classList.add('right'); K.sfx.correct(); K.addStar(1); K.event('correct'); score++; round++; setTimeout(next, 800); } else { b.classList.add('wrong'); K.sfx.wrong(); setTimeout(function () { b.classList.add('dim'); }, 400); } }); ch.appendChild(b); });
+        K.shuffle([goneItem].concat(K.sample(SETS.animals.concat(SETS.fruits, SETS.vehicles), 3, items))).forEach(function (x) { var b = el('button', { class: 'kl-choice', text: x }); b.addEventListener('click', function () { if (x === goneItem) { b.classList.add('right'); K.sfx.correct(); K.addStar(1); K.event('correct'); score++; round++; setTimeout(next, 800); } else { b.classList.add('wrong', 'wrong-mark'); K.nope('아니에요'); setTimeout(function () { b.classList.add('dim'); }, 400); } }); ch.appendChild(b); });
         box.appendChild(ch);
       }, 2500 + lv * 300);
       K.speak('잘 기억해요');

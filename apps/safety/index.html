@@ -58,7 +58,7 @@
     btn.addEventListener('click', function () {
       if (busy) return; busy = true; var kid = road.querySelector('.kid');
       if (state === 'green') { kid.style.bottom = '160px'; K.sfx.correct(); K.addStar(1); K.event('correct'); score++; msg.textContent = '잘 건넜어요! 👏'; K.speak('잘 건넜어요'); }
-      else { K.sfx.wrong(); msg.textContent = state === 'red' ? '빨간불! 멈춰야 해요 ⛔' : '노란불은 기다려요 ⏳'; K.speak(msg.textContent); }
+      else { K.nope(state === 'red' ? '빨간불이에요!' : '아직이에요!', false); msg.textContent = state === 'red' ? '❌ 빨간불! 멈춰야 해요 ⛔' : '❌ 노란불은 기다려요 ⏳'; K.speak(msg.textContent); }
       round++;
       setTimeout(function () { kid.style.transition = 'none'; kid.style.bottom = '-10px'; setTimeout(function () { kid.style.transition = 'bottom 2s linear'; }, 50); busy = false; msg.textContent = '초록불일 때만 건너요! (' + round + '/' + total + ')'; if (round >= total) { clearInterval(timer); box.innerHTML = ''; var lv = K.getLevel('light'); if (score >= 4 && lv < 5) K.setLevel('light', lv + 1); box.appendChild(el('div', { class: 'kl-result' }, [el('div', { class: 'kl-result-emoji', text: score >= 4 ? '🏆' : '🙂' }), el('div', { class: 'kl-result-title', text: score + ' / ' + total + ' 안전하게 건넜어요' }), el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '🔁 한 번 더', onclick: lightGame }), el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: home })])])); if (score >= 4) { K.sfx.win(); K.confetti(); } } }, 2200);
     });
@@ -94,7 +94,7 @@
         b.addEventListener('click', function () {
           K.sfx.pop();
           if (k === '지우기') { typed = typed.slice(0, -1); }
-          else if (k === '📞') { if (typed === c[1]) { K.sfx.correct(); K.addStar(1); K.event('correct'); score++; K.speak(c[1] + ' 맞아요! 잘했어요'); round++; setTimeout(next, 1200); } else { K.sfx.wrong(); K.speak('다시 눌러봐요. ' + c[0].replace(/^\S+\s/, '') + '. ' + c[1].split('').join(' ')); typed = ''; } }
+          else if (k === '📞') { if (typed === c[1]) { K.sfx.correct(); K.addStar(1); K.event('correct'); score++; K.speak(c[1] + ' 맞아요! 잘했어요'); round++; setTimeout(next, 1200); } else { K.nope('아니에요', false); K.speak('아니에요. 다시 눌러봐요. ' + c[0].replace(/^\S+\s/, '') + '. ' + c[1].split('').join(' ')); typed = ''; } }
           else if (typed.length < 3) { typed += k; K.speak(k); }
           dial.textContent = typed;
         });
