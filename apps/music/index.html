@@ -5,20 +5,46 @@
 <title>음악 놀이</title>
 <link rel="stylesheet" href="../../shared/app.css">
 <style>
-  .piano { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
-  .key { width: 80px; height: 200px; border-radius: 0 0 18px 18px; border: 3px solid #333; background: #fff; font-size: 22px; font-weight: 900; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 12px; gap: 4px; transition: .08s; }
+  /* 건반은 화면 맨 아래 고정. 악보만 위에서 스크롤된다. */
+  .keyrow { flex: 0 1 auto; min-height: 76px; display: flex; justify-content: center; gap: 5px; width: 100%;
+    height: clamp(112px, 28vh, 200px); padding: 0 2px; }
+  .key { flex: 1 1 0; min-width: 0; max-width: 88px; height: 100%;
+    border-radius: 0 0 16px 16px; border: 3px solid #333; background: #fff;
+    font-size: clamp(13px, 3.4vw, 20px); font-weight: 900;
+    display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+    padding-bottom: 8px; gap: 2px; transition: .08s; }
   .key:active, .key.on { background: #ffca3a; transform: translateY(4px); }
-  .key .n { font-size: 34px; }
+  .key .n { font-size: clamp(20px, 5vw, 32px); }
+  .key .num { font-size: 12px; color: #999; }
   .drums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; max-width: 600px; margin: 0 auto; }
   .drums button { aspect-ratio: 1; border-radius: 50%; font-size: 60px; background: #fff; box-shadow: 0 6px 0 rgba(0,0,0,.12); }
   .drums button:active { transform: scale(.92); }
   .song-list button { display: block; width: 100%; text-align: left; margin-bottom: 8px; }
-  .sheet { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; font-size: 22px; font-weight: 800; }
-  .sheet span { background: #fff; padding: 6px 12px; border-radius: 12px; }
-  .sheet span.cur { background: #ffca3a; }
+  .notes { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; font-size: 22px; font-weight: 800; }
+  .notes span { background: #fff; padding: 5px 10px; border-radius: 12px; }
+  .notes span.cur { background: #ffca3a; }
+  .scroller { flex: 1 1 0; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 2px; }
+  .foot { flex: 0 0 auto; }
   .beat { display: flex; gap: 10px; justify-content: center; margin: 12px 0; }
   .beat i { width: 60px; height: 60px; border-radius: 14px; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 30px; font-style: normal; }
   .beat i.on { background: #ffca3a; transform: scale(1.1); }
+  @media (max-width: 760px) {
+    .notes { font-size: 18px; gap: 4px; }
+    .notes span { padding: 4px 7px; }
+    .drums button { font-size: 40px; }
+  }
+  /* 가로모드처럼 세로가 아주 짧으면 건반을 낮추고 악보 자리를 남긴다 */
+  @media (max-height: 470px) {
+    .keyrow { height: 88px; }
+    .key { font-size: 13px; padding-bottom: 3px; border-width: 2px; }
+    .key .n { font-size: 17px; }
+    .key .num { display: none; }
+    body.fixed main { gap: 3px; padding: 4px 8px; }
+    body.fixed .kl-prompt { font-size: 17px; margin: 0; }
+    body.fixed .kl-hint { font-size: 14px; margin: 0; }
+    body.fixed .foot .kl-row { margin: 0; }
+    body.fixed .foot .speak-btn { font-size: 15px; padding: 5px 12px; }
+  }
 </style>
 </head>
 <body data-app="music">
@@ -39,8 +65,11 @@
     { name: '비행기', notes: '미레도레미미미 레레레미솔솔 미레도레미미미 레레미레도' },
     { name: '작은 동물원', notes: '도미솔도 솔미도 레파라 파레 도미솔도 솔미도' }
   ];
+  /* 건반이 붙는 화면에서만 본문 스크롤을 잠근다 */
+  function fixed(on) { document.body.classList.toggle('fixed', !!on); }
   function noteIdx(ch, prev) { var i = NOTES.findIndex(function (n) { return n[0] === ch; }); if (ch === '도' && prev != null && prev >= 5) return 7; return i; }
   function home() {
+    fixed(false);
     main.innerHTML = '';
     K.menu(main, [
       { icon: '🎹', label: '피아노', color: '#d0f4de', run: piano },
@@ -51,22 +80,26 @@
       { icon: '🎼', label: '어떤 음일까?', mode: 'ear', color: '#ece6f5', run: earQuiz }
     ]);
   }
-  function quiz(mode, total, make) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: total, make: make, autoSay: false, onFinish: home }); }
+  function quiz(mode, total, make) { fixed(false); main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: total, make: make, autoSay: false, onFinish: home }); }
   function buildPiano(onPlay) {
-    var p = el('div', { class: 'piano' });
-    var keys = NOTES.map(function (n, i) { var k = el('button', { class: 'key' }, [el('span', { class: 'n', text: n[2] }), el('span', { text: n[0] }), el('span', { text: String(i + 1), style: 'font-size:14px;color:#999' })]); k.addEventListener('pointerdown', function () { playKey(i); if (onPlay) onPlay(i); }); p.appendChild(k); return k; });
+    var p = el('div', { class: 'keyrow' });
+    var keys = NOTES.map(function (n, i) { var k = el('button', { class: 'key' }, [el('span', { class: 'n', text: n[2] }), el('span', { text: n[0] }), el('span', { class: 'num', text: String(i + 1) })]); k.addEventListener('pointerdown', function (e) { e.preventDefault(); playKey(i); if (onPlay) onPlay(i); }); p.appendChild(k); return k; });
     function playKey(i) { K.sfx.note(NOTES[i][1], 0.5); keys[i].classList.add('on'); setTimeout(function () { keys[i].classList.remove('on'); }, 200); }
     var handler = function (e) { var i = KEYMAP[e.key.toLowerCase()]; if (i != null && document.body.contains(p)) { playKey(i); if (onPlay) onPlay(i); } else if (!document.body.contains(p)) window.removeEventListener('keydown', handler); };
     window.addEventListener('keydown', handler);
     return { el: p, play: playKey };
   }
   function piano() {
+    fixed(true);
     main.innerHTML = ''; main.appendChild(K.backButton(home));
-    main.appendChild(el('div', { class: 'kl-hint', text: '건반을 눌러요! 키보드 1~8 또는 A S D F G H J K' }));
+    var box = el('div', { class: 'scroller' });
+    box.appendChild(el('div', { class: 'kl-hint', text: '건반을 눌러요! 키보드 1~8 또는 A S D F G H J K' }));
+    main.appendChild(box);
     var count = 0; var pn = buildPiano(function () { count++; if (count === 20) { K.addStar(1); K.event('play'); } });
     main.appendChild(pn.el);
   }
   function drums() {
+    fixed(false);
     main.innerHTML = ''; main.appendChild(K.backButton(home));
     var d = el('div', { class: 'drums' });
     var count = 0;
@@ -79,6 +112,7 @@
     var obs = new MutationObserver(function () { if (!document.body.contains(row)) { clearInterval(timer); obs.disconnect(); } }); obs.observe(main, { childList: true });
   }
   function songs() {
+    fixed(false);
     main.innerHTML = ''; main.appendChild(K.backButton(home));
     main.appendChild(el('div', { class: 'kl-prompt', text: '어떤 노래를 칠까요?' }));
     var list = el('div', { class: 'song-list' });
@@ -86,20 +120,37 @@
     main.appendChild(list);
   }
   function playSong(s) {
+    fixed(true);
     main.innerHTML = ''; main.appendChild(K.backButton(songs));
-    main.appendChild(el('div', { class: 'kl-prompt', text: '🎵 ' + s.name }));
+    /* 위: 악보(스크롤) / 아래: 건반(고정) */
+    var box = el('div', { class: 'scroller' });
+    box.appendChild(el('div', { class: 'kl-prompt', text: '🎵 ' + s.name }));
     var seq = []; var prev = null; s.notes.replace(/\s/g, '').split('').forEach(function (ch) { var i = noteIdx(ch, prev); seq.push(i); prev = i; });
     var pos = 0, wrong = 0;
-    var sheet = el('div', { class: 'sheet' }); seq.forEach(function (i, k) { sheet.appendChild(el('span', { text: NOTES[i][2] + NOTES[i][0], class: k === 0 ? 'cur' : '' })); });
-    main.appendChild(sheet);
+    var sheet = el('div', { class: 'notes' }); seq.forEach(function (i, k) { sheet.appendChild(el('span', { text: NOTES[i][2] + NOTES[i][0], class: k === 0 ? 'cur' : '' })); });
+    box.appendChild(sheet);
+    main.appendChild(box);
+    var foot = el('div', { class: 'foot' });
+    main.appendChild(foot);
+    /* 지금 칠 음이 항상 보이게 악보를 따라 스크롤한다 */
+    function follow() { var c = sheet.children[pos]; if (!c) return; var cb = c.getBoundingClientRect(), bb = box.getBoundingClientRect(); if (cb.top < bb.top + 4 || cb.bottom > bb.bottom - 4) box.scrollTop += cb.top - bb.top - bb.height / 2 + cb.height / 2; }
     var pn = buildPiano(function (i) {
       if (pos >= seq.length) return;
-      if (i === seq[pos]) { sheet.children[pos].classList.remove('cur'); sheet.children[pos].style.background = '#c9f0a8'; pos++; if (sheet.children[pos]) sheet.children[pos].classList.add('cur'); if (pos === seq.length) { K.sfx.win(); K.confetti(); K.addStar(2); K.event('win'); K.event('correct'); var lv = K.getLevel('song'); if (wrong <= 3 && lv < 5) K.setLevel('song', lv + 1); K.speak('와! 노래를 다 쳤어요'); main.appendChild(el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '🔁 다시', onclick: function () { playSong(s); } }), el('button', { class: 'kl-btn', text: '🎵 다른 노래', onclick: songs })])); } }
+      if (i === seq[pos]) {
+        sheet.children[pos].classList.remove('cur'); sheet.children[pos].style.background = '#c9f0a8'; pos++;
+        if (sheet.children[pos]) { sheet.children[pos].classList.add('cur'); follow(); }
+        if (pos === seq.length) {
+          K.sfx.win(); K.confetti(); K.addStar(2); K.event('win'); K.event('correct');
+          var lv = K.getLevel('song'); if (wrong <= 3 && lv < 5) K.setLevel('song', lv + 1);
+          K.speak('와! 노래를 다 쳤어요');
+          foot.innerHTML = '';
+          foot.appendChild(el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '🔁 다시', onclick: function () { playSong(s); } }), el('button', { class: 'kl-btn', text: '🎵 다른 노래', onclick: songs })]));
+        }
+      }
       else { wrong++; sheet.children[pos].style.background = '#ffc9c9'; setTimeout(function () { sheet.children[pos] && (sheet.children[pos].style.background = ''); }, 300); }
     });
-    main.appendChild(el('div', { style: 'margin-top:14px' }, pn.el));
-    main.appendChild(el('div', { class: 'kl-row' }, el('button', { class: 'speak-btn', text: '🔊 노래 들어보기', onclick: function () { seq.forEach(function (i, k) { setTimeout(function () { pn.play(i); }, k * 380); }); } })));
-    main.appendChild(el('div', { class: 'kl-hint', text: '노란색 음을 순서대로 눌러요' }));
+    foot.appendChild(el('div', { class: 'kl-row', style: 'margin:0' }, el('button', { class: 'speak-btn', text: '🔊 노래 들어보기', onclick: function () { seq.forEach(function (i, k) { setTimeout(function () { pn.play(i); }, k * 380); }); } })));
+    main.appendChild(pn.el);
   }
   function pitchQuiz() {
     quiz('pitch', 8, function (i, lv) {
@@ -118,6 +169,7 @@
     });
   }
   function rhythm() {
+    fixed(false);
     main.innerHTML = ''; main.appendChild(K.backButton(home));
     var lv = K.getLevel('rhythm'); var len = lv + 2; var pattern = []; for (var i = 0; i < len; i++) pattern.push(K.randInt(0, 1));
     var msg = el('div', { class: 'kl-prompt', text: '리듬을 듣고 똑같이 따라 쳐요' }); main.appendChild(msg);

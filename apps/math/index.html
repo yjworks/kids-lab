@@ -14,11 +14,11 @@
   .num-line span { width: 54px; height: 54px; border-radius: 50%; background: #f4f1ea; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 24px; }
   .num-line span.hl { background: #ffca3a; }
   .num-line span.q { background: #ffe9ee; color: #d6336c; }
-  .count-board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; max-width: 520px; margin: 0 auto 20px; }
-  .count-board button { font-size: 48px; background: #fff; border-radius: 18px; padding: 8px; box-shadow: 0 4px 0 rgba(0,0,0,.08); }
+  .count-board { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; max-width: 520px; margin: 0 auto 20px; }
+  .count-board button { min-width: 0; font-size: min(48px, 11vw); background: #fff; border-radius: 18px; padding: 8px; box-shadow: 0 4px 0 rgba(0,0,0,.08); }
   .count-board button.hit { background: #c9f0a8; transform: scale(.9); }
-  .ten-frame { display: grid; grid-template-columns: repeat(5, 60px); gap: 6px; justify-content: center; margin: 10px auto; }
-  .ten-frame i { width: 60px; height: 60px; border: 3px solid #999; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 36px; font-style: normal; background: #fff; }
+  .ten-frame { display: grid; grid-template-columns: repeat(5, min(60px, 16vw)); gap: min(6px, 1.4vw); justify-content: center; margin: 10px auto; }
+  .ten-frame i { width: 100%; aspect-ratio: 1 / 1; height: auto; border: 3px solid #999; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 36px; font-style: normal; background: #fff; }
 </style>
 </head>
 <body data-app="math">

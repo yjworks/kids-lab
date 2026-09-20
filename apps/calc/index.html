@@ -92,9 +92,16 @@
 
   /* ---------- 숫자 다루기 ---------- */
   function digits(str) { return String(str).replace(/[-.]/g, '').replace(/^0+(?=\d)/, '').length; }
+  /* 0.1 + 0.2 = 0.30000000000000004 같은 찌꺼기만 털어낸다.
+     예전에는 12자리로 반올림해서 100조 + 3의 3이 사라졌다.
+     이제 정수 자리를 남겨 두고 소수점 아래만 정리한다. */
   function clean(x) {
     if (!isFinite(x)) return x;
-    var r = parseFloat(x.toPrecision(12));
+    if (x === 0) return 0;
+    if (Number.isInteger(x)) return x;
+    var intDigits = Math.floor(Math.log10(Math.abs(x))) + 1;
+    var decimals = Math.max(0, Math.min(10, 15 - Math.max(1, intDigits)));
+    var r = parseFloat(x.toFixed(decimals));
     return Object.is(r, -0) ? 0 : r;
   }
   function fits(x) { return isFinite(x) && Math.abs(x) <= LIMIT; }
