@@ -216,7 +216,9 @@ main, .kl-main { flex: 1; padding: 18px; max-width: 1100px; margin: 0 auto; widt
   .pick button.done { background: #eaf7dc; }
   .pick button:hover { transform: scale(1.06); }
   .pad { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-  .sheet { position: relative; background: #fff; border-radius: 20px; box-shadow: 0 6px 0 rgba(0,0,0,.08); touch-action: none; }
+  /* 쓰기판은 줄어들면 안 된다. 줄어들면 안의 캔버스가 아래 글자를 덮는다.
+     크기는 화면에 맞춰 코드에서 정한다. */
+  .sheet { position: relative; flex: 0 0 auto; background: #fff; border-radius: 20px; box-shadow: 0 6px 0 rgba(0,0,0,.08); touch-action: none; overflow: hidden; }
   .sheet canvas { position: absolute; left: 0; top: 0; border-radius: 20px; }
   .sheet canvas.ink { touch-action: none; }
   .bar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; }
@@ -228,6 +230,17 @@ main, .kl-main { flex: 1; padding: 18px; max-width: 1100px; margin: 0 auto; widt
   body.fixed main { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 8px 10px; gap: 6px; }
   body.fixed .kl-back { align-self: flex-start; margin: 0; }
   body.fixed .pad { flex: 1; min-height: 0; justify-content: center; }
+  /* 세로가 짧으면(폰 가로모드) 쓰기판을 왼쪽에, 조작부를 오른쪽에 둔다 */
+  @media (max-height: 520px) {
+    body.fixed .pad { display: grid; grid-template-columns: auto minmax(180px, 1fr);
+      grid-template-areas: "sheet title" "sheet meter" "sheet verdict" "sheet bar";
+      align-content: center; justify-content: center; gap: 6px 14px; }
+    body.fixed .pad .cur { grid-area: title; }
+    body.fixed .pad .sheet { grid-area: sheet; align-self: center; }
+    body.fixed .pad .meter { grid-area: meter; }
+    body.fixed .pad .verdict { grid-area: verdict; }
+    body.fixed .pad .bar { grid-area: bar; }
+  }
   @media (max-width: 760px) {
     .pick { grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 6px; }
     .pick button .ch { font-size: 28px; }

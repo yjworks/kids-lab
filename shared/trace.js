@@ -89,14 +89,27 @@
     pad.appendChild(title); pad.appendChild(sheet); pad.appendChild(meter); pad.appendChild(verdict); pad.appendChild(bar);
     main.appendChild(pad);
 
-    /* 화면에 맞는 크기 정하기 */
+    /* 화면에 맞는 크기 정하기.
+       어림잡지 않고, 쓰기판을 잠시 접어 나머지가 실제로 차지하는 높이를 재서 정한다. */
     var size = 320;
+    function setSize(v) {
+      size = v;
+      sheet.style.width = v + 'px'; sheet.style.height = v + 'px';
+      [guide, ink].forEach(function (c) { c.width = v; c.height = v; c.style.width = v + 'px'; c.style.height = v + 'px'; });
+    }
+    /* 가장 큰 정사각형에서 시작해, 화면에 다 들어올 때까지 줄인다.
+       글자마다 버튼 줄 수가 달라질 수 있으니 어림잡지 않고 실제로 재서 맞춘다. */
     function layout() {
-      var availH = window.innerHeight - back.offsetHeight - 210;
-      var availW = Math.min(window.innerWidth - 32, 420);
-      size = Math.max(180, Math.min(availW, availH, 420));
-      sheet.style.width = size + 'px'; sheet.style.height = size + 'px';
-      [guide, ink].forEach(function (c) { c.width = size; c.height = size; c.style.width = size + 'px'; c.style.height = size + 'px'; });
+      var maxW = Math.min(window.innerWidth - 20, 460);
+      setSize(maxW);
+      /* main이 넘침을 감추므로 scrollHeight로는 알 수 없다.
+         맨 아래 버튼 줄이 화면 안에 들어왔는지로 판단한다. */
+      var guard = 0;
+      var tooBig = function () {
+        return bar.getBoundingClientRect().bottom > window.innerHeight - 4 ||
+               sheet.getBoundingClientRect().bottom > window.innerHeight - 4;
+      };
+      while (tooBig() && size > 110 && guard++ < 90) setSize(size - 6);
       drawGuide(); redrawInk();
     }
     var S = function (v) { return v / 100 * size; };
