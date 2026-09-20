@@ -133,7 +133,7 @@
     }
     var S = function (v) { return v / 100 * size; };
     var gc = guide.getContext('2d'), ic = ink.getContext('2d');
-    var GUIDE_W = 0.15, INK_W = 0.13;   /* 글자 크기 대비 선 굵기 */
+    var GUIDE_W = 0.15, INK_W = 0.11;   /* 글자 크기 대비 선 굵기 */
 
     function pathStroke(ctx, st) {
       ctx.beginPath();
@@ -182,78 +182,117 @@
     ink.addEventListener('pointerup', function () { drawing = false; });
     ink.addEventListener('pointercancel', function () { drawing = false; });
 
-    /* ---------- 채점 ---------- */
+    /* ---------- 채점 ----------
+       글자 선을 일정 간격 점으로 바꾼 뒤,
+       (1) 아이가 그린 점이 선 가까이 있는지 (밖으로 안 나갔는지)
+       (2) 선 위의 점이 모두 지나갔는지 (획을 빠뜨리지 않았는지)
+       (3) 그린 길이가 지나치게 길지 않은지 (덧칠·낙서 거르기) 를 본다 */
+    var TOL = 8;          /* 100칸 기준 허용 거리 */
+    function resample(st, step) {
+      var out = [[st[0][0], st[0][1]]], cx = st[0][0], cy = st[0][1];
+      for (var i = 1; i < st.length; i++) {
+        var x = st[i][0], y = st[i][1], d = Math.hypot(x - cx, y - cy);
+        while (d >= step) { var t = step / d; cx += (x - cx) * t; cy += (y - cy) * t; out.push([cx, cy]); d = Math.hypot(x - cx, y - cy); }
+        cx = x; cy = y;
+      }
+      out.push([cx, cy]);
+      return out;
+    }
+    function pathLen(ss) {
+      var L = 0;
+      ss.forEach(function (st) { for (var i = 1; i < st.length; i++) L += Math.hypot(st[i][0] - st[i - 1][0], st[i][1] - st[i - 1][1]); });
+      return L;
+    }
+    function near(pt, pts, tol) {
+      var t2 = tol * tol;
+      for (var i = 0; i < pts.length; i++) { var dx = pt[0] - pts[i][0], dy = pt[1] - pts[i][1]; if (dx * dx + dy * dy <= t2) return true; }
+      return false;
+    }
+    var missed = [];      /* 못 지나간 부분 (틀린 곳 보여주기) */
     function score() {
       if (!drawn.length) return null;
-      var n = 100;                                   /* 100x100 격자로 비교 */
-      var t = document.createElement('canvas'); t.width = t.height = n;
-      var u = document.createElement('canvas'); u.width = u.height = n;
-      var tc = t.getContext('2d'), uc = u.getContext('2d');
-      /* 본보기 안쪽 심지만 기준으로 삼아, 제대로 따라 그리면 100%가 되게 한다 */
-      tc.strokeStyle = '#000'; tc.lineWidth = n * GUIDE_W * 0.8; tc.lineCap = 'round'; tc.lineJoin = 'round';
-      strokes.forEach(function (st) {
-        tc.beginPath(); tc.moveTo(st[0][0] / 100 * n, st[0][1] / 100 * n);
-        for (var i = 1; i < st.length; i++) tc.lineTo(st[i][0] / 100 * n, st[i][1] / 100 * n);
-        tc.stroke();
+      var user = drawn.map(function (st) { return st.map(function (p) { return [p[0] * 100, p[1] * 100]; }); });
+      var uAll = [];
+      user.forEach(function (st) { uAll = uAll.concat(resample(st, 2)); });
+      if (uAll.length < 2) return null;
+      var tS = strokes.map(function (st) { return resample(st, 2); });
+      var tAll = [];
+      tS.forEach(function (st) { tAll = tAll.concat(st); });
+
+      var on = 0;
+      uAll.forEach(function (pt) { if (near(pt, tAll, TOL)) on++; });
+
+      var covered = 0, total = 0, minStroke = 1;
+      missed = [];
+      tS.forEach(function (st) {
+        var c = 0;
+        st.forEach(function (pt) { if (near(pt, uAll, TOL)) c++; else missed.push(pt); });
+        covered += c; total += st.length;
+        minStroke = Math.min(minStroke, c / st.length);
       });
-      uc.strokeStyle = '#000'; uc.lineWidth = n * INK_W; uc.lineCap = 'round'; uc.lineJoin = 'round';
-      drawn.forEach(function (st) {
-        if (st.length < 2) { uc.beginPath(); uc.arc(st[0][0] * n, st[0][1] * n, n * INK_W / 2, 0, Math.PI * 2); uc.fillStyle = '#000'; uc.fill(); return; }
-        uc.beginPath(); uc.moveTo(st[0][0] * n, st[0][1] * n);
-        for (var i = 1; i < st.length; i++) uc.lineTo(st[i][0] * n, st[i][1] * n);
-        uc.stroke();
+      /* 획을 순서대로 썼는지 (어기면 못 쓴 것은 아니고, 최고 등급만 안 준다) */
+      var uS = user.map(function (st) { return resample(st, 2); });
+      var seq = [], inOrder = true;
+      tS.forEach(function (st) {
+        var best = -1, bestC = 0;
+        uS.forEach(function (us, ui) {
+          var c = 0;
+          st.forEach(function (pt) { if (near(pt, us, TOL)) c++; });
+          c = c / st.length;
+          if (c > bestC) { bestC = c; best = ui; }
+        });
+        seq.push(bestC >= 0.6 ? best : -1);
       });
-      var td = tc.getImageData(0, 0, n, n).data, ud = uc.getImageData(0, 0, n, n).data;
-      var target = 0, user = 0, hit = 0, spill = 0;
-      for (var p = 3; p < td.length; p += 4) {
-        var a = td[p] > 40, b = ud[p] > 40;
-        if (a) target++;
-        if (b) user++;
-        if (a && b) hit++;
-        if (b && !a) spill++;
+      for (var i = 1; i < seq.length; i++) {
+        if (seq[i] < 0 || seq[i - 1] < 0) continue;
+        if (seq[i] < seq[i - 1]) inOrder = false;
       }
-      if (!target || !user) return null;
-      /* 획을 하나라도 통째로 빼먹지 않았는지 따로 본다 (대각선 낙서 거르기) */
-      var minCover = 1;
-      strokes.forEach(function (st) {
-        var one = document.createElement('canvas'); one.width = one.height = n;
-        var oc = one.getContext('2d');
-        oc.strokeStyle = '#000'; oc.lineWidth = n * GUIDE_W * 0.8; oc.lineCap = 'round'; oc.lineJoin = 'round';
-        oc.beginPath(); oc.moveTo(st[0][0] / 100 * n, st[0][1] / 100 * n);
-        for (var i = 1; i < st.length; i++) oc.lineTo(st[i][0] / 100 * n, st[i][1] / 100 * n);
-        oc.stroke();
-        var od = oc.getImageData(0, 0, n, n).data;
-        var tot = 0, got = 0;
-        for (var q = 3; q < od.length; q += 4) { if (od[q] > 40) { tot++; if (ud[q] > 40) got++; } }
-        if (tot) minCover = Math.min(minCover, got / tot);
-      });
-      return { cover: hit / target, spill: spill / user, minCover: minCover, strokes: drawn.length, want: strokes.length };
+      return {
+        on: on / uAll.length,
+        covered: covered / total,
+        minStroke: minStroke,
+        inOrder: inOrder,
+        ratio: pathLen(user) / Math.max(1, pathLen(strokes))
+      };
+    }
+    /* 못 지나간 곳을 잠깐 표시해 준다 */
+    function showMissed() {
+      if (!missed.length) return;
+      ic.fillStyle = 'rgba(255,89,94,.85)';
+      missed.forEach(function (pt) { ic.beginPath(); ic.arc(S(pt[0]), S(pt[1]), size * 0.018, 0, Math.PI * 2); ic.fill(); });
+      setTimeout(redrawInk, 2200);
     }
     function check() {
       var s = score();
       if (!s) { verdict.textContent = '먼저 글자를 따라 그려 보세요 ✏️'; K.sfx.wrong(); return; }
-      var pct = Math.round(Math.max(0, s.cover * 100 - s.spill * 55));
-      meter.querySelector('i').style.width = Math.min(100, pct) + '%';
+      var pct = Math.round(Math.max(0, Math.min(100,
+        (s.covered * 0.6 + s.on * 0.4) * 100 - Math.max(0, s.ratio - 2) * 10)));
+      meter.querySelector('i').style.width = pct + '%';
       var say = sayOf(set.id, ch);
-      if (s.minCover < 0.45) {
-        verdict.textContent = '빠뜨린 획이 있어요. 번호 순서대로 그려 봐요';
-        K.sfx.wrong(); K.speak('빠뜨린 획이 있어요');
-      } else if (s.cover >= 0.82 && s.spill <= 0.32) {
+      var ok = s.minStroke >= 0.65 && s.covered >= 0.8 && s.on >= 0.7 && s.ratio <= 3.2;
+      var great = s.minStroke >= 0.85 && s.covered >= 0.93 && s.on >= 0.85 && s.ratio <= 2.2 && s.inOrder;
+      if (great) {
         verdict.textContent = '🌟 아주 잘 썼어요! (' + pct + '점)';
         K.addStar(2); K.event('trace'); K.sfx.win(); K.confetti(); markDone(set.id, ch);
         K.speak(say.text + '. 아주 잘 썼어요', { lang: say.lang });
         setTimeout(nextChar, 1600);
-      } else if (s.cover >= 0.6 && s.spill <= 0.5) {
-        verdict.textContent = '👍 잘했어요! (' + pct + '점)';
+      } else if (ok) {
+        verdict.textContent = s.inOrder ? '👍 잘했어요! (' + pct + '점)' : '👍 잘했어요! 다음엔 번호 순서대로 써 봐요 (' + pct + '점)';
         K.addStar(1); K.event('trace'); K.sfx.correct(); markDone(set.id, ch);
         K.speak(say.text + '. 잘했어요', { lang: say.lang });
         setTimeout(nextChar, 1600);
-      } else if (s.cover < 0.6) {
-        verdict.textContent = '조금 더 채워 볼까요? (' + pct + '점)';
-        K.sfx.wrong(); K.speak('조금 더 채워 볼까요?');
-      } else {
+      } else if (s.minStroke < 0.65) {
+        verdict.textContent = '빨간 점을 지나가야 해요. 번호 순서대로! (' + pct + '점)';
+        K.sfx.wrong(); K.speak('빠뜨린 곳이 있어요. 빨간 점을 지나가 봐요'); showMissed();
+      } else if (s.ratio > 3.2) {
+        verdict.textContent = '너무 많이 그렸어요. 회색 글자만 따라 그려요 (' + pct + '점)';
+        K.sfx.wrong(); K.speak('너무 많이 그렸어요. 회색 글자만 따라 그려요');
+      } else if (s.on < 0.7) {
         verdict.textContent = '회색 글자 안쪽으로 그려 봐요 (' + pct + '점)';
         K.sfx.wrong(); K.speak('회색 글자 안쪽으로 그려 봐요');
+      } else {
+        verdict.textContent = '끝까지 다 그려 볼까요? (' + pct + '점)';
+        K.sfx.wrong(); K.speak('끝까지 다 그려 볼까요?'); showMissed();
       }
     }
     function nextChar() { if (idx + 1 < list.length) trace(set, idx + 1); else picker(set); }
