@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>계산기</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .calc { max-width: 520px; margin: 0 auto; }
+  .screen { background: #2b2b33; color: #fff; border-radius: 22px; padding: 14px 18px; text-align: right; box-shadow: inset 0 3px 10px rgba(0,0,0,.35); }
+  .screen .expr { font-size: 20px; color: #a9b0c0; min-height: 26px; word-break: break-all; }
+  .screen .num { font-size: 46px; font-weight: 800; line-height: 1.15; word-break: break-all; font-variant-numeric: tabular-nums; }
+  .screen .num.small { font-size: 32px; }
+  .screen .num.tiny { font-size: 24px; }
+  .screen .read { font-size: 19px; color: #ffd166; min-height: 24px; margin-top: 4px; word-break: keep-all; }
+  .screen.err { background: #6b2020; animation: shake .4s; }
+  .screen.err .num { font-size: 26px; color: #ffd8d8; }
+  .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+  .keys button { height: 72px; border-radius: 20px; font-size: 30px; font-weight: 800; background: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.12); color: #333; }
+  .keys button:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.12); }
+  .keys button.op { background: #ffd8a8; color: #8a4b00; }
+  .keys button.eq { background: #8ac926; color: #143d00; }
+  .keys button.fn { background: #e6e8ef; color: #444; font-size: 24px; }
+  .keys button.zero { grid-column: span 2; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 12px 0; }
+  .tape { margin-top: 14px; background: #fff; border-radius: 18px; padding: 10px 14px; max-height: 190px; overflow: auto; }
+  .tape .row { display: flex; justify-content: space-between; gap: 10px; padding: 7px 4px; border-bottom: 1px dashed #eee; font-size: 19px; }
+  .tape .row:last-child { border-bottom: none; }
+  .tape .row b { color: #1982c4; }
+  .tape .row:hover { background: #fff8e5; cursor: pointer; }
+  .easy .keys { grid-template-columns: repeat(3, 1fr); }
+  .easy .keys button { height: 84px; font-size: 36px; }
+  .place { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .place .col { background: #fff; border-radius: 14px; padding: 8px 12px; text-align: center; box-shadow: 0 4px 0 rgba(0,0,0,.08); }
+  .place .col .d { font-size: 40px; font-weight: 900; color: #1982c4; }
+  .place .col .n { font-size: 15px; color: #777; font-weight: 800; }
+  .place .col.hl { background: #fff3c4; outline: 3px solid #ffca3a; }
+  @media (max-height: 500px) { .keys button { height: 48px; font-size: 22px; } .screen .num { font-size: 30px; } .screen .expr, .screen .read { font-size: 15px; } }
+</style>
+</head>
+<body data-app="calc">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '계산기', icon: '🧮', say: '계산기' });
+  var main = document.getElementById('main');
+  var MAX = 15;                      /* 보여 줄 수 있는 자릿수 */
+  var LIMIT = 999999999999999;       /* 15자리 최대값 */
+  var OPW = { '+': '더하기', '-': '빼기', '×': '곱하기', '÷': '나누기' };
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '🧮', label: '계산기', color: '#e9f3ff', run: function () { calc(false); } },
+      { icon: '🐣', label: '쉬운 계산기', color: '#e3f7cf', run: function () { calc(true); } },
+      { icon: '🗣️', label: '숫자 읽기', mode: 'read', color: '#fff3c4', run: readQuiz },
+      { icon: '🏷️', label: '자릿값 놀이', mode: 'place', color: '#ffe9ee', run: placeQuiz },
+      { icon: '📏', label: '얼마나 큰 수?', mode: 'big', color: '#ece6f5', run: bigQuiz }
+    ]);
+  }
+
+  /* ---------- 숫자 다루기 ---------- */
+  function digits(str) { return String(str).replace(/[-.]/g, '').replace(/^0+(?=\d)/, '').length; }
+  function clean(x) {
+    if (!isFinite(x)) return x;
+    var r = parseFloat(x.toPrecision(12));
+    return Object.is(r, -0) ? 0 : r;
+  }
+  function fits(x) { return isFinite(x) && Math.abs(x) <= LIMIT; }
+  function show(v) {
+    var s = String(v);
+    if (s.indexOf('e') >= 0) return s;             /* 아주 작은 소수는 그대로 */
+    return K.comma(s);
+  }
+
+  /* ---------- 계산기 ---------- */
+  function calc(easy) {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var wrap = el('div', { class: 'calc' + (easy ? ' easy' : '') });
+    var screen = el('div', { class: 'screen' });
+    var exprEl = el('div', { class: 'expr', text: '' });
+    var numEl = el('div', { class: 'num', text: '0' });
+    var readEl = el('div', { class: 'read', text: '영' });
+    screen.appendChild(exprEl); screen.appendChild(numEl); screen.appendChild(readEl);
+    wrap.appendChild(screen);
+
+    var cur = '0', acc = null, op = null, fresh = true, err = false, count = 0;
+    var pr = K.progress();
+    var speakOn = pr.speak !== false;
+
+    function render() {
+      screen.classList.toggle('err', err);
+      if (err) { numEl.textContent = err; readEl.textContent = '← 나 AC를 눌러요'; exprEl.textContent = ''; return; }
+      var t = show(cur);
+      numEl.className = 'num' + (t.length > 12 ? (t.length > 17 ? ' tiny' : ' small') : '');
+      numEl.textContent = t;
+      readEl.textContent = K.numToKo(cur);
+      exprEl.textContent = acc === null ? '' : show(acc) + ' ' + op + ' ';
+    }
+    function setErr(msg, say) {
+      err = msg; render(); K.sfx.wrong();
+      if (speakOn) K.speak(say || msg);
+      K.toast('⚠️ ' + msg, 3000);
+    }
+    function pressDigit(d) {
+      if (err) return;
+      if (fresh) { cur = (d === '.') ? '0.' : d; fresh = false; }
+      else {
+        if (d === '.' && cur.indexOf('.') >= 0) return;
+        if (digits(cur) >= MAX && d !== '.') { K.toast('숫자는 ' + MAX + '자리까지 쓸 수 있어요'); K.sfx.wrong(); return; }
+        cur = (cur === '0' && d !== '.') ? d : cur + d;
+      }
+      K.sfx.pop();
+      if (speakOn && d !== '.') K.speak(K.numToKo(d));
+      render();
+    }
+    function setOp(o) {
+      if (err) return;
+      if (acc !== null && !fresh) { if (!equals(true)) return; }
+      acc = parseFloat(cur); op = o; fresh = true;
+      K.sfx.click();
+      if (speakOn) K.speak(OPW[o]);
+      render();
+    }
+    function equals(chain) {
+      if (err || acc === null || op === null) return true;
+      var a = acc, b = parseFloat(cur), r;
+      if (op === '÷' && b === 0) {
+        setErr('0으로 나눌 수 없어요', '영으로는 나눌 수 없어요. 다른 수로 나눠 볼까요?');
+        acc = null; op = null; fresh = true;
+        return false;
+      }
+      r = op === '+' ? a + b : op === '-' ? a - b : op === '×' ? a * b : a / b;
+      r = clean(r);
+      if (!fits(r)) {
+        setErr(isFinite(r) ? '숫자가 너무 커요' : '계산할 수 없어요',
+               isFinite(r) ? '숫자가 너무 커요. ' + MAX + '자리까지 보여 줄 수 있어요' : '계산할 수 없어요');
+        acc = null; op = null; fresh = true;
+        return false;
+      }
+      var line = show(a) + ' ' + op + ' ' + show(b) + ' = ' + show(r);
+      addTape(line, a, op, b, r);
+      if (speakOn) K.speak(K.numToKo(a) + ' ' + OPW[op] + ' ' + K.numToKo(b) + '는 ' + K.numToKo(r));
+      K.sfx.correct();
+      count++; K.event('calc');
+      if (count % 5 === 0) K.addStar(1);
+      cur = String(r); acc = null; op = null; fresh = true;
+      if (!chain) render();
+      return true;
+    }
+    function clearAll() { cur = '0'; acc = null; op = null; fresh = true; err = false; K.sfx.click(); render(); }
+    function back() {
+      if (err) { err = false; render(); return; }
+      if (fresh) return;
+      cur = cur.length > 1 ? cur.slice(0, -1) : '0';
+      if (cur === '-' || cur === '') cur = '0';
+      K.sfx.pop(); render();
+    }
+    function negate() { if (err) return; cur = String(clean(-parseFloat(cur))); K.sfx.pop(); render(); }
+    function percent() { if (err) return; cur = String(clean(parseFloat(cur) / 100)); K.sfx.pop(); render(); }
+
+    var keys = el('div', { class: 'keys' });
+    var layout = easy
+      ? [['AC','fn'],['←','fn'],['＋','op'],['7',''],['8',''],['9',''],['4',''],['5',''],['6',''],['1',''],['2',''],['3',''],['0',''],['－','op'],['＝','eq']]
+      : [['AC','fn'],['←','fn'],['%','fn'],['÷','op'],
+         ['7',''],['8',''],['9',''],['×','op'],
+         ['4',''],['5',''],['6',''],['－','op'],
+         ['1',''],['2',''],['3',''],['＋','op'],
+         ['±','fn'],['0',''],['.',''],['＝','eq']];
+    layout.forEach(function (k) {
+      var b = el('button', { class: k[1], text: k[0] });
+      b.addEventListener('click', function () {
+        var t = k[0];
+        if (t === 'AC') clearAll();
+        else if (t === '←') back();
+        else if (t === '±') negate();
+        else if (t === '%') percent();
+        else if (t === '＝') equals(false);
+        else if (t === '＋') setOp('+');
+        else if (t === '－') setOp('-');
+        else if (t === '×') setOp('×');
+        else if (t === '÷') setOp('÷');
+        else pressDigit(t);
+      });
+      keys.appendChild(b);
+    });
+    wrap.appendChild(keys);
+
+    var tools = el('div', { class: 'toolbar' }, [
+      el('button', { class: 'speak-btn', text: '🔊 읽어주기', onclick: function () { K.speak(err ? err : K.numToKo(cur)); } }),
+      (function () {
+        var b = el('button', { class: 'kl-btn' + (speakOn ? ' green' : ''), text: speakOn ? '🗣️ 말하기 켜짐' : '🤫 말하기 꺼짐' });
+        b.addEventListener('click', function () {
+          speakOn = !speakOn; K.setProgress({ speak: speakOn });
+          b.className = 'kl-btn' + (speakOn ? ' green' : '');
+          b.textContent = speakOn ? '🗣️ 말하기 켜짐' : '🤫 말하기 꺼짐';
+          K.sfx.click();
+        });
+        return b;
+      })(),
+      el('button', { class: 'kl-btn', text: easy ? '🧮 보통 계산기' : '🐣 쉬운 계산기', onclick: function () { K.sfx.click(); calc(!easy); } })
+    ]);
+    wrap.appendChild(tools);
+
+    var tape = el('div', { class: 'tape' });
+    var history = (K.progress().tape || []).slice();
+    function drawTape() {
+      tape.innerHTML = '';
+      if (!history.length) { tape.appendChild(el('div', { class: 'kl-hint', text: '계산한 것이 여기에 쌓여요' })); return; }
+      history.slice().reverse().forEach(function (h) {
+        var row = el('div', { class: 'row' }, [el('span', { text: h.line.split(' = ')[0] }), el('b', { text: '= ' + h.line.split(' = ')[1] })]);
+        row.addEventListener('click', function () { K.speak(K.numToKo(h.a) + ' ' + OPW[h.op] + ' ' + K.numToKo(h.b) + '는 ' + K.numToKo(h.r)); cur = String(h.r); fresh = true; err = false; render(); });
+        tape.appendChild(row);
+      });
+    }
+    function addTape(line, a, op2, b, r) {
+      history.push({ line: line, a: a, op: op2, b: b, r: r });
+      if (history.length > 20) history.shift();
+      K.setProgress({ tape: history });
+      drawTape();
+    }
+    drawTape();
+    wrap.appendChild(tape);
+    main.appendChild(wrap);
+    render();
+
+    /* PC 키보드 */
+    var keyH = function (e) {
+      if (!document.body.contains(wrap)) { window.removeEventListener('keydown', keyH); return; }
+      var k = e.key;
+      if (k >= '0' && k <= '9') pressDigit(k);
+      else if (k === '.') pressDigit('.');
+      else if (k === '+') setOp('+');
+      else if (k === '-') setOp('-');
+      else if (k === '*' || k === 'x') setOp('×');
+      else if (k === '/') setOp('÷');
+      else if (k === 'Enter' || k === '=') { e.preventDefault(); equals(false); }
+      else if (k === 'Backspace') { e.preventDefault(); back(); }
+      else if (k === 'Delete') clearAll();
+      else return;
+    };
+    window.addEventListener('keydown', keyH);
+  }
+
+  /* ---------- 숫자 읽기 퀴즈 ---------- */
+  function randByLevel(lv) {
+    if (lv === 1) return K.randInt(1, 10);
+    if (lv === 2) return K.randInt(1, 99);
+    if (lv === 3) return K.randInt(100, 999);
+    if (lv === 4) return K.randInt(1000, 9999);
+    return K.pick([K.randInt(10000, 99999), K.randInt(100000, 999999), K.randInt(1000000, 99999999)]);
+  }
+  function quiz(mode, total, make) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: total, make: make, onFinish: home }); }
+
+  function readQuiz() {
+    quiz('read', 8, function (i, lv) {
+      var ans = randByLevel(lv);
+      var wrong = []; var guard = 0;
+      while (wrong.length < 3 && guard++ < 200) { var w = randByLevel(lv); if (w !== ans && wrong.indexOf(w) < 0) wrong.push(w); }
+      if (i % 2) {
+        /* 한국말을 보고 숫자 고르기 */
+        return { key: 'ko' + ans, prompt: K.numToKo(ans), say: K.numToKo(ans), cols: 4,
+          choices: K.shuffle([ans].concat(wrong)).map(function (x) { return { html: K.comma(x), cls: 'text', correct: x === ans, say: K.numToKo(x) }; }) };
+      }
+      /* 숫자를 보고 읽는 법 고르기 */
+      return { key: 'num' + ans, prompt: K.comma(ans), say: '이 숫자를 어떻게 읽을까요?', cols: 1,
+        choices: K.shuffle([ans].concat(wrong)).map(function (x) { return { html: K.numToKo(x), cls: 'text', correct: x === ans, say: K.numToKo(x) }; }) };
+    });
+  }
+
+  /* ---------- 자릿값 놀이 ---------- */
+  var PLACE_NAME = ['일', '십', '백', '천', '만', '십만', '백만', '천만'];
+  function placeView(n, hl) {
+    var s = String(n); var out = '';
+    for (var i = 0; i < s.length; i++) {
+      var pos = s.length - 1 - i;
+      out += '<div class="col' + (pos === hl ? ' hl' : '') + '"><div class="d">' + s.charAt(i) + '</div><div class="n">' + PLACE_NAME[pos] + '</div></div>';
+    }
+    return '<div class="place">' + out + '</div>';
+  }
+  function placeQuiz() {
+    quiz('place', 8, function (i, lv) {
+      var len = lv === 1 ? 2 : lv === 2 ? 3 : lv === 3 ? 4 : lv === 4 ? 5 : 6;
+      var n = K.randInt(Math.pow(10, len - 1), Math.pow(10, len) - 1);
+      var s = String(n); var pos = K.randInt(0, len - 1);
+      var ans = +s.charAt(s.length - 1 - pos);
+      var wrong = []; var guard = 0;
+      while (wrong.length < 3 && guard++ < 200) { var w = K.randInt(0, 9); if (w !== ans && wrong.indexOf(w) < 0) wrong.push(w); }
+      if (i % 3 === 2) {
+        /* 자리 이름 맞히기 - 정답 하나와 서로 다른 오답 셋 */
+        var correctName = PLACE_NAME[pos];
+        var wrongNames = K.sample(PLACE_NAME.filter(function (x) { return x !== correctName; }), 3);
+        return { key: 'pn' + n + '-' + pos, prompt: placeView(n, pos) + '<div style="font-size:24px;margin-top:10px">노란 칸은 어느 자리일까요?</div>',
+          say: K.numToKo(n) + '. 노란 칸은 어느 자리일까요?', cols: 2,
+          choices: K.shuffle([correctName].concat(wrongNames)).map(function (x) { return { html: x + '의 자리', cls: 'text', correct: x === correctName, say: x + '의 자리' }; }) };
+      }
+      return { key: 'pd' + n + '-' + pos, prompt: K.comma(n) + '<div style="font-size:24px;color:#777;margin-top:6px">' + PLACE_NAME[pos] + '의 자리 숫자는?</div>',
+        say: K.numToKo(n) + '. ' + PLACE_NAME[pos] + '의 자리 숫자는?', cols: 4,
+        choices: K.shuffle([ans].concat(wrong)).map(function (x) { return { html: String(x), correct: x === ans, say: K.numToKo(x) }; }) };
+    });
+  }
+
+  /* ---------- 얼마나 큰 수? ---------- */
+  function bigQuiz() {
+    quiz('big', 8, function (i, lv) {
+      var a = randByLevel(Math.min(5, lv + 1)), b = randByLevel(Math.min(5, lv + 1));
+      var guard = 0;
+      while (a === b && guard++ < 50) b = randByLevel(Math.min(5, lv + 1));
+      var bigger = i % 2 === 0;
+      return { key: 'big' + Math.min(a, b) + '-' + Math.max(a, b) + (bigger ? 'b' : 's'),
+        prompt: bigger ? '더 큰 수는?' : '더 작은 수는?', say: bigger ? '더 큰 수는 어느 것일까요?' : '더 작은 수는 어느 것일까요?', cols: 2,
+        choices: K.shuffle([a, b]).map(function (x) { return { html: K.comma(x) + '<div style="font-size:17px;color:#777">' + K.numToKo(x) + '</div>', cls: 'small', correct: bigger ? x === Math.max(a, b) : x === Math.min(a, b), say: K.numToKo(x) }; }) };
+    });
+  }
+  home();
+})();
+</script>
+</body>
+</html>

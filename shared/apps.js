@@ -5,6 +5,8 @@ window.KIDLAB_APPS = [
   { id: 'math',     name: '수학 놀이',   icon: '🔢', color: '#ffd166', desc: '세기, 더하기, 빼기, 비교', cat: '수학' },
   { id: 'shapes',   name: '모양·색깔',   icon: '🔷', color: '#b8e0d2', desc: '모양 찾기, 색 맞추기, 패턴', cat: '수학' },
   { id: 'clock',    name: '시계 놀이',   icon: '⏰', color: '#c3b1e1', desc: '몇 시일까? 시계 읽기', cat: '수학' },
+  { id: 'calc',     name: '계산기',     icon: '🧮', color: '#a7c7ff', desc: '휴대폰 계산기, 숫자 읽기, 자릿값', cat: '수학' },
+  { id: 'blocks',   name: '숫자 블록',   icon: '🧱', color: '#ffc09f', desc: '블록을 쌓아 수 익히기, 짝꿍 수, 홀짝', cat: '수학' },
   { id: 'science',  name: '과학 탐험',   icon: '🔬', color: '#9be7a0', desc: '동물, 날씨, 우리 몸, 뜨고 가라앉기', cat: '과학' },
   { id: 'daily',    name: '생활 습관',   icon: '🪥', color: '#ffe0b3', desc: '순서 맞추기, 옷 고르기, 정리하기', cat: '생활' },
   { id: 'feelings', name: '마음 알기',   icon: '😊', color: '#ffc6ff', desc: '표정 읽기, 어떻게 할까요?', cat: '생활' },

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>숫자 블록</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .fig { display: inline-flex; flex-direction: column-reverse; align-items: center; gap: 3px; vertical-align: bottom; }
+  .fig .row { display: flex; gap: 3px; }
+  .cube { width: 38px; height: 38px; border-radius: 8px; position: relative; box-shadow: inset 0 -5px 0 rgba(0,0,0,.16), inset 0 3px 0 rgba(255,255,255,.35); }
+  .cube.pop { animation: pop .35s; }
+  .fig.s .cube { width: 26px; height: 26px; border-radius: 6px; }
+  .fig.l .cube { width: 52px; height: 52px; border-radius: 11px; }
+  .eyes { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 18%; }
+  .eyes i { width: 22%; height: 30%; background: #fff; border-radius: 50%; display: block; position: relative; }
+  .eyes i::after { content: ""; position: absolute; left: 22%; top: 28%; width: 56%; height: 45%; background: #222; border-radius: 50%; }
+  .mouth { position: absolute; left: 50%; bottom: 16%; transform: translateX(-50%); width: 34%; height: 16%; border-bottom: 3px solid rgba(0,0,0,.55); border-radius: 0 0 40px 40px; }
+  .stage-row { display: flex; align-items: flex-end; justify-content: center; gap: 18px; flex-wrap: wrap; min-height: 120px; padding-bottom: 4px; }
+  .plus { font-size: 44px; font-weight: 900; color: #6a4c93; align-self: flex-end; line-height: 1; padding-bottom: 4px; }
+  .build { display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap; }
+  .big-num { font-size: 84px; font-weight: 900; line-height: 1; }
+  .name { font-size: 26px; font-weight: 800; color: #555; }
+  .pairs { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .pairs .pair { display: flex; flex-direction: column; gap: 3px; }
+  .rods { display: flex; gap: 10px; align-items: flex-end; justify-content: center; flex-wrap: wrap; }
+  .rod { display: flex; flex-direction: column-reverse; gap: 3px; }
+  @media (max-height: 500px) { body[data-app] .cube { width: 24px; height: 24px; } body[data-app] .fig.l .cube { width: 30px; height: 30px; } .big-num { font-size: 48px; } .stage-row { min-height: 0; } }
+  @media (max-width: 760px) { .cube { width: 30px; height: 30px; } .fig.l .cube { width: 40px; height: 40px; } .big-num { font-size: 60px; } }
+</style>
+</head>
+<body data-app="blocks">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '숫자 블록', icon: '🧱', say: '숫자 블록' });
+  var main = document.getElementById('main');
+  /* 수마다 고유한 색을 준다 */
+  var COLORS = ['#ff595e', '#ff924c', '#ffca3a', '#8ac926', '#1982c4', '#6a4c93', '#ff8fa3', '#00b4a6', '#c1666b', '#f4a261',
+                '#9b5de5', '#00bbf9', '#f15bb5', '#fee440', '#70c1b3', '#e76f51', '#2a9d8f', '#e07a5f', '#81b29a', '#3d5a80'];
+  var NAME = ['영', '하나', '둘', '셋', '넷', '다섯', '여섯', '일곱', '여덟', '아홉', '열',
+              '열하나', '열둘', '열셋', '열넷', '열다섯', '열여섯', '열일곱', '열여덟', '열아홉', '스물'];
+  function koName(n) { return NAME[n] || K.numToKo(n); }
+  function colorOf(n) { return COLORS[(n - 1 + COLORS.length) % COLORS.length]; }
+
+  /* 큐브 n개로 만든 블록 친구. 아래부터 한 줄에 최대 5개씩 쌓는다 */
+  function fig(n, opts) {
+    opts = opts || {};
+    var c = opts.color || colorOf(n);
+    var per = opts.per || 5;
+    var rows = [], left = n;
+    while (left > 0) { var take = Math.min(per, left); rows.push(take); left -= take; }
+    var html = '<div class="fig' + (opts.size ? ' ' + opts.size : '') + '">';
+    rows.forEach(function (cnt, ri) {
+      html += '<div class="row">';
+      for (var i = 0; i < cnt; i++) {
+        var top = (ri === rows.length - 1 && i === 0);
+        html += '<span class="cube" style="background:' + c + '">' +
+          (top && !opts.noFace ? '<span class="eyes"><i></i><i></i></span><span class="mouth"></span>' : '') + '</span>';
+      }
+      html += '</div>';
+    });
+    return html + '</div>';
+  }
+  function tell(n) { K.speak(koName(n) + '. ' + K.numToKo(n)); }
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '🧱', label: '블록 쌓기', color: '#ffe9ee', run: build },
+      { icon: '🔢', label: '몇 개일까?', mode: 'count', color: '#fff3c4', run: countQuiz },
+      { icon: '➕', label: '블록 더하기', mode: 'add', color: '#e3f7cf', run: addQuiz },
+      { icon: '➖', label: '블록 빼기', mode: 'sub', color: '#ffe4a1', run: subQuiz },
+      { icon: '🤝', label: '짝꿍 수 만들기', mode: 'bond', color: '#e9f3ff', run: bondQuiz },
+      { icon: '✌️', label: '두 배 블록', mode: 'dbl', color: '#d0f4de', run: doubleQuiz },
+      { icon: '👫', label: '홀수 짝수', mode: 'odd', color: '#ece6f5', run: oddQuiz },
+      { icon: '🏗️', label: '십과 일', mode: 'tens', color: '#cfd8ff', run: tensQuiz }
+    ]);
+  }
+  function quiz(mode, total, make) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: total, make: make, onFinish: home }); }
+
+  /* ---------- 블록 쌓기 (자유 놀이) ---------- */
+  function build() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var n = 1;
+    var card = el('div', { class: 'kl-card kl-center' });
+    var stage = el('div', { class: 'build' });
+    var info = el('div');
+    card.appendChild(stage); card.appendChild(info);
+    function draw(bump) {
+      stage.innerHTML = fig(n, { size: n <= 10 ? 'l' : '' });
+      info.innerHTML = '<div class="big-num" style="color:' + colorOf(n) + '">' + n + '</div>' +
+        '<div class="name">' + koName(n) + ' · ' + K.numToKo(n) + '</div>' +
+        '<div class="kl-hint">' + (n % 2 === 0 ? '짝수예요 👫' : '홀수예요 🙋') + (n > 10 ? ' · 십 ' + Math.floor(n / 10) + '개와 일 ' + (n % 10) + '개' : '') + '</div>';
+      if (bump) { var cubes = stage.querySelectorAll('.cube'); var last = cubes[cubes.length - 1]; if (last) last.classList.add('pop'); }
+    }
+    var row = el('div', { class: 'kl-row' }, [
+      el('button', { class: 'kl-btn red big', text: '－', onclick: function () { if (n <= 1) return; n--; K.sfx.pop(); draw(); tell(n); } }),
+      el('button', { class: 'speak-btn', text: '🔊 읽어주기', onclick: function () { tell(n); K.event('learn'); } }),
+      el('button', { class: 'kl-btn green big', text: '＋', onclick: function () { if (n >= 20) { K.toast('스물까지 쌓을 수 있어요'); return; } n++; K.sfx.note(300 + n * 40, 0.2); draw(true); tell(n); if (n === 10 || n === 20) { K.confetti(); K.addStar(1); K.event('build'); } } })
+    ]);
+    main.appendChild(card); main.appendChild(row);
+    main.appendChild(el('div', { class: 'kl-hint', text: '블록을 쌓으면서 수를 세어 봐요' }));
+    draw(); tell(n);
+  }
+
+  /* ---------- 몇 개일까 ---------- */
+  function countQuiz() {
+    quiz('count', 8, function (i, lv) {
+      var max = lv === 1 ? 5 : lv === 2 ? 10 : lv === 3 ? 15 : 20;
+      var ans = K.randInt(1, max);
+      var wrong = []; var guard = 0;
+      while (wrong.length < 3 && guard++ < 200) { var w = K.randInt(1, max); if (w !== ans && wrong.indexOf(w) < 0) wrong.push(w); }
+      return { key: 'c' + ans + '-' + wrong.slice().sort().join(','), prompt: fig(ans), say: '블록이 몇 개일까요?', cols: 4,
+        choices: K.shuffle([ans].concat(wrong)).map(function (x) { return { html: String(x), correct: x === ans, say: koName(x) }; }) };
+    });
+  }
+
+  /* ---------- 더하기 / 빼기 ---------- */
+  function addQuiz() {
+    quiz('add', 8, function (i, lv) {
+      var max = lv === 1 ? 3 : lv === 2 ? 5 : lv === 3 ? 8 : 10;
+      var a = K.randInt(1, max), b = K.randInt(1, max), ans = a + b;
+      var wrong = []; var guard = 0;
+      while (wrong.length < 3 && guard++ < 200) { var w = K.randInt(Math.max(1, ans - 3), ans + 3); if (w !== ans && wrong.indexOf(w) < 0) wrong.push(w); }
+      return { key: 'a' + a + '+' + b,
+        prompt: '<div class="stage-row">' + fig(a) + '<span class="plus">＋</span>' + fig(b) + '<span class="plus">＝</span><span class="plus">?</span></div>' +
+                '<div style="font-size:30px;margin-top:6px">' + a + ' + ' + b + ' = ?</div>',
+        say: koName(a) + ' 더하기 ' + koName(b) + '는?', cols: 4,
+        choices: K.shuffle([ans].concat(wrong)).map(function (x) { return { html: String(x), correct: x === ans, say: koName(x) }; }) };
+    });
+  }
+  function subQuiz() {
+    quiz('sub', 8, function (i, lv) {
+      var max = lv === 1 ? 5 : lv === 2 ? 8 : lv === 3 ? 12 : 20;
+      var a = K.randInt(2, max), b = K.randInt(1, a - 1), ans = a - b;
+      var wrong = []; var guard = 0;
+      while (wrong.length < 3 && guard++ < 200) { var w = K.randInt(Math.max(0, ans - 3), ans + 3); if (w !== ans && wrong.indexOf(w) < 0) wrong.push(w); }
+      /* 떨어져 나갈 블록은 흐리게 보여 준다 */
+      var vis = '<div class="stage-row">' + fig(ans) +
+        '<span style="opacity:.4;filter:grayscale(1)">' + fig(b, { color: '#bbb', noFace: true }) + '</span>' +
+        '<span class="plus" style="color:#d6336c">✂️</span></div>';
+      return { key: 's' + a + '-' + b,
+        prompt: vis + '<div style="font-size:30px;margin-top:6px">' + a + ' − ' + b + ' = ?</div>',
+        say: koName(a) + ' 빼기 ' + koName(b) + '는?', cols: 4,
+        choices: K.shuffle([ans].concat(wrong)).map(function (x) { return { html: String(x), correct: x === ans, say: koName(x) }; }) };
+    });
+  }
+
+  /* ---------- 짝꿍 수 ---------- */
+  function bondQuiz() {
+    quiz('bond', 8, function (i, lv) {
+      var total = lv === 1 ? K.pick([5, 6]) : lv === 2 ? K.pick([7, 10]) : lv === 3 ? K.pick([10, 12]) : K.pick([10, 15, 20]);
+      var a = K.randInt(1, total - 1), ans = total - a;
+      var wrong = []; var guard = 0;
+      while (wrong.length < 3 && guard++ < 200) { var w = K.randInt(1, total); if (w !== ans && wrong.indexOf(w) < 0) wrong.push(w); }
+      return { key: 'b' + total + '-' + a,
+        prompt: '<div class="stage-row">' + fig(total, { color: '#cfd4e6', noFace: true }) + '</div>' +
+                '<div style="font-size:26px;margin-top:4px">' + total + '을 만들려면 ' + a + '에 얼마를 더할까요?</div>' +
+                '<div class="stage-row" style="min-height:0">' + fig(a) + '<span class="plus">＋ ?</span></div>',
+        say: koName(a) + '에 얼마를 더하면 ' + koName(total) + '이 될까요?', cols: 4,
+        choices: K.shuffle([ans].concat(wrong)).map(function (x) { return { html: String(x), correct: x === ans, say: koName(x) }; }) };
+    });
+  }
+
+  /* ---------- 두 배 ---------- */
+  function doubleQuiz() {
+    quiz('dbl', 5, function (i, lv) {
+      var max = lv === 1 ? 5 : lv === 2 ? 8 : lv === 3 ? 10 : 12;
+      var a = K.randInt(1, max), ans = a * 2;
+      var wrong = []; var guard = 0;
+      while (wrong.length < 3 && guard++ < 200) { var w = K.randInt(2, max * 2 + 2); if (w !== ans && wrong.indexOf(w) < 0) wrong.push(w); }
+      return { key: 'd' + a,
+        prompt: '<div class="stage-row">' + fig(a) + '<span class="plus">＋</span>' + fig(a) + '</div>' +
+                '<div style="font-size:26px;margin-top:6px">' + a + '의 두 배는?</div>',
+        say: koName(a) + '의 두 배는?', cols: 4,
+        choices: K.shuffle([ans].concat(wrong)).map(function (x) { return { html: String(x), correct: x === ans, say: koName(x) }; }) };
+    });
+  }
+
+  /* ---------- 홀수 짝수 ---------- */
+  function pairsView(n) {
+    var c = colorOf(n), html = '<div class="pairs">';
+    for (var i = 0; i < Math.floor(n / 2); i++)
+      html += '<div class="pair"><span class="cube" style="background:' + c + '"></span><span class="cube" style="background:' + c + '"></span></div>';
+    if (n % 2) html += '<div class="pair"><span class="cube" style="background:' + c + ';outline:3px dashed #d6336c"></span></div>';
+    return html + '</div>';
+  }
+  function oddQuiz() {
+    quiz('odd', 8, function (i, lv) {
+      var max = lv === 1 ? 9 : lv === 2 ? 12 : lv === 3 ? 16 : 20;
+      var n = K.randInt(1, max);
+      return { key: 'o' + n,
+        prompt: pairsView(n) + '<div style="font-size:28px;margin-top:10px">' + n + '</div>',
+        say: koName(n) + '. 둘씩 짝을 지으면 남는 게 있을까요?', cols: 2,
+        choices: [
+          { html: '👫 짝수<div style="font-size:17px;color:#666">남는 게 없어요</div>', cls: 'text', correct: n % 2 === 0, say: '짝수' },
+          { html: '🙋 홀수<div style="font-size:17px;color:#666">하나가 남아요</div>', cls: 'text', correct: n % 2 === 1, say: '홀수' }
+        ] };
+    });
+  }
+
+  /* ---------- 십과 일 ---------- */
+  function rodsView(n) {
+    var tens = Math.floor(n / 10), ones = n % 10, html = '<div class="rods">';
+    for (var t = 0; t < tens; t++) {
+      html += '<div class="rod">';
+      for (var i = 0; i < 10; i++) html += '<span class="cube" style="background:#1982c4"></span>';
+      html += '</div>';
+    }
+    if (ones) { html += '<div class="rod">'; for (var j = 0; j < ones; j++) html += '<span class="cube" style="background:#ffca3a"></span>'; html += '</div>'; }
+    return html + '</div>';
+  }
+  function tensQuiz() {
+    quiz('tens', 8, function (i, lv) {
+      var max = lv === 1 ? 29 : lv === 2 ? 59 : lv === 3 ? 99 : 99;
+      var n = K.randInt(11, max);
+      var tens = Math.floor(n / 10), ones = n % 10;
+      if (i % 2) {
+        var wrong = []; var guard = 0;
+        while (wrong.length < 3 && guard++ < 200) { var w = K.randInt(11, max); if (w !== n && wrong.indexOf(w) < 0) wrong.push(w); }
+        return { key: 't' + n, prompt: rodsView(n) + '<div style="font-size:24px;margin-top:10px">파란 줄은 10개씩이에요. 모두 몇 개?</div>',
+          say: '파란 줄은 열 개씩이에요. 모두 몇 개일까요?', cols: 4,
+          choices: K.shuffle([n].concat(wrong)).map(function (x) { return { html: String(x), correct: x === n, say: K.numToKo(x) }; }) };
+      }
+      var opts = [[tens, ones]]; var guard2 = 0;
+      while (opts.length < 4 && guard2++ < 200) {
+        var t2 = K.randInt(1, Math.floor(max / 10)), o2 = K.randInt(0, 9);
+        if (!opts.some(function (p) { return p[0] === t2 && p[1] === o2; })) opts.push([t2, o2]);
+      }
+      return { key: 'to' + n, prompt: K.comma(n) + '<div style="font-size:24px;color:#777;margin-top:6px">십이 몇 개, 일이 몇 개일까요?</div>',
+        say: K.numToKo(n) + '. 십이 몇 개, 일이 몇 개일까요?', cols: 2,
+        choices: K.shuffle(opts).map(function (p) { return { html: '십 ' + p[0] + '개 · 일 ' + p[1] + '개', cls: 'text', correct: p[0] === tens && p[1] === ones, say: '십 ' + p[0] + '개 일 ' + p[1] + '개' }; }) };
+    });
+  }
+  home();
+})();
+</script>
+</body>
+</html>

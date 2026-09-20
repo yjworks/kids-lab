@@ -139,7 +139,9 @@
     { app: 'diary', key: 'save', n: 1, label: '오늘의 일기 쓰기', icon: '📔' },
     { app: 'maze', key: 'win', n: 1, label: '미로 탈출 성공하기', icon: '🧭' },
     { app: 'coding', key: 'win', n: 1, label: '로봇 코딩 1단계 성공하기', icon: '🤖' },
-    { app: 'shop', key: 'correct', n: 3, label: '가게 놀이에서 3번 계산하기', icon: '🛒' }
+    { app: 'shop', key: 'correct', n: 3, label: '가게 놀이에서 3번 계산하기', icon: '🛒' },
+    { app: 'calc', key: 'correct', n: 4, label: '숫자 읽기 4문제 맞히기', icon: '🧮' },
+    { app: 'blocks', key: 'correct', n: 5, label: '숫자 블록 5문제 맞히기', icon: '🧱' }
   ];
   var DAILY_FIXED = { app: 'diary', key: 'save', n: 1, label: '오늘의 일기 쓰기', icon: '📔' };
   function missions(d) {
@@ -211,6 +213,58 @@
     } catch (e) { return false; }
   }
   function speakEn(text) { return speak(text, { lang: 'en-US', rate: 0.85 }); }
+
+  /* ---------- 숫자를 한국말로 읽기 ----------
+     12345 → "만 이천삼백사십오", 3.14 → "삼 점 일사", -5 → "마이너스 오" */
+  var KO_D = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'];
+  var KO_U = ['', '십', '백', '천'];
+  var KO_G = ['', '만', '억', '조', '경'];
+  function koGroup4(x) {
+    var out = '';
+    for (var i = 3; i >= 0; i--) {
+      var d = Math.floor(x / Math.pow(10, i)) % 10;
+      if (!d) continue;
+      out += (d === 1 && i > 0 ? '' : KO_D[d]) + KO_U[i];
+    }
+    return out;
+  }
+  function koInt(n) {
+    n = Math.trunc(Math.abs(n));
+    if (n === 0) return '영';
+    var parts = [], g = 0;
+    while (n > 0 && g < KO_G.length) {
+      var x = n % 10000; n = Math.floor(n / 10000);
+      if (x) parts.unshift((g === 1 && x === 1 ? '' : koGroup4(x)) + KO_G[g]);
+      g++;
+    }
+    return parts.join(' ');
+  }
+  /* 소수점 아래는 한 자리씩 읽는다 */
+  function numToKo(v) {
+    if (v === '' || v == null) return '영';
+    var str = String(v);
+    if (str === 'Infinity' || str === '-Infinity' || str === 'NaN') return '셀 수 없는 수';
+    var neg = str.charAt(0) === '-';
+    if (neg) str = str.slice(1);
+    str = str.replace(/,/g, '');
+    var dot = str.indexOf('.');
+    var ip = dot < 0 ? str : str.slice(0, dot);
+    var fp = dot < 0 ? '' : str.slice(dot + 1);
+    var out = koInt(parseFloat(ip) || 0);
+    if (fp) {
+      out += ' 점';
+      for (var i = 0; i < fp.length; i++) out += ' ' + (fp.charAt(i) === '0' ? '영' : KO_D[+fp.charAt(i)]);
+    }
+    return (neg ? '마이너스 ' : '') + out;
+  }
+  /* 1000000 → "1,000,000" */
+  function comma(v) {
+    var str = String(v); var neg = str.charAt(0) === '-'; if (neg) str = str.slice(1);
+    var dot = str.indexOf('.');
+    var ip = dot < 0 ? str : str.slice(0, dot);
+    var fp = dot < 0 ? '' : str.slice(dot);
+    return (neg ? '-' : '') + ip.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + fp;
+  }
 
   /* ---------- UI 도우미 ---------- */
   function toast(msg, ms) {
@@ -398,6 +452,7 @@
     STICKERS: STICKERS, STICKER_COST: STICKER_COST,
     sfx: sfx, speak: speak, speakEn: speakEn,
     toast: toast, confetti: confetti, header: header, runQuiz: runQuiz, buildRound: buildRound, qkey: qkey, menu: menu, backButton: backButton,
+    numToKo: numToKo, comma: comma,
     el: el, esc: esc, randInt: randInt, pick: pick, shuffle: shuffle, sample: sample, notify: notify, APP_ID: APP_ID
   };
   if (APP_ID !== 'os') { try { markVisit(APP_ID); } catch (e) { } }
