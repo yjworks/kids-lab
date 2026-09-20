@@ -114,7 +114,7 @@
     quiz('ten', 8, function (i, lv) {
       var target = lv <= 2 ? 10 : K.pick([5, 10, 10, 10]); var a = K.randInt(1, target - 1); var ans = target - a;
       var frame = '<div class="ten-frame">'; for (var k = 0; k < target; k++) frame += '<i>' + (k < a ? '🔵' : '') + '</i>'; frame += '</div>';
-      return { prompt: (lv <= 3 ? frame : '') + '<div style="font-size:50px">' + a + ' + ? = ' + target + '</div>', say: a + '에 몇을 더하면 ' + target + '이 될까요?', cols: 4, choices: K.shuffle([ans].concat(wrongs(ans, 1, target, 3))).map(function (x) { return { html: String(x), correct: x === ans }; }) };
+      return { prompt: (lv <= 3 ? frame : '') + '<div style="font-size:50px">' + a + ' + ? = ' + target + '</div>', say: a + '에 몇을 더하면 ' + target + K.josa(target, '이/가') + ' 될까요?', cols: 4, choices: K.shuffle([ans].concat(wrongs(ans, 1, target, 3))).map(function (x) { return { html: String(x), correct: x === ans }; }) };
     });
   }
   function seqQuiz() {

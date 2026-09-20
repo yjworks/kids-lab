@@ -257,6 +257,17 @@
     }
     return (neg ? '마이너스 ' : '') + out;
   }
+  /* 받침에 따라 조사를 고른다. josa(5, '을/를') → '를' (오를) */
+  function josa(word, pair) {
+    var parts = String(pair).split('/');
+    var w = String(word);
+    if (/[0-9]$/.test(w) || /^-?[0-9.,]+$/.test(w)) w = numToKo(w);   /* 숫자면 읽는 소리로 판단 */
+    var ch = w.replace(/\s+$/, '').slice(-1);
+    var code = ch.charCodeAt(0) - 0xAC00;
+    if (code < 0 || code > 11171) return parts[0];
+    return (code % 28) ? parts[0] : parts[1];   /* 받침 있으면 앞, 없으면 뒤 */
+  }
+
   /* 1000000 → "1,000,000" */
   function comma(v) {
     var str = String(v); var neg = str.charAt(0) === '-'; if (neg) str = str.slice(1);
@@ -452,7 +463,7 @@
     STICKERS: STICKERS, STICKER_COST: STICKER_COST,
     sfx: sfx, speak: speak, speakEn: speakEn,
     toast: toast, confetti: confetti, header: header, runQuiz: runQuiz, buildRound: buildRound, qkey: qkey, menu: menu, backButton: backButton,
-    numToKo: numToKo, comma: comma,
+    numToKo: numToKo, comma: comma, josa: josa,
     el: el, esc: esc, randInt: randInt, pick: pick, shuffle: shuffle, sample: sample, notify: notify, APP_ID: APP_ID
   };
   if (APP_ID !== 'os') { try { markVisit(APP_ID); } catch (e) { } }

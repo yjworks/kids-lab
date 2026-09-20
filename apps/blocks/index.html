@@ -157,9 +157,9 @@
       while (wrong.length < 3 && guard++ < 200) { var w = K.randInt(1, total); if (w !== ans && wrong.indexOf(w) < 0) wrong.push(w); }
       return { key: 'b' + total + '-' + a,
         prompt: '<div class="stage-row">' + fig(total, { color: '#cfd4e6', noFace: true }) + '</div>' +
-                '<div style="font-size:26px;margin-top:4px">' + total + '을 만들려면 ' + a + '에 얼마를 더할까요?</div>' +
+                '<div style="font-size:26px;margin-top:4px">' + total + K.josa(total, '을/를') + ' 만들려면 ' + a + '에 얼마를 더할까요?</div>' +
                 '<div class="stage-row" style="min-height:0">' + fig(a) + '<span class="plus">＋ ?</span></div>',
-        say: koName(a) + '에 얼마를 더하면 ' + koName(total) + '이 될까요?', cols: 4,
+        say: koName(a) + '에 얼마를 더하면 ' + koName(total) + K.josa(koName(total), '이/가') + ' 될까요?', cols: 4,
         choices: K.shuffle([ans].concat(wrong)).map(function (x) { return { html: String(x), correct: x === ans, say: koName(x) }; }) };
     });
   }
