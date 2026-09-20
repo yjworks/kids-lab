@@ -143,6 +143,7 @@
       return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height];
     }
     ink.addEventListener('pointerdown', function (e) {
+      stopDemo(true);                 /* 시범 보이는 중이면 멈추고 아이 그림을 살린다 */
       drawing = true; cur = [pos(e)]; drawn.push(cur); ink.setPointerCapture(e.pointerId);
       redrawInk(); verdict.textContent = '';
     });
@@ -155,7 +156,10 @@
        (1) 아이가 그린 점이 선 가까이 있는지 (밖으로 안 나갔는지)
        (2) 선 위의 점이 모두 지나갔는지 (획을 빠뜨리지 않았는지)
        (3) 그린 길이가 지나치게 길지 않은지 (덧칠·낙서 거르기) 를 본다 */
-    var TOL = 8;          /* 100칸 기준 허용 거리 */
+    /* 회색 본보기의 굵기는 100칸 기준 15칸이다. 그 띠 안에 들어가면 인정한다.
+       덮었는지 볼 때는 아이가 그은 굵은 선의 두께까지 감안해 조금 더 넉넉하게 본다. */
+    var TOL_ON = 9;       /* 밖으로 나갔는지 보는 거리 */
+    var TOL_COVER = 11;   /* 선을 지나갔는지 보는 거리 */
     function resample(st, step) {
       var out = [[st[0][0], st[0][1]]], cx = st[0][0], cy = st[0][1];
       for (var i = 1; i < st.length; i++) {
@@ -188,13 +192,13 @@
       tS.forEach(function (st) { tAll = tAll.concat(st); });
 
       var on = 0;
-      uAll.forEach(function (pt) { if (near(pt, tAll, TOL)) on++; });
+      uAll.forEach(function (pt) { if (near(pt, tAll, TOL_ON)) on++; });
 
       var covered = 0, total = 0, minStroke = 1;
       missed = [];
       tS.forEach(function (st) {
         var c = 0;
-        st.forEach(function (pt) { if (near(pt, uAll, TOL)) c++; else missed.push(pt); });
+        st.forEach(function (pt) { if (near(pt, uAll, TOL_COVER)) c++; else missed.push(pt); });
         covered += c; total += st.length;
         minStroke = Math.min(minStroke, c / st.length);
       });
@@ -205,7 +209,7 @@
         var best = -1, bestC = 0;
         uS.forEach(function (us, ui) {
           var c = 0;
-          st.forEach(function (pt) { if (near(pt, us, TOL)) c++; });
+          st.forEach(function (pt) { if (near(pt, us, TOL_COVER)) c++; });
           c = c / st.length;
           if (c > bestC) { bestC = c; best = ui; }
         });
@@ -249,6 +253,9 @@
         K.addStar(1); K.event('trace'); K.sfx.correct(); markDone(set.id, ch);
         K.speak(say.text + '. 잘했어요', { lang: say.lang });
         setTimeout(nextChar, 1600);
+      } else if (s.minStroke < 0.65 && s.on >= 0.6 && s.covered >= 0.55) {
+        verdict.textContent = '조금 옆으로 치우쳤어요. 빨간 점을 지나가 봐요 (' + pct + '점)';
+        K.sfx.wrong(); K.speak('조금 옆으로 치우쳤어요. 빨간 점을 지나가 봐요'); showMissed();
       } else if (s.minStroke < 0.65) {
         verdict.textContent = '빨간 점을 지나가야 해요. 번호 순서대로! (' + pct + '점)';
         K.sfx.wrong(); K.speak('빠뜨린 곳이 있어요. 빨간 점을 지나가 봐요'); showMissed();
@@ -263,21 +270,28 @@
         K.sfx.wrong(); K.speak('끝까지 다 그려 볼까요?'); showMissed();
       }
     }
-    function nextChar() { if (idx + 1 < list.length) trace(set, idx + 1); else picker(set, SETS_ALL.length === 1); }
+    function nextChar() { stopDemo(true); if (idx + 1 < list.length) trace(set, idx + 1); else picker(set, SETS_ALL.length === 1); }
 
     /* ---------- 시범 보이기 ---------- */
-    var playing = false;
+    var playing = false, demoTimer = null, demoNext = null;
+    function stopDemo(silent) {
+      if (demoTimer) { clearInterval(demoTimer); demoTimer = null; }
+      if (demoNext) { clearTimeout(demoNext); demoNext = null; }
+      if (playing) { playing = false; if (!silent) verdict.textContent = '이제 따라 그려 봐요 ✏️'; redrawInk(); }
+    }
     function demo() {
       if (playing) return; playing = true;
       drawn = []; redrawInk();
       var si = 0;
       function one() {
+        if (!playing) return;
         if (si >= strokes.length) { playing = false; verdict.textContent = '이제 따라 그려 봐요 ✏️'; return; }
         var st = strokes[si], i = 1;
         ic.strokeStyle = '#ffb703'; ic.lineWidth = size * INK_W; ic.lineCap = 'round'; ic.lineJoin = 'round';
         ic.beginPath(); ic.moveTo(S(st[0][0]), S(st[0][1]));
-        var timer = setInterval(function () {
-          if (i >= st.length) { clearInterval(timer); si++; setTimeout(one, 280); return; }
+        demoTimer = setInterval(function () {
+          if (!playing) { clearInterval(demoTimer); demoTimer = null; return; }
+          if (i >= st.length) { clearInterval(demoTimer); demoTimer = null; si++; demoNext = setTimeout(one, 280); return; }
           ic.lineTo(S(st[i][0]), S(st[i][1])); ic.stroke();
           ic.beginPath(); ic.moveTo(S(st[i][0]), S(st[i][1]));
           K.sfx.note(520 + i * 12, 0.05);
@@ -292,7 +306,7 @@
     bar.appendChild(el('button', { class: 'kl-btn', text: '◀', title: '앞 글자', onclick: function () { if (idx > 0) trace(set, idx - 1); } }));
     bar.appendChild(el('button', { class: 'speak-btn', text: '🔊 듣기', onclick: function () { var s = sayOf(set.id, ch); K.speak(s.text, { lang: s.lang }); } }));
     bar.appendChild(el('button', { class: 'kl-btn blue', text: '👀 보여줘', onclick: function () { K.sfx.click(); demo(); } }));
-    bar.appendChild(el('button', { class: 'kl-btn', text: '🧽 지우기', onclick: function () { drawn = []; redrawInk(); meter.querySelector('i').style.width = '0'; verdict.textContent = '다시 그려 봐요'; K.sfx.pop(); } }));
+    bar.appendChild(el('button', { class: 'kl-btn', text: '🧽 지우기', onclick: function () { stopDemo(true); drawn = []; redrawInk(); meter.querySelector('i').style.width = '0'; verdict.textContent = '다시 그려 봐요'; K.sfx.pop(); } }));
     bar.appendChild(el('button', { class: 'kl-btn green', text: '✔ 다 썼어요', onclick: check }));
     bar.appendChild(el('button', { class: 'kl-btn', text: '▶', title: '다음 글자', onclick: nextChar }));
 
