@@ -207,3 +207,31 @@ main, .kl-main { flex: 1; padding: 18px; max-width: 1100px; margin: 0 auto; widt
   body[data-app] .combo .slot { width: 64px; height: 64px; }
   body[data-app] .combo { font-size: 34px; gap: 8px; }
 }
+
+/* ---------- 따라 쓰기 (한글·영어·숫자 앱이 함께 쓴다) ---------- */
+.pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
+  .pick button { background: #fff; border-radius: 16px; padding: 10px 4px; box-shadow: 0 4px 0 rgba(0,0,0,.08); position: relative; }
+  .pick button .ch { font-size: 34px; font-weight: 900; color: #333; line-height: 1.1; }
+  .pick button .ok { position: absolute; top: 3px; right: 6px; font-size: 14px; }
+  .pick button.done { background: #eaf7dc; }
+  .pick button:hover { transform: scale(1.06); }
+  .pad { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .sheet { position: relative; background: #fff; border-radius: 20px; box-shadow: 0 6px 0 rgba(0,0,0,.08); touch-action: none; }
+  .sheet canvas { position: absolute; left: 0; top: 0; border-radius: 20px; }
+  .sheet canvas.ink { touch-action: none; }
+  .bar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; }
+  .meter { width: 100%; max-width: 420px; height: 16px; border-radius: 10px; background: #e8e8e8; overflow: hidden; }
+  .meter i { display: block; height: 100%; background: linear-gradient(90deg, #8ac926, #4caf50); width: 0; transition: width .35s; }
+  .verdict { font-size: 22px; font-weight: 800; min-height: 30px; text-align: center; }
+  .cur { font-size: 26px; font-weight: 900; }
+  body.fixed { overflow: hidden; }
+  body.fixed main { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 8px 10px; gap: 6px; }
+  body.fixed .kl-back { align-self: flex-start; margin: 0; }
+  body.fixed .pad { flex: 1; min-height: 0; justify-content: center; }
+  @media (max-width: 760px) {
+    .pick { grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 6px; }
+    .pick button .ch { font-size: 28px; }
+    .bar button { font-size: 16px; padding: 8px 12px; }
+    .verdict { font-size: 18px; min-height: 24px; }
+    .cur { font-size: 20px; }
+  }

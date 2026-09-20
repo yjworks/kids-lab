@@ -21,10 +21,12 @@
 <body data-app="hangul">
 <main id="main"></main>
 <script src="../../shared/kid.js"></script>
+<script src="../../shared/glyphs.js"></script>
+<script src="../../shared/trace.js"></script>
 <script>
 (function () {
   var K = KidLab, el = K.el;
-  K.header({ title: '한글 놀이', icon: '🇰🇷', say: '한글 놀이' });
+  K.header({ title: '한글 놀이', icon: '가', say: '한글 놀이' });
   var main = document.getElementById('main');
 
   var CONS = [
@@ -56,7 +58,7 @@
       { icon: '🧩', label: '글자 만들기', mode: 'combo', color: '#e3f7cf', run: comboGame },
       { icon: '🍎', label: '낱말과 그림', mode: 'word', color: '#ffe4a1', run: wordQuiz },
       { icon: '🔍', label: '첫소리 찾기', mode: 'first', color: '#ece6f5', run: firstSoundQuiz },
-      { icon: '✏️', label: '따라 쓰기', color: '#e2ece9', run: function () { location.href = '../write/index.html'; } }
+      { icon: '✏️', label: '따라 쓰기', color: '#e2ece9', run: function () { KidTrace.start(main, ['cons', 'vow', 'syl'], home); } }
     ]);
   }
 

@@ -1,56 +1,17 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>따라 쓰기</title>
-<link rel="stylesheet" href="../../shared/app.css">
-<style>
-  .pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
-  .pick button { background: #fff; border-radius: 16px; padding: 10px 4px; box-shadow: 0 4px 0 rgba(0,0,0,.08); position: relative; }
-  .pick button .ch { font-size: 34px; font-weight: 900; color: #333; line-height: 1.1; }
-  .pick button .ok { position: absolute; top: 3px; right: 6px; font-size: 14px; }
-  .pick button.done { background: #eaf7dc; }
-  .pick button:hover { transform: scale(1.06); }
-  .pad { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-  .sheet { position: relative; background: #fff; border-radius: 20px; box-shadow: 0 6px 0 rgba(0,0,0,.08); touch-action: none; }
-  .sheet canvas { position: absolute; left: 0; top: 0; border-radius: 20px; }
-  .sheet canvas.ink { touch-action: none; }
-  .bar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; }
-  .meter { width: 100%; max-width: 420px; height: 16px; border-radius: 10px; background: #e8e8e8; overflow: hidden; }
-  .meter i { display: block; height: 100%; background: linear-gradient(90deg, #8ac926, #4caf50); width: 0; transition: width .35s; }
-  .verdict { font-size: 22px; font-weight: 800; min-height: 30px; text-align: center; }
-  .cur { font-size: 26px; font-weight: 900; }
-  body.fixed { overflow: hidden; }
-  body.fixed main { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 8px 10px; gap: 6px; }
-  body.fixed .kl-back { align-self: flex-start; margin: 0; }
-  body.fixed .pad { flex: 1; min-height: 0; justify-content: center; }
-  @media (max-width: 760px) {
-    .pick { grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 6px; }
-    .pick button .ch { font-size: 28px; }
-    .bar button { font-size: 16px; padding: 8px 12px; }
-    .verdict { font-size: 18px; min-height: 24px; }
-    .cur { font-size: 20px; }
-  }
-</style>
-</head>
-<body data-app="write">
-<main id="main"></main>
-<script src="../../shared/kid.js"></script>
-<script src="glyphs.js"></script>
-<script>
-(function () {
-  var K = KidLab, el = K.el, G = window.GLYPHS;
-  K.header({ title: '따라 쓰기', icon: '✏️', say: '따라 쓰기' });
-  var main = document.getElementById('main');
+/* 따라 쓰기 엔진 - 한글·영어·숫자 앱이 함께 쓴다 */
+(function (global) {
+  'use strict';
+  var K, el, G;
+  var main, onHome, SETS_ALL;
 
-  var SETS = [
-    { id: 'digits', icon: '🔢', label: '숫자 0~9', color: '#fff3c4', lang: 'ko' },
-    { id: 'cons',   icon: 'ㄱ',  label: '한글 자음', color: '#ffe9ee', lang: 'ko' },
-    { id: 'vow',    icon: 'ㅏ',  label: '한글 모음', color: '#e9f3ff', lang: 'ko' },
-    { id: 'syl',    icon: '가',  label: '한글 글자', color: '#e3f7cf', lang: 'ko' },
-    { id: 'upper',  icon: 'A',  label: '영어 대문자', color: '#d0f4de', lang: 'en' },
-    { id: 'lower',  icon: 'a',  label: '영어 소문자', color: '#ece6f5', lang: 'en' }
-  ];
+  var SET_DEF = {
+    digits: { id: 'digits', icon: '7', label: '숫자 따라 쓰기', color: '#fff3c4' },
+    cons:   { id: 'cons',   icon: 'ㄱ', label: '자음 따라 쓰기', color: '#ffe9ee' },
+    vow:    { id: 'vow',    icon: 'ㅏ', label: '모음 따라 쓰기', color: '#e9f3ff' },
+    syl:    { id: 'syl',    icon: '가', label: '글자 따라 쓰기', color: '#e3f7cf' },
+    upper:  { id: 'upper',  icon: 'A', label: '대문자 따라 쓰기', color: '#d0f4de' },
+    lower:  { id: 'lower',  icon: 'a', label: '소문자 따라 쓰기', color: '#ece6f5' }
+  };
   var NAME = {
     'ㄱ': '기역', 'ㄴ': '니은', 'ㄷ': '디귿', 'ㄹ': '리을', 'ㅁ': '미음', 'ㅂ': '비읍', 'ㅅ': '시옷',
     'ㅇ': '이응', 'ㅈ': '지읒', 'ㅊ': '치읓', 'ㅋ': '키읔', 'ㅌ': '티읕', 'ㅍ': '피읖', 'ㅎ': '히읗',
@@ -61,10 +22,15 @@
     if (set === 'upper' || set === 'lower') return { text: ch, lang: 'en-US' };
     return { text: NAME[ch] || ch, lang: 'ko-KR' };
   }
-  function doneList(set) { var p = K.progress(); return (p.done && p.done[set]) || []; }
+  /* 어느 앱에서 열든 따라 쓰기 진도는 한곳에 모아 둔다 */
+  function doneList(set) {
+    var d = K.data();
+    var pr = d.progress.trace || {};
+    return (pr.done && pr.done[set]) || [];
+  }
   function markDone(set, ch) {
     K.mutate(function (d) {
-      var pr = d.progress.write || (d.progress.write = {});
+      var pr = d.progress.trace || (d.progress.trace = {});
       var done = pr.done || (pr.done = {});
       var arr = done[set] || (done[set] = []);
       if (arr.indexOf(ch) < 0) arr.push(ch);
@@ -73,18 +39,20 @@
 
   function home() {
     document.body.classList.remove('fixed');
+    if (SETS_ALL.length === 1) { picker(SET_DEF[SETS_ALL[0]], true); return; }
     main.innerHTML = '';
-    var items = SETS.map(function (s) {
-      var done = doneList(s.id).length, all = G.order[s.id].length;
+    main.appendChild(K.backButton(onHome));
+    var items = SETS_ALL.map(function (id) {
+      var s = SET_DEF[id], done = doneList(id).length, all = G.order[id].length;
       return { icon: s.icon, label: s.label + ' (' + done + '/' + all + ')', color: s.color, run: function () { picker(s); } };
     });
     K.menu(main, items);
     main.appendChild(el('div', { class: 'kl-hint', text: '회색 글자를 따라 그리면 얼마나 잘 썼는지 알려줘요' }));
   }
 
-  function picker(set) {
+  function picker(set, top) {
     document.body.classList.remove('fixed');
-    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    main.innerHTML = ''; main.appendChild(K.backButton(top ? onHome : home));
     main.appendChild(el('div', { class: 'kl-prompt', text: set.label, style: 'font-size:24px;margin-bottom:10px' }));
     var done = doneList(set.id);
     var grid = el('div', { class: 'pick' });
@@ -106,7 +74,7 @@
     var list = G.order[set.id];
     var ch = list[idx];
     var strokes = G[set.id][ch];
-    var back = K.backButton(function () { picker(set); });
+    var back = K.backButton(function () { picker(set, SETS_ALL.length === 1); });
     main.appendChild(back);
 
     var pad = el('div', { class: 'pad' });
@@ -295,7 +263,7 @@
         K.sfx.wrong(); K.speak('끝까지 다 그려 볼까요?'); showMissed();
       }
     }
-    function nextChar() { if (idx + 1 < list.length) trace(set, idx + 1); else picker(set); }
+    function nextChar() { if (idx + 1 < list.length) trace(set, idx + 1); else picker(set, SETS_ALL.length === 1); }
 
     /* ---------- 시범 보이기 ---------- */
     var playing = false;
@@ -334,8 +302,14 @@
     setTimeout(function () { if (document.body.contains(sheet)) demo(); }, 700);
   }
 
-  home();
-})();
-</script>
-</body>
-</html>
+  /* 공용 API: KidTrace.start(main, ['cons','vow','syl'], 돌아갈곳) */
+  global.KidTrace = {
+    start: function (mainEl, setIds, backFn) {
+      K = window.KidLab; el = K.el; G = window.GLYPHS;
+      main = mainEl; SETS_ALL = setIds; onHome = backFn;
+      home();
+    },
+    setLabel: function (id) { return SET_DEF[id] ? SET_DEF[id].label : id; },
+    count: function (id) { return { done: doneList(id).length, all: window.GLYPHS.order[id].length }; }
+  };
+})(window);

@@ -1,9 +1,8 @@
 /* 앱 목록 - 런처와 부모님 설정에서 공통 사용 */
 window.KIDLAB_APPS = [
-  { id: 'hangul',   name: '한글 놀이',   icon: '🇰🇷', color: '#ff8fa3', desc: '자음·모음, 글자 만들기, 낱말 읽기', cat: '언어' },
-  { id: 'english',  name: '영어 놀이',   icon: '🔤', color: '#7fc8ff', desc: 'ABC, 파닉스, 그림 낱말', cat: '언어' },
-  { id: 'write',    name: '따라 쓰기',   icon: '✏️', color: '#ffd6a5', desc: '한글·영어·숫자를 획순대로 따라 쓰기', cat: '언어' },
-  { id: 'math',     name: '수학 놀이',   icon: '🔢', color: '#ffd166', desc: '세기, 더하기, 빼기, 비교', cat: '수학' },
+  { id: 'hangul',   name: '한글 놀이',   icon: '가', color: '#ff8fa3', desc: '자음·모음, 글자 만들기, 낱말 읽기, 따라 쓰기', cat: '언어' },
+  { id: 'english',  name: '영어 놀이',   icon: '🔤', color: '#7fc8ff', desc: 'ABC, 파닉스, 그림 낱말, 따라 쓰기', cat: '언어' },
+  { id: 'math',     name: '수학 놀이',   icon: '🔢', color: '#ffd166', desc: '세기, 더하기, 빼기, 비교, 숫자 따라 쓰기', cat: '수학' },
   { id: 'shapes',   name: '모양·색깔',   icon: '🔷', color: '#b8e0d2', desc: '모양 찾기, 색 맞추기, 패턴', cat: '수학' },
   { id: 'clock',    name: '시계 놀이',   icon: '⏰', color: '#c3b1e1', desc: '몇 시일까? 시계 읽기', cat: '수학' },
   { id: 'calc',     name: '계산기',     icon: '🧮', color: '#a7c7ff', desc: '휴대폰 계산기, 숫자 읽기, 자릿값', cat: '수학' },

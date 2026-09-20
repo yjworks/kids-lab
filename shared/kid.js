@@ -123,7 +123,7 @@
 
   /* ---------- 오늘의 미션 ---------- */
   var MISSION_POOL = [
-    { app: 'hangul', key: 'correct', n: 5, label: '한글 놀이에서 5문제 맞히기', icon: '🇰🇷' },
+    { app: 'hangul', key: 'correct', n: 5, label: '한글 놀이에서 5문제 맞히기', icon: '가' },
     { app: 'english', key: 'correct', n: 5, label: '영어 놀이에서 5문제 맞히기', icon: '🔤' },
     { app: 'math', key: 'correct', n: 6, label: '수학 놀이에서 6문제 맞히기', icon: '🔢' },
     { app: 'shapes', key: 'correct', n: 5, label: '모양·색깔 5문제 맞히기', icon: '🔷' },
@@ -142,7 +142,9 @@
     { app: 'shop', key: 'correct', n: 3, label: '가게 놀이에서 3번 계산하기', icon: '🛒' },
     { app: 'calc', key: 'correct', n: 4, label: '숫자 읽기 4문제 맞히기', icon: '🧮' },
     { app: 'blocks', key: 'correct', n: 5, label: '숫자 블록 5문제 맞히기', icon: '🧱' },
-    { app: 'write', key: 'trace', n: 4, label: '글자 4개 따라 쓰기', icon: '✏️' }
+    { app: 'hangul', key: 'trace', n: 3, label: '한글 3글자 따라 쓰기', icon: '✏️' },
+    { app: 'english', key: 'trace', n: 3, label: '영어 3글자 따라 쓰기', icon: '✏️' },
+    { app: 'math', key: 'trace', n: 3, label: '숫자 3개 따라 쓰기', icon: '✏️' }
   ];
   var DAILY_FIXED = { app: 'diary', key: 'save', n: 1, label: '오늘의 일기 쓰기', icon: '📔' };
   function missions(d) {

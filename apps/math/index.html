@@ -24,6 +24,8 @@
 <body data-app="math">
 <main id="main"></main>
 <script src="../../shared/kid.js"></script>
+<script src="../../shared/glyphs.js"></script>
+<script src="../../shared/trace.js"></script>
 <script>
 (function () {
   var K = KidLab, el = K.el;
@@ -45,7 +47,8 @@
       { icon: '⚖️', label: '어느 쪽이 많을까?', mode: 'cmp', color: '#ece6f5', run: cmpQuiz },
       { icon: '🔟', label: '10 만들기', mode: 'ten', color: '#d0f4de', run: tenQuiz },
       { icon: '🪜', label: '빠진 숫자', mode: 'seq', color: '#ffd9e8', run: seqQuiz },
-      { icon: '📏', label: '크기 순서', mode: 'order', color: '#e2ece9', run: orderQuiz }
+      { icon: '📏', label: '크기 순서', mode: 'order', color: '#e2ece9', run: orderQuiz },
+      { icon: '✏️', label: '숫자 따라 쓰기', color: '#ffd6a5', run: function () { KidTrace.start(main, ['digits'], home); } }
     ]);
   }
   function quiz(mode, total, make) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: total, make: make, onFinish: home }); }

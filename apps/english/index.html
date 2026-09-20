@@ -17,6 +17,8 @@
 <body data-app="english">
 <main id="main"></main>
 <script src="../../shared/kid.js"></script>
+<script src="../../shared/glyphs.js"></script>
+<script src="../../shared/trace.js"></script>
 <script>
 (function () {
   var K = KidLab, el = K.el;
@@ -39,7 +41,8 @@
       { icon: '🎨', label: '색깔 영어', mode: 'color', color: '#ffe4a1', run: colorQuiz },
       { icon: '🔢', label: '숫자 영어', mode: 'num', color: '#ece6f5', run: numQuiz },
       { icon: '🔡', label: '대문자·소문자', mode: 'case', color: '#d0f4de', run: caseQuiz },
-      { icon: '👋', label: '인사말', mode: 'greet', color: '#ffd9e8', run: greetQuiz }
+      { icon: '👋', label: '인사말', mode: 'greet', color: '#ffd9e8', run: greetQuiz },
+      { icon: '✏️', label: '따라 쓰기', color: '#ffd6a5', run: function () { KidTrace.start(main, ['upper', 'lower'], home); } }
     ]);
   }
   function learnABC() {
