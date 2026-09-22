@@ -8,9 +8,9 @@ body {
 }
 button { font-family: inherit; cursor: pointer; border: none; }
 button:focus-visible { outline: 4px solid #1982c4; outline-offset: 2px; }
-.kl-header.compact { padding: 4px 12px; }
-.kl-header.compact .kl-title { display: none; }
-.kl-header.compact .kl-right { margin-left: auto; }
+/* 좁은 화면에서는 창 제목줄에 이미 앱 이름과 닫기가 있으므로 앱 머리말을 감춘다.
+   이 46px이 폰에서 내용 영역의 10% 가까이 된다. */
+.kl-header.compact { display: none; }
 .kl-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: nowrap; padding: 10px 18px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.08); position: sticky; top: 0; z-index: 20; }
 .kl-title { font-size: 26px; font-weight: 800; min-width: 0; }
 .kl-icon { font-size: 30px; }
@@ -30,7 +30,7 @@ main, .kl-main { flex: 1; padding: 18px; max-width: 1100px; margin: 0 auto; widt
 .kl-menu-label { font-size: 22px; font-weight: 800; color: #333; }
 .kl-menu-level { font-size: 16px; background: rgba(0,0,0,.08); padding: 3px 12px; border-radius: 20px; color: #444; }
 
-.kl-back { background: #eee; padding: 10px 20px; border-radius: 30px; font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+.kl-back { background: #eee; padding: 12px 22px; border-radius: 30px; font-size: 20px; font-weight: 700; margin-bottom: 12px; min-height: 56px; min-width: 104px; }
 .kl-back:hover { background: #ddd; }
 
 .kl-quiztop { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -78,7 +78,7 @@ main, .kl-main { flex: 1; padding: 18px; max-width: 1100px; margin: 0 auto; widt
   .kl-menu-label { font-size: 17px; }
   .kl-btn { font-size: 19px; padding: 11px 18px; }
   .kl-btn.big { font-size: 22px; padding: 14px 24px; }
-  .kl-back { font-size: 17px; padding: 8px 16px; }
+  .kl-back { font-size: 18px; padding: 10px 18px; min-height: 52px; min-width: 96px; }
   .kl-dots i { width: 16px; height: 16px; }
   .kl-result-emoji { font-size: 78px; }
   .kl-result-title { font-size: 28px; }
@@ -121,9 +121,9 @@ main, .kl-main { flex: 1; padding: 18px; max-width: 1100px; margin: 0 auto; widt
 
 .kl-card { background: #fff; border-radius: 26px; padding: 24px; box-shadow: 0 8px 30px rgba(0,0,0,.06); margin-bottom: 18px; }
 .kl-center { text-align: center; }
-.kl-hint { color: #888; font-size: 18px; text-align: center; margin-top: 10px; }
+.kl-hint { color: #5e5e5e; font-size: 18px; text-align: center; margin-top: 10px; }
 .kl-big-emoji { font-size: 120px; line-height: 1; text-align: center; }
-.speak-btn { background: #e3f0ff; border-radius: 40px; padding: 10px 22px; font-size: 22px; font-weight: 700; }
+.speak-btn { background: #e3f0ff; border-radius: 40px; padding: 10px 22px; font-size: 22px; font-weight: 700; min-height: 48px; }
 
 
 /* 세로가 짧은 화면(가로로 눕힌 폰)에서도 보기 버튼이 한 화면에 들어오도록 */
@@ -138,7 +138,7 @@ main, .kl-main { flex: 1; padding: 18px; max-width: 1100px; margin: 0 auto; widt
   .kl-stars { font-size: 15px; padding: 3px 9px; }
   .kl-avatar { font-size: 20px; }
   .kl-mini { width: 32px; height: 32px; font-size: 15px; }
-  .kl-back { font-size: 14px; padding: 5px 12px; margin-bottom: 6px; }
+  .kl-back { font-size: 16px; padding: 6px 14px; margin-bottom: 6px; min-height: 44px; min-width: 88px; }
   .kl-quiztop { margin-bottom: 4px; }
   .kl-dots i { width: 12px; height: 12px; }
   .kl-level { font-size: 14px; padding: 2px 10px; }
@@ -155,7 +155,7 @@ main, .kl-main { flex: 1; padding: 18px; max-width: 1100px; margin: 0 auto; widt
   .kl-menu-item { min-height: 92px; padding: 8px 6px; gap: 2px; }
   .kl-menu-icon { font-size: 32px; }
   .kl-menu-label { font-size: 14px; }
-  .kl-menu-level { font-size: 12px; }
+  .kl-menu-level { font-size: 14px; }
   .kl-btn { font-size: 16px; padding: 8px 14px; }
   .kl-btn.big { font-size: 18px; padding: 10px 18px; }
   .kl-row { margin-top: 10px; gap: 10px; }
@@ -294,3 +294,8 @@ body[data-app] main { overflow-x: auto; }
   .kl-feedback { font-size: 17px; }
   .kl-choice.wrong-mark::after, .kl-choice.right-mark::after { font-size: 22px; right: 5px; }
 }
+
+/* 지난번에 틀린 문제를 다시 낼 때 */
+.kl-again { background: #ece6f5; color: #5b3c86; font-weight: 800; border-radius: 16px;
+  padding: 6px 14px; text-align: center; margin: 0 auto 8px; max-width: 520px; font-size: 18px; }
+@media (max-width: 760px) { .kl-again { font-size: 15px; padding: 5px 10px; } }

@@ -18,8 +18,8 @@
   .paid { min-height: 80px; background: #f7f7f7; border-radius: 16px; padding: 8px; text-align: center; }
   @media (max-width: 760px) {
     .coin { margin: 2px; }
-    .c10 { width: 32px; height: 32px; font-size: 13px; }
-    .c50 { width: 36px; height: 36px; font-size: 13px; }
+    .c10 { width: 36px; height: 36px; font-size: 14px; }
+    .c50 { width: 40px; height: 40px; font-size: 14px; }
     .c100 { width: 42px; height: 42px; font-size: 14px; }
     .c500 { width: 48px; height: 48px; font-size: 14px; }
     .b1000 { width: 84px; height: 40px; font-size: 15px; margin: 2px; }
@@ -83,7 +83,7 @@
       var pay = el('div', { class: 'paybox' });
       allowed.forEach(function (m) { var b = el('button', { html: money(m[0], m[1]) }); b.addEventListener('click', function () { paid.push(m); K.sfx.pop(); render(); }); pay.appendChild(b); });
       var row = el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn', text: '↩ 다시', onclick: function () { paid = []; render(); } }), el('button', { class: 'kl-btn green', text: '💳 계산하기', onclick: function () { var s = paid.reduce(function (a, m) { return a + m[0]; }, 0); if (s === item[2]) { K.sfx.correct(); K.addStar(1); K.event('correct'); if (!mistakes) score++; K.speak('딱 맞아요! 고맙습니다'); round++; setTimeout(next, 1200); } else { mistakes++; K.sfx.wrong(); K.speak(s < item[2] ? fmt(item[2] - s) + ' 더 필요해요' : fmt(s - item[2]) + ' 많아요'); K.toast(s < item[2] ? '조금 더 내야 해요' : '너무 많이 냈어요'); } } })]);
-      function render() { paidBox.innerHTML = coinsHTML(paid) || '<span style="color:#999">돈을 눌러서 내요</span>'; sumEl.textContent = fmt(paid.reduce(function (a, m) { return a + m[0]; }, 0)); }
+      function render() { paidBox.innerHTML = coinsHTML(paid) || '<span style="color:#5e5e5e">돈을 눌러서 내요</span>'; sumEl.textContent = fmt(paid.reduce(function (a, m) { return a + m[0]; }, 0)); }
       box.appendChild(pay); box.appendChild(paidBox); box.appendChild(sumEl); box.appendChild(row); render();
       K.speak(item[1] + '는 ' + fmt(item[2]) + '이에요');
     }

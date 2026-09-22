@@ -7,7 +7,7 @@
 <style>
   .seq-target { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
   .seq-target .slot { width: 120px; height: 120px; border-radius: 20px; border: 4px dashed #bbb; background: #fafafa; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 50px; position: relative; }
-  .seq-target .slot .n { position: absolute; top: 4px; left: 10px; font-size: 16px; color: #999; font-weight: 800; }
+  .seq-target .slot .n { position: absolute; top: 4px; left: 10px; font-size: 16px; color: #6b6b6b; font-weight: 800; }
   .seq-target .slot.filled { border-style: solid; border-color: #8ac926; background: #f0fbe5; }
   .seq-pool { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
   .seq-pool button { width: 130px; height: 130px; border-radius: 22px; background: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.08); font-size: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -25,7 +25,7 @@
   @media (max-width: 760px) {
     .seq-target .slot { width: 84px; height: 84px; font-size: 36px; }
     .seq-pool button { width: 96px; height: 96px; font-size: 36px; }
-    .seq-pool button small { font-size: 12px; }
+    .seq-pool button small { font-size: 14px; }
     .checklist { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
   }
 </style>
@@ -85,7 +85,7 @@
     main.appendChild(g);
     var hist = el('div', { class: 'kl-card', style: 'margin-top:18px' }); var keys = Object.keys(d.days).sort().slice(-7);
     hist.appendChild(el('div', { text: '📅 지난 7일 습관 기록', style: 'font-weight:800;margin-bottom:8px' }));
-    hist.appendChild(el('div', { html: keys.map(function (k) { return '<div style="font-size:18px">' + k.slice(5) + ' : ' + '✔'.repeat((d.days[k].habits || []).length) + ' <small style="color:#999">' + (d.days[k].habits || []).length + '/' + CHECK.length + '</small></div>'; }).join('') || '<div style="color:#999">아직 기록이 없어요</div>' }));
+    hist.appendChild(el('div', { html: keys.map(function (k) { return '<div style="font-size:18px">' + k.slice(5) + ' : ' + '✔'.repeat((d.days[k].habits || []).length) + ' <small style="color:#6b6b6b;font-size:15px">' + (d.days[k].habits || []).length + '/' + CHECK.length + '</small></div>'; }).join('') || '<div style="color:#5e5e5e">아직 기록이 없어요</div>' }));
     main.appendChild(hist);
     K.speak('오늘 한 일을 눌러요');
   }
@@ -102,7 +102,7 @@
       K.shuffle(steps).forEach(function (st) {
         var b = el('button', {}, [el('span', { text: st[0] }), el('small', { text: st[1] })]);
         b.addEventListener('click', function () {
-          if (st === steps[pos]) { b.classList.add('used'); var slot = target.children[pos]; slot.classList.add('filled'); slot.innerHTML = st[0] + '<small style="font-size:14px">' + st[1] + '</small>'; pos++; K.sfx.pop(); K.speak(st[1]); if (pos === steps.length) { if (mistakes === 0) score++; K.addStar(1); K.event('correct'); K.sfx.correct(); r++; setTimeout(next, 1200); } }
+          if (st === steps[pos]) { b.classList.add('used'); var slot = target.children[pos]; slot.classList.add('filled'); slot.innerHTML = st[0] + '<small style="font-size:15px">' + st[1] + '</small>'; pos++; K.sfx.pop(); K.speak(st[1]); if (pos === steps.length) { if (mistakes === 0) score++; K.addStar(1); K.event('correct'); K.sfx.correct(); r++; setTimeout(next, 1200); } }
           else { mistakes++; b.classList.add('wrong'); K.nope('아니에요', '그 다음이 아니에요'); setTimeout(function () { b.classList.remove('wrong'); }, 500); }
         });
         pool.appendChild(b);

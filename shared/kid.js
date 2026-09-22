@@ -33,10 +33,21 @@
   function loadJSON(key, def) { try { var v = JSON.parse(localStorage.getItem(key)); return v == null ? def : v; } catch (e) { return def; } }
   function saveJSON(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) { } }
 
-  function meta() { var m = loadJSON(META_KEY, null); if (!m || !m.profiles) m = { profiles: [], current: null, settings: { tts: true, sfx: true } }; if (!m.settings) m.settings = { tts: true, sfx: true }; return m; }
+  var DEFAULT_SETTINGS = { tts: true, sfx: true, mute: false, rate: 0.9, limitMin: 0, breakMin: 20, vibrate: true };
+  function meta() {
+    var m = loadJSON(META_KEY, null);
+    if (!m || !m.profiles) m = { profiles: [], current: null, settings: {} };
+    if (!m.settings) m.settings = {};
+    for (var k in DEFAULT_SETTINGS) if (typeof m.settings[k] === 'undefined') m.settings[k] = DEFAULT_SETTINGS[k];
+    return m;
+  }
+  function setSetting(key, val) { var m = meta(); m.settings[key] = val; saveMeta(m); notify('settings', { key: key, val: val }); return val; }
+  /* 상단바 한 번으로 소리 전부 끄기 */
+  function muted() { return meta().settings.mute === true; }
+  function toggleMute() { var v = !muted(); setSetting('mute', v); if (v && window.speechSynthesis) { try { speechSynthesis.cancel(); } catch (e) { } } return v; }
   function saveMeta(m) { saveJSON(META_KEY, m); }
 
-  function defaultData() { return { stars: 0, totalStars: 0, progress: {}, days: {}, stickers: [], drawings: [], diary: {}, stories: [], created: todayKey() }; }
+  function defaultData() { return { stars: 0, totalStars: 0, progress: {}, days: {}, stickers: [], drawings: [], diary: {}, stories: [], wrong: {}, stamps: 0, created: todayKey() }; }
   function pkey(id) { return 'kidlab.p.' + id; }
   function loadData(id) { var d = loadJSON(pkey(id), null); if (!d) d = defaultData(); return d; }
   function saveData(id, d) { saveJSON(pkey(id), d); }
@@ -66,7 +77,7 @@
   }
   function data() { var p = requireProfile(); return loadData(p.id); }
 
-  function dayRec(d, key) { key = key || todayKey(); if (!d.days[key]) d.days[key] = { events: {}, missions: [], stars: 0, apps: {} }; return d.days[key]; }
+  function dayRec(d, key) { key = key || todayKey(); if (!d.days[key]) d.days[key] = { events: {}, missions: [], stars: 0, apps: {} }; var r = d.days[key]; if (!r.sec) r.sec = 0; if (!r.acts) r.acts = 0; if (!r.stamps) r.stamps = 0; return r; }
 
   /* ---------- 부모 창 통신 ---------- */
   function notify(action, payload) {
@@ -91,6 +102,7 @@
   function event(appId, key, n) {
     if (typeof key === 'undefined') { key = appId; appId = APP_ID; }
     n = n == null ? 1 : n;
+    if (key === 'win' || key === 'save') setTimeout(function () { stampToast(addActivity()); }, 300);
     mutate(function (d) {
       var day = dayRec(d);
       day.events[appId] = day.events[appId] || {};
@@ -106,6 +118,69 @@
   }
   function getLevel(mode) { var p = progress(); return (p.levels && p.levels[mode]) || 1; }
   function setLevel(mode, lv) { var p = progress(); var levels = p.levels || {}; levels[mode] = lv; setProgress({ levels: levels }); }
+
+  /* ---------- 오답 노트 ----------
+     틀린 문제를 앱·모드별로 모아 두었다가 다음 판 앞쪽에 다시 낸다.
+     소리로 내는 문제(q.after가 있는 문제)는 화면만으로 다시 낼 수 없어 저장하지 않는다. */
+  var WRONG_MAX = 12;
+  function wrongKey(mode) { return APP_ID + ':' + (mode || '-'); }
+  function plainQ(q) {
+    if (!q || q.after) return null;
+    return {
+      key: qkey(q), prompt: q.prompt, say: q.say || null, sayLang: q.sayLang || null,
+      sub: q.sub || null, cols: q.cols || null, big: !!q.big,
+      choices: (q.choices || []).map(function (c) { return { html: String(c.html), correct: !!c.correct, say: c.say || null, sayLang: c.sayLang || null, cls: c.cls || null }; })
+    };
+  }
+  function addWrong(mode, q) {
+    var pq = plainQ(q); if (!pq) return;
+    mutate(function (d) {
+      if (!d.wrong) d.wrong = {};
+      var k = wrongKey(mode); var list = d.wrong[k] || [];
+      list = list.filter(function (x) { return x.key !== pq.key; });
+      list.push({ key: pq.key, q: pq, ts: Date.now() });
+      if (list.length > WRONG_MAX) list = list.slice(list.length - WRONG_MAX);
+      d.wrong[k] = list;
+    });
+  }
+  function takeWrongs(mode, n) {
+    var d = data(); var list = (d.wrong && d.wrong[wrongKey(mode)]) || [];
+    return list.slice(0, n).map(function (x) { var q = Object.assign({}, x.q); q.review = true; return q; });
+  }
+  function clearWrong(mode, key) {
+    mutate(function (d) {
+      if (!d.wrong) return;
+      var k = wrongKey(mode); var list = d.wrong[k] || [];
+      d.wrong[k] = list.filter(function (x) { return x.key !== key; });
+    });
+  }
+  function wrongCount(mode) { var d = data(); return ((d.wrong && d.wrong[wrongKey(mode)]) || []).length; }
+
+  /* ---------- 도장판 ----------
+     활동 3개를 하면 도장 1개. 도장 10개면 보너스 별 5개. 5세가 체감하는 짧은 목표. */
+  var STAMP_PER = 3, STAMP_GOAL = 10;
+  function addActivity() {
+    return mutate(function (d) {
+      var day = dayRec(d);
+      day.acts = (day.acts || 0) + 1;
+      var earned = 0;
+      while (day.acts >= (day.stamps + 1) * STAMP_PER) { day.stamps++; d.stamps = (d.stamps || 0) + 1; earned++; }
+      if (earned) { d.stars += 2 * earned; d.totalStars += 2 * earned; day.stars += 2 * earned; }
+      return { earned: earned, acts: day.acts, stamps: day.stamps };
+    });
+  }
+  function stampToast(r) {
+    if (r && r.earned) { toast('🏅 도장 ' + r.stamps + '개! (+' + (2 * r.earned) + '⭐)'); sfx.star(); notify('update'); }
+  }
+  function stampState() {
+    var d = data(); var day = d.days[todayKey()] || {};
+    var acts = day.acts || 0, st = day.stamps || 0;
+    return { acts: acts, today: st, total: d.stamps || 0, per: STAMP_PER, goal: STAMP_GOAL, next: (st + 1) * STAMP_PER - acts };
+  }
+
+  /* ---------- 사용 시간 ---------- */
+  function addUsage(sec) { mutate(function (d) { dayRec(d).sec += sec; }); }
+  function usageToday() { var d = data(); var day = d.days[todayKey()]; return day ? Math.round((day.sec || 0) / 60) : 0; }
 
   function markVisit(appId) {
     appId = appId || APP_ID;
@@ -177,18 +252,23 @@
   var actx = null;
   function ctx() { if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { } } if (actx && actx.state === 'suspended') actx.resume(); return actx; }
   function tone(freq, dur, type, when, gain) {
-    var c = ctx(); if (!c || meta().settings.sfx === false) return;
+    var st = meta().settings;
+    var c = ctx(); if (!c || st.sfx === false || st.mute) return;
     var o = c.createOscillator(), g = c.createGain();
     o.type = type || 'sine'; o.frequency.value = freq;
     var t = c.currentTime + (when || 0);
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain || 0.25, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + 0.05);
   }
+  /* 소리를 꺼 두어도 맞고 틀림을 알 수 있게 폰을 짧게 울린다 */
+  function buzz(pattern) {
+    try { if (meta().settings.vibrate !== false && navigator.vibrate) navigator.vibrate(pattern); } catch (e) { }
+  }
   var sfx = {
     click: function () { tone(600, 0.08, 'triangle'); },
-    correct: function () { tone(660, 0.12, 'sine'); tone(880, 0.12, 'sine', 0.12); tone(1320, 0.2, 'sine', 0.24); },
-    wrong: function () { tone(220, 0.25, 'sawtooth', 0, 0.12); tone(180, 0.3, 'sawtooth', 0.15, 0.12); },
-    win: function () { [523, 659, 784, 1047, 784, 1047].forEach(function (f, i) { tone(f, 0.18, 'triangle', i * 0.13); }); },
+    correct: function () { tone(660, 0.12, 'sine'); tone(880, 0.12, 'sine', 0.12); tone(1320, 0.2, 'sine', 0.24); buzz(40); },
+    wrong: function () { tone(220, 0.25, 'sawtooth', 0, 0.12); tone(180, 0.3, 'sawtooth', 0.15, 0.12); buzz([60, 70, 60]); },
+    win: function () { [523, 659, 784, 1047, 784, 1047].forEach(function (f, i) { tone(f, 0.18, 'triangle', i * 0.13); }); buzz([50, 60, 50, 60, 120]); },
     star: function () { tone(1200, 0.1, 'sine'); tone(1600, 0.15, 'sine', 0.08); },
     pop: function () { tone(400, 0.06, 'square', 0, 0.08); },
     note: function (freq, dur) { tone(freq, dur || 0.4, 'triangle', 0, 0.3); },
@@ -203,12 +283,15 @@
   if (window.speechSynthesis) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
   function speak(text, opts) {
     opts = opts || {};
-    if (!window.speechSynthesis || meta().settings.tts === false) return false;
+    var st = meta().settings;
+    if (!window.speechSynthesis || st.tts === false || st.mute) return false;
     try {
       speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
       var lang = opts.lang || 'ko-KR';
-      u.lang = lang; u.rate = opts.rate || 0.9; u.pitch = opts.pitch || 1.1;
+      /* 부모가 고른 말 속도를 기준으로 삼는다 (기본 0.9) */
+      var base = st.rate || 0.9;
+      u.lang = lang; u.rate = (opts.rate ? opts.rate / 0.9 : 1) * base; u.pitch = opts.pitch || 1.1;
       var v = voices.filter(function (v) { return v.lang && v.lang.replace('_', '-').toLowerCase().indexOf(lang.toLowerCase().slice(0, 2)) === 0; });
       if (v.length) u.voice = v[0];
       speechSynthesis.speak(u);
@@ -399,6 +482,11 @@
     var total = cfg.total || 8, idx = 0, score = 0, tries = 0, locked = false;
     var level = cfg.level || (cfg.mode ? getLevel(cfg.mode) : 1);
     var questions = buildRound(cfg, total, level);
+    /* 지난번에 틀린 문제를 앞쪽 두 자리에 다시 낸다 */
+    if (cfg.review !== false) {
+      var again = takeWrongs(cfg.mode, Math.min(2, Math.max(0, total - 1)));
+      again.forEach(function (rq, i) { rq.__wkey = rq.key; delete rq.key; questions[i] = rq; });
+    }
     root.innerHTML = '';
     var dots = el('div', { class: 'kl-dots' });
     for (var i = 0; i < total; i++) dots.appendChild(el('i'));
@@ -410,6 +498,7 @@
       if (idx >= total) return finish();
       var q = questions[idx]; tries = 0; locked = false;
       stage.innerHTML = '';
+      if (q.review) stage.appendChild(el('div', { class: 'kl-again', text: '🔁 지난번에 어려웠던 문제예요' }));
       var promptEl = el('div', { class: 'kl-prompt' + (q.big ? ' big' : ''), html: q.prompt });
       if (q.say) { promptEl.classList.add('speakable'); promptEl.addEventListener('click', function () { speak(q.say, { lang: q.sayLang || 'ko-KR' }); }); }
       stage.appendChild(promptEl);
@@ -426,6 +515,8 @@
             locked = true; sfx.correct(); b.classList.add('right');
             b.classList.add('right-mark');
             fb.className = 'kl-feedback good'; fb.textContent = tries === 0 ? '⭕ 맞았어요!' : '⭕ 이제 맞았어요!';
+            if (q.__wkey) { if (tries === 0) clearWrong(cfg.mode, q.__wkey); }
+            else if (tries > 0) addWrong(cfg.mode, q);
             dots.children[idx].className = tries === 0 ? 'ok' : 'ok2';
             if (tries === 0) score++;
             addStar(1); event(APP_ID, "correct");
@@ -438,6 +529,7 @@
             fb.className = 'kl-feedback bad';
             fb.textContent = '❌ 아니에요. 다시 골라 보세요' + (tries >= 2 ? ' (노란 칸을 보세요)' : '');
             if (q.onWrong) q.onWrong(c);
+            if (tries === 1 && !q.__wkey) addWrong(cfg.mode, q);
             /* 두 번 틀리면 정답 칸을 살짝 알려 준다 */
             if (tries >= 2) {
               var kids = grid.children;
@@ -455,6 +547,7 @@
       if (q.after) q.after(stage);
     }
     function finish() {
+      stampToast(addActivity());
       stage.innerHTML = '';
       var pct = score / total;
       var up = false;
@@ -503,6 +596,9 @@
     todayKey: todayKey, dayRec: dayRec, streak: streak,
     addStar: addStar, spendStars: spendStars, event: event, progress: progress, setProgress: setProgress, getLevel: getLevel, setLevel: setLevel, markVisit: markVisit,
     missions: missions, checkMissions: checkMissions, MISSION_POOL: MISSION_POOL,
+    setSetting: setSetting, muted: muted, toggleMute: toggleMute, buzz: buzz,
+    addWrong: addWrong, takeWrongs: takeWrongs, clearWrong: clearWrong, wrongCount: wrongCount,
+    addActivity: addActivity, stampState: stampState, addUsage: addUsage, usageToday: usageToday,
     STICKERS: STICKERS, STICKER_COST: STICKER_COST,
     sfx: sfx, speak: speak, speakEn: speakEn,
     toast: toast, nope: nope, yep: yep, confetti: confetti, header: header, runQuiz: runQuiz, buildRound: buildRound, qkey: qkey, menu: menu, backButton: backButton,
