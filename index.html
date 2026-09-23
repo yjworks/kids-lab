@@ -45,6 +45,8 @@
   #cats button { flex: 0 0 auto; background: rgba(255,255,255,.8); border-radius: 20px; padding: 10px 18px;
     font-size: 18px; font-weight: 800; color: #444; min-height: 48px; }
   #cats button.on { background: #ffca3a; color: #5a3d00; }
+  .cat-head { grid-column: 1 / -1; font-size: 20px; font-weight: 900; color: #5a3d00; background: rgba(255,255,255,.7); border-radius: 16px; padding: 6px 14px; justify-self: start; margin-top: 6px; }
+  .cat-head:first-child { margin-top: 0; }
   .app-icon { background: rgba(255,255,255,.75); border-radius: 26px; padding: 16px 8px 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: 0 6px 0 rgba(0,0,0,.08); transition: transform .15s; position: relative; }
   .app-icon:hover { transform: translateY(-5px) scale(1.04); background: #fff; }
   .app-icon:active { transform: translateY(2px); }
@@ -283,7 +285,8 @@
   }
 
   /* ---------- 과목 탭 ---------- */
-  var CATS = ['전체', '언어', '읽기', '수학', '과학', '생활', '두뇌', '창작', '놀이'];
+  var CATS = ['전체', '한글', '읽기', '우리말', '영어', '수학', '과학·생활', '두뇌·놀이', '창작'];
+  var CAT_ICON = { '한글': '가', '읽기': '📚', '우리말': '💬', '영어': '🔤', '수학': '🔢', '과학·생활': '🔬', '두뇌·놀이': '🧩', '창작': '🎨' };
   var curCat = '전체';
   function renderCats() {
     var box = document.getElementById('cats'); box.innerHTML = '';
@@ -339,7 +342,17 @@
     var day = d.days[K.todayKey()] || { apps: {} };
     var ms = K.missions(d);
     var box = document.getElementById('icons'); box.innerHTML = '';
-    APPS.filter(function (a) { return curCat === '전체' || a.cat === curCat; }).forEach(function (a) {
+    /* 전체 보기는 과목별로 제목을 달아 묶어 보여 준다 */
+    var list = [];
+    CATS.slice(1).forEach(function (c) {
+      if (curCat !== '전체' && curCat !== c) return;
+      var inCat = APPS.filter(function (a) { return a.cat === c; });
+      if (!inCat.length) return;
+      if (curCat === '전체') list.push({ head: c, n: inCat.length });
+      list = list.concat(inCat);
+    });
+    list.forEach(function (a) {
+      if (a.head) { box.appendChild(el('div', { class: 'cat-head', text: (CAT_ICON[a.head] || '') + ' ' + a.head + ' · ' + a.n })); return; }
       var mission = ms.filter(function (m) { return m.app === a.id && !m.done; })[0];
       var b = el('button', { class: 'app-icon', title: a.desc }, [
         el('div', { class: 'ic', text: a.icon, style: 'background:' + a.color }),

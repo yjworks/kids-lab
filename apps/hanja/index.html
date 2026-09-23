@@ -32,6 +32,8 @@
 <script src="../../shared/kid.js"></script>
 <script src="../../shared/glyphs.js"></script>
 <script src="../../shared/trace.js"></script>
+<script src="../../shared/classics.js"></script>
+<script src="../../shared/copy.js"></script>
 <script>
 (function () {
   var K = KidLab, el = K.el, G = GLYPHS;
@@ -65,7 +67,9 @@
       { icon: '🖼️', label: '뜻 맞히기', mode: 'mean', color: '#e3f7cf', run: meanQuiz },
       { icon: '👂', label: '듣고 한자 찾기', mode: 'sound', color: '#e9f3ff', run: soundQuiz },
       { icon: '📅', label: '요일 한자', mode: 'week', color: '#fff3c4', run: weekQuiz },
-      { icon: '✏️', label: '한자 따라 쓰기', color: '#ffe9ee', run: function () { KidTrace.start(main, ['hanja'], home); } }
+      { icon: '✏️', label: '한자 따라 쓰기', color: '#ffe9ee', run: function () { KidTrace.start(main, ['hanja'], home); } },
+      { icon: '📜', label: '천자문 (' + cjDone() + '/' + CJ.length + '구절)', color: '#f3e3c3', run: cheonja },
+      { icon: '🧩', label: '천자문 훈음 맞히기', mode: 'cj', color: '#e2ece9', run: cjQuiz }
     ]);
     main.appendChild(el('div', { class: 'kl-hint', text: '한자는 "뜻"과 "소리"를 같이 불러요. 山은 "메 산"!' }));
   }
@@ -162,6 +166,68 @@
         prompt: '📅 "' + w[0] + '"의 "' + w[0].charAt(0) + '"은 어느 한자?',
         say: w[0] + '의 ' + w[0].charAt(0) + '은 어느 한자일까요?', cols: opts.length,
         choices: opts.map(function (o) { return { html: '<div class="hz-choice hz">' + o + '</div>' + (lv <= 2 ? '<div class="rd-choice-lbl">' + INFO[o][0] + '</div>' : ''), correct: o === w[1], say: o === w[1] ? say(o) : null }; })
+      };
+    });
+  }
+
+  /* ---------- 천자문 (첫 16구절) ---------- */
+  var CJ = CLASSICS.cheonja;
+  function cjDone() { return (K.progress().cj || []).length; }
+  function cheonja() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    main.appendChild(el('div', { class: 'kl-prompt', text: '📜 천자문 — 네 글자씩 한 구절', style: 'font-size:24px;margin-bottom:6px' }));
+    main.appendChild(el('div', { class: 'kl-hint', text: '천자문은 옛날 아이들이 한자를 처음 배우던 책이에요. 처음 16구절(64자)을 담았어요.', style: 'margin:0 0 10px' }));
+    var done = K.progress().cj || [];
+    var box = el('div', { class: 'cards', style: 'grid-template-columns:repeat(auto-fill,minmax(150px,1fr))' });
+    CJ.forEach(function (c, i) {
+      var b = el('button', { class: 'hcard' }, [
+        el('div', { class: 'h hz', text: c[0], style: 'font-size:32px;letter-spacing:2px' }),
+        el('div', { class: 'm', text: (i + 1) + '. ' + c[1] }),
+        done.indexOf(i) >= 0 ? el('span', { class: 'ok', text: '✍️' }) : null
+      ]);
+      b.addEventListener('click', function () { K.sfx.click(); cjDetail(i); });
+      box.appendChild(b);
+    });
+    main.appendChild(box);
+  }
+  function cjDetail(i) {
+    var c = CJ[i];
+    main.innerHTML = ''; main.appendChild(K.backButton(cheonja));
+    var row = el('div', { style: 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:10px 0' });
+    c[0].split('').forEach(function (h, k) {
+      var b = el('button', { class: 'hcard', style: 'min-width:92px' }, [el('div', { class: 'h hz', text: h }), el('div', { class: 'm', text: c[3][k] })]);
+      b.addEventListener('click', function () { K.speak(c[3][k]); });
+      row.appendChild(b);
+    });
+    main.appendChild(el('div', { class: 'kl-prompt', text: (i + 1) + '구절 · ' + c[1], style: 'font-size:26px;margin-bottom:0' }));
+    main.appendChild(row);
+    main.appendChild(el('div', { class: 'detail' }, [el('div', { class: 'ex', text: '💬 ' + c[2] })]));
+    main.appendChild(el('div', { class: 'kl-row', style: 'margin-top:14px' }, [
+      el('button', { class: 'speak-btn', text: '🔊 읽기', onclick: function () { K.speak(c[1] + '. ' + c[2]); } }),
+      el('button', { class: 'kl-btn primary', text: '✍️ 필사하기', onclick: function () {
+        KidCopy.open({ main: main, text: c[0], title: c[0] + ' (' + c[1] + ')', sub: c[2], say: c[3].join(', ') + '. ' + c[2],
+          back: function () { cjDetail(i); },
+          onDone: function (n) { if (n) K.mutate(function (d) { var pr = d.progress.hanja || (d.progress.hanja = {}); var a = pr.cj || (pr.cj = []); if (a.indexOf(i) < 0) a.push(i); }); } });
+      } }),
+      i + 1 < CJ.length ? el('button', { class: 'kl-btn', text: '다음 구절 ▶', onclick: function () { cjDetail(i + 1); } }) : null
+    ]));
+    K.speak(c[1] + '. ' + c[2]);
+  }
+  /* 글자를 보고 훈음 고르기 (단계가 오르면 뒤 구절까지) */
+  function cjQuiz() {
+    var all = [];
+    CJ.forEach(function (c, i) { c[0].split('').forEach(function (h, k) { all.push({ h: h, s: c[3][k], i: i }); }); });
+    quiz('cj', 8, function (n, lv) {
+      var upto = Math.min(CJ.length, 4 * lv);
+      var pool = all.filter(function (x) { return x.i < upto; });
+      var ans = K.pick(pool);
+      var others = K.sample(all.filter(function (x) { return x.s !== ans.s && x.h !== ans.h; }), lv <= 1 ? 2 : 3);
+      var opts = K.shuffle([ans].concat(others));
+      return {
+        key: 'cj' + ans.h,
+        prompt: '<div class="hz" style="font-size:100px;line-height:1.1">' + ans.h + '</div>이 글자의 훈과 음은?',
+        say: '이 글자의 훈과 음은 무엇일까요?', cols: 2,
+        choices: opts.map(function (o) { return { html: '<div style="font-size:24px;font-weight:900">' + o.s + '</div>', correct: o === ans, say: o === ans ? ans.s : null }; })
       };
     });
   }

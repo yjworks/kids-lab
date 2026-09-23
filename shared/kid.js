@@ -230,7 +230,9 @@
     { app: 'sequence', key: 'correct', n: 3, label: '이야기 순서 3번 맞추기', icon: '🎬' },
     { app: 'hanja', key: 'correct', n: 5, label: '한자 5문제 맞히기', icon: '山' },
     { app: 'arcade', key: 'win', n: 1, label: '오락실에서 한 판 이기기', icon: '🕹️' },
-    { app: 'passage', key: 'correct', n: 3, label: '읽기 지문 3문제 맞히기', icon: '📰' }
+    { app: 'passage', key: 'correct', n: 3, label: '읽기 지문 3문제 맞히기', icon: '📰' },
+    { app: 'korean', key: 'correct', n: 5, label: '우리말 5문제 맞히기', icon: '💬' },
+    { app: 'classic', key: 'read', n: 1, label: '고전 한 문장 읽기', icon: '📜' }
   ];
   var DAILY_FIXED = { app: 'diary', key: 'save', n: 1, label: '오늘의 일기 쓰기', icon: '📔' };
   function missions(d) {

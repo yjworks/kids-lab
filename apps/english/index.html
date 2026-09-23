@@ -26,6 +26,14 @@
   var main = document.getElementById('main');
   var ABC = [['A', 'apple', '🍎', '사과'], ['B', 'bear', '🐻', '곰'], ['C', 'cat', '🐱', '고양이'], ['D', 'dog', '🐶', '강아지'], ['E', 'egg', '🥚', '달걀'], ['F', 'fish', '🐟', '물고기'], ['G', 'grapes', '🍇', '포도'], ['H', 'hat', '🎩', '모자'], ['I', 'ice cream', '🍦', '아이스크림'], ['J', 'juice', '🧃', '주스'], ['K', 'kite', '🪁', '연'], ['L', 'lion', '🦁', '사자'], ['M', 'moon', '🌙', '달'], ['N', 'nose', '👃', '코'], ['O', 'orange', '🍊', '오렌지'], ['P', 'pig', '🐷', '돼지'], ['Q', 'queen', '👸', '여왕'], ['R', 'rabbit', '🐰', '토끼'], ['S', 'sun', '☀️', '해'], ['T', 'tiger', '🐯', '호랑이'], ['U', 'umbrella', '☂️', '우산'], ['V', 'violin', '🎻', '바이올린'], ['W', 'water', '💧', '물'], ['X', 'x-ray', '🩻', '엑스레이'], ['Y', 'yellow', '💛', '노랑'], ['Z', 'zebra', '🦓', '얼룩말']];
   var WORDS = ABC.map(function (a) { return [a[1], a[2], a[3]]; }).concat([['banana', '🍌', '바나나'], ['car', '🚗', '자동차'], ['book', '📖', '책'], ['ball', '⚽', '공'], ['house', '🏠', '집'], ['tree', '🌳', '나무'], ['flower', '🌸', '꽃'], ['star', '⭐', '별'], ['bird', '🐦', '새'], ['cow', '🐮', '소'], ['duck', '🦆', '오리'], ['frog', '🐸', '개구리'], ['milk', '🥛', '우유'], ['bread', '🍞', '빵'], ['cake', '🎂', '케이크'], ['bus', '🚌', '버스'], ['train', '🚂', '기차'], ['airplane', '✈️', '비행기'], ['hand', '✋', '손'], ['eye', '👁️', '눈'], ['ear', '👂', '귀'], ['mouth', '👄', '입'], ['heart', '❤️', '하트'], ['rain', '🌧️', '비'], ['snow', '❄️', '눈'], ['monkey', '🐵', '원숭이'], ['elephant', '🐘', '코끼리'], ['strawberry', '🍓', '딸기'], ['pizza', '🍕', '피자'], ['robot', '🤖', '로봇']]);
+  /* 영단어 단계: [영어, 그림(없으면 ''), 우리말]. 단계마다 뜻이 겹치지 않게 골랐다 */
+  var STEPS = [
+    { name: '1단계 · 동물과 물건', icon: '🐣', w: [['cat', '🐱', '고양이'], ['dog', '🐶', '개'], ['pig', '🐷', '돼지'], ['fish', '🐟', '물고기'], ['egg', '🥚', '달걀'], ['sun', '☀️', '해'], ['moon', '🌙', '달'], ['hat', '🎩', '모자'], ['cup', '☕', '컵'], ['bed', '🛏️', '침대'], ['key', '🔑', '열쇠'], ['box', '📦', '상자'], ['bee', '🐝', '벌'], ['ant', '🐜', '개미'], ['bag', '👜', '가방'], ['shoe', '👟', '신발'], ['door', '🚪', '문'], ['fox', '🦊', '여우'], ['bear', '🐻', '곰'], ['lion', '🦁', '사자'], ['rabbit', '🐰', '토끼'], ['tiger', '🐯', '호랑이'], ['apple', '🍎', '사과'], ['duck', '🦆', '오리']] },
+    { name: '2단계 · 음식과 자연', icon: '🌱', w: [['water', '💧', '물'], ['rice', '🍚', '밥'], ['grape', '🍇', '포도'], ['lemon', '🍋', '레몬'], ['carrot', '🥕', '당근'], ['corn', '🌽', '옥수수'], ['cookie', '🍪', '쿠키'], ['cheese', '🧀', '치즈'], ['candy', '🍬', '사탕'], ['tooth', '🦷', '이(치아)'], ['nose', '👃', '코'], ['foot', '🦶', '발'], ['leg', '🦵', '다리'], ['sea', '🌊', '바다'], ['cloud', '☁️', '구름'], ['mountain', '⛰️', '산'], ['fire', '🔥', '불'], ['leaf', '🍃', '나뭇잎'], ['rainbow', '🌈', '무지개'], ['school', '🏫', '학교'], ['clock', '⏰', '시계'], ['chair', '🪑', '의자'], ['bike', '🚲', '자전거'], ['tree', '🌳', '나무']] },
+    { name: '3단계 · 움직임 말', icon: '🏃', w: [['run', '', '달리다'], ['walk', '', '걷다'], ['eat', '', '먹다'], ['drink', '', '마시다'], ['sleep', '', '자다'], ['read', '', '읽다'], ['write', '', '쓰다'], ['sing', '', '노래하다'], ['swim', '', '수영하다'], ['jump', '', '뛰어오르다'], ['open', '', '열다'], ['close', '', '닫다'], ['sit', '', '앉다'], ['stand', '', '서다'], ['look', '', '보다'], ['listen', '', '듣다'], ['go', '', '가다'], ['come', '', '오다'], ['play', '', '놀다'], ['help', '', '돕다'], ['cry', '', '울다'], ['laugh', '', '웃다'], ['wash', '', '씻다'], ['cook', '', '요리하다']] },
+    { name: '4단계 · 꾸미는 말', icon: '🎨', w: [['big', '', '큰'], ['small', '', '작은'], ['hot', '', '뜨거운'], ['cold', '', '차가운'], ['happy', '', '행복한'], ['sad', '', '슬픈'], ['fast', '', '빠른'], ['slow', '', '느린'], ['long', '', '긴'], ['short', '', '짧은'], ['new', '', '새로운'], ['old', '', '오래된'], ['clean', '', '깨끗한'], ['dirty', '', '더러운'], ['full', '', '가득 찬'], ['empty', '', '텅 빈'], ['heavy', '', '무거운'], ['light', '', '가벼운'], ['quiet', '', '조용한'], ['loud', '', '시끄러운'], ['kind', '', '친절한'], ['brave', '', '용감한'], ['hungry', '', '배고픈'], ['sleepy', '', '졸린']] },
+    { name: '5단계 · 때와 곳, 사람', icon: '🏙️', w: [['morning', '', '아침'], ['night', '', '밤'], ['today', '', '오늘'], ['tomorrow', '', '내일'], ['yesterday', '', '어제'], ['week', '', '일주일'], ['family', '', '가족'], ['friend', '', '친구'], ['teacher', '', '선생님'], ['doctor', '', '의사'], ['library', '', '도서관'], ['hospital', '', '병원'], ['park', '', '공원'], ['market', '', '시장'], ['kitchen', '', '부엌'], ['window', '', '창문'], ['question', '', '질문'], ['answer', '', '대답'], ['story', '', '이야기'], ['music', '', '음악'], ['weather', '', '날씨'], ['season', '', '계절'], ['holiday', '', '휴일'], ['birthday', '', '생일']] }
+  ];
   var COLORS = [['red', '#e63946', '빨강'], ['blue', '#1982c4', '파랑'], ['yellow', '#ffca3a', '노랑'], ['green', '#4caf50', '초록'], ['orange', '#ff8c42', '주황'], ['purple', '#8e44ad', '보라'], ['pink', '#ff8fa3', '분홍'], ['black', '#222', '검정'], ['white', '#fafafa', '하양'], ['brown', '#8d5524', '갈색']];
   var NUMS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
   var ANIMAL_EMO = { cat: '🐱', dog: '🐶', bear: '🐻', lion: '🦁', pig: '🐷', rabbit: '🐰', tiger: '🐯', zebra: '🦓', fish: '🐟', cow: '🐮', duck: '🦆', frog: '🐸', bird: '🐦', monkey: '🐵', elephant: '🐘' };
@@ -42,6 +50,7 @@
       { icon: '🔢', label: '숫자 영어', mode: 'num', color: '#ece6f5', run: numQuiz },
       { icon: '🔡', label: '대문자·소문자', mode: 'case', color: '#d0f4de', run: caseQuiz },
       { icon: '👋', label: '인사말', mode: 'greet', color: '#ffd9e8', run: greetQuiz },
+      { icon: '📚', label: '영단어 단계 (1~5)', color: '#cfe8ff', run: steps },
       { icon: '✏️', label: '따라 쓰기', color: '#ffd6a5', run: function () { KidTrace.start(main, ['upper', 'lower'], home); } }
     ]);
   }
@@ -110,6 +119,59 @@
       return { prompt: ans[2] + ' ' + ans[0], say: ans[0], sayLang: 'en-US', cols: opts.length, choices: opts.map(function (o) { return { html: o[1], cls: 'text', correct: o === ans, say: o[0], sayLang: 'en-US' }; }) };
     });
   }
+  /* ---------- 영단어 단계 ---------- */
+  function steps() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var items = STEPS.map(function (st, k) {
+      return { icon: st.icon, label: st.name, mode: 'step' + (k + 1), color: ['#fff3c4', '#e3f7cf', '#ffe9ee', '#ece6f5', '#e9f3ff'][k], run: function () { stepMenu(k); } };
+    });
+    K.menu(main, items);
+    main.appendChild(el('div', { class: 'kl-hint', text: '단계마다 낱말 ' + STEPS[0].w.length + '개 · 그림, 뜻, 듣기 문제가 섞여 나와요' }));
+  }
+  function stepMenu(k) {
+    var st = STEPS[k];
+    main.innerHTML = ''; main.appendChild(K.backButton(steps));
+    main.appendChild(el('div', { class: 'kl-prompt', text: st.icon + ' ' + st.name, style: 'font-size:24px;margin-bottom:8px' }));
+    K.menu(main, [
+      { icon: '🧩', label: '문제 풀기', mode: 'step' + (k + 1), color: '#fff3c4', run: function () { stepQuiz(k); } },
+      { icon: '📖', label: '낱말장 보기', color: '#e9f3ff', run: function () { stepList(k); } }
+    ]);
+  }
+  function stepList(k) {
+    var st = STEPS[k];
+    main.innerHTML = ''; main.appendChild(K.backButton(function () { stepMenu(k); }));
+    var grid = el('div', { class: 'abc' });
+    st.w.forEach(function (w) {
+      var b = el('button', {}, [w[1] ? el('div', { class: 'em', text: w[1] }) : null, el('div', { class: 'ch', text: w[0], style: 'font-size:26px' }), el('div', { class: 'wd', text: w[2] })]);
+      b.addEventListener('click', function () { K.sfx.pop(); K.speakEn(w[0]); K.event('learn'); });
+      grid.appendChild(b);
+    });
+    main.appendChild(grid);
+  }
+  function stepQuiz(k) {
+    var st = STEPS[k], pool = st.w, pics = pool.filter(function (w) { return w[1]; });
+    main.innerHTML = ''; main.appendChild(K.backButton(function () { stepMenu(k); }));
+    var box = el('div'); main.appendChild(box);
+    K.runQuiz({
+      el: box, mode: 'step' + (k + 1), total: 8, onFinish: function () { stepMenu(k); },
+      make: function (i, lv) {
+        var n = lv <= 1 ? 3 : 4;
+        var kinds = pics.length ? ['pic', 'word2pic', 'mean', 'rmean', 'listen'] : ['mean', 'rmean', 'listen'];
+        if (lv <= 1) kinds = pics.length ? ['pic', 'word2pic', 'mean'] : ['mean', 'rmean'];
+        var kind = kinds[i % kinds.length];
+        var src = kind === 'pic' || kind === 'word2pic' ? pics : pool;
+        var ans = K.pick(src);
+        var opts = K.shuffle([ans].concat(K.sample(src.filter(function (x) { return x !== ans; }), n - 1)));
+        var en = function (o) { return { html: o[0], cls: 'text', correct: o === ans, say: o[0], sayLang: 'en-US' }; };
+        if (kind === 'pic') return { key: 'p' + ans[0], prompt: ans[1], big: true, sub: '영어로 뭘까요?', say: 'What is this?', sayLang: 'en-US', cols: 2, choices: opts.map(en) };
+        if (kind === 'word2pic') return { key: 'w' + ans[0], prompt: ans[0], sub: lv <= 2 ? ans[2] : '', say: ans[0], sayLang: 'en-US', cols: n, choices: opts.map(function (o) { return { html: o[1], correct: o === ans, say: o[0], sayLang: 'en-US' }; }) };
+        if (kind === 'mean') return { key: 'm' + ans[0], prompt: ans[0], sub: '우리말 뜻은?', say: ans[0], sayLang: 'en-US', cols: 2, choices: opts.map(function (o) { return { html: o[2], cls: 'text', correct: o === ans }; }) };
+        if (kind === 'rmean') return { key: 'r' + ans[0], prompt: ans[2], sub: '영어로는?', say: ans[2] + '. 영어로는?', cols: 2, choices: opts.map(en) };
+        return { key: 'l' + ans[0], prompt: '🔊', big: true, sub: '잘 듣고 알맞은 낱말을 골라요', say: ans[0], sayLang: 'en-US', cols: 2, choices: opts.map(en) };
+      }
+    });
+  }
+
   home();
 })();
 </script>

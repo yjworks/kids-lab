@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>고전 한 문장</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .hz { font-family: "Noto Serif KR", "Nanum Myeongjo", "Batang", "바탕", "AppleMyungjo", "Noto Sans KR", "Malgun Gothic", serif; }
+  .card { background: #fffdf7; border-radius: 24px; box-shadow: 0 6px 0 rgba(0,0,0,.08); padding: 20px 18px; text-align: center; max-width: 720px; margin: 0 auto; }
+  .card .src { display: inline-block; background: #f3e3c3; color: #6b4a12; border-radius: 14px; padding: 3px 12px; font-weight: 900; font-size: 15px; }
+  .card .han { font-size: 40px; font-weight: 700; margin: 12px 0 2px; letter-spacing: 4px; line-height: 1.4; word-break: keep-all; }
+  .card .read { font-size: 18px; color: #6b6b6b; font-weight: 800; }
+  .card .mean { font-size: 26px; font-weight: 900; margin: 14px 0 8px; line-height: 1.5; word-break: keep-all; color: #2d2d2d; }
+  .card .tip { background: #e9f3ff; border-radius: 14px; padding: 10px 14px; font-weight: 800; color: #1d4f7a; display: inline-block; font-size: 18px; }
+  .card .row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+  .grp { font-size: 19px; font-weight: 900; color: #6b4a12; margin: 16px 4px 8px; }
+  .slist { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+  .sitem { background: #fff; border-radius: 18px; padding: 12px 14px; text-align: left; box-shadow: 0 4px 0 rgba(0,0,0,.07); position: relative; }
+  .sitem .h { font-size: 20px; font-weight: 700; }
+  .sitem .m { font-size: 15px; font-weight: 800; color: #555; margin-top: 4px; line-height: 1.4; word-break: keep-all; }
+  .sitem .ok { position: absolute; top: 8px; right: 10px; }
+  .today-tag { font-size: 16px; font-weight: 900; color: #c0395f; margin-bottom: 8px; text-align: center; }
+  .note-row { background: #fff; border-radius: 14px; padding: 10px 14px; margin-bottom: 8px; font-weight: 800; }
+  .note-row small { color: #6b6b6b; margin-left: 6px; }
+  .qhan { font-size: 36px; font-weight: 700; letter-spacing: 3px; line-height: 1.4; }
+  .qmean { font-size: 19px; font-weight: 800; text-align: left; line-height: 1.45; word-break: keep-all; }
+  body[data-app="classic"] .kl-choice { min-height: 0; padding: 14px 16px; }
+  @media (max-width: 760px) {
+    .card .han { font-size: 28px; letter-spacing: 2px; } .card .mean { font-size: 20px; } .card .tip { font-size: 15px; }
+    .slist { grid-template-columns: 1fr; } .qhan { font-size: 26px; } .qmean { font-size: 16px; }
+  }
+</style>
+</head>
+<body data-app="classic">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script src="../../shared/classics.js"></script>
+<script src="../../shared/copy.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el, S = CLASSICS.sayings;
+  K.header({ title: '고전 한 문장', icon: '📜', say: '고전 한 문장' });
+  var main = document.getElementById('main');
+
+  function copied() { return K.progress().copied || {}; }
+  /* 날짜로 정해지는 오늘의 문장 (하루 종일 같고, 날마다 바뀐다) */
+  function todayIdx() { var k = K.todayKey().replace(/-/g, ''); var n = 0; for (var i = 0; i < k.length; i++) n = (n * 31 + k.charCodeAt(i)) % 100003; return n % S.length; }
+
+  function home() {
+    document.body.classList.remove('fixed');
+    main.innerHTML = '';
+    var c = copied(), n = Object.keys(c).length;
+    K.menu(main, [
+      { icon: '🌅', label: '오늘의 한 문장', color: '#fde2c8', run: function () { card(todayIdx(), home, true); } },
+      { icon: '📚', label: '문장 모음 (' + S.length + ')', color: '#f3e3c3', run: list },
+      { icon: '🧩', label: '뜻 맞히기', mode: 'mean', color: '#e3f7cf', run: meanQuiz },
+      { icon: '✍️', label: '필사 노트 (' + n + ')', color: '#e9f3ff', run: notes }
+    ]);
+    main.appendChild(el('div', { class: 'kl-hint', text: '옛 책의 좋은 말을 하루 한 문장씩 읽고 따라 써요' }));
+  }
+
+  function card(i, back, isToday) {
+    document.body.classList.remove('fixed');
+    var s = S[i];
+    main.innerHTML = ''; main.appendChild(K.backButton(back));
+    if (isToday) main.appendChild(el('div', { class: 'today-tag', text: '🌅 ' + K.todayKey() + ' 오늘의 한 문장' }));
+    var c = el('div', { class: 'card' });
+    c.appendChild(el('span', { class: 'src', text: s.src }));
+    if (s.han) { c.appendChild(el('div', { class: 'han hz', text: s.han })); c.appendChild(el('div', { class: 'read', text: s.read })); }
+    c.appendChild(el('div', { class: 'mean', text: s.mean }));
+    c.appendChild(el('div', { class: 'tip', text: '💡 ' + s.tip }));
+    var row = el('div', { class: 'row' }, [
+      el('button', { class: 'speak-btn', text: '🔊 읽기', onclick: function () { K.speak((s.read ? s.read + '. ' : '') + s.mean); } }),
+      el('button', { class: 'kl-btn primary', text: '✍️ 뜻 따라 쓰기', onclick: function () { write(i, s.mean, back, isToday); } }),
+      s.han ? el('button', { class: 'kl-btn', text: '✍️ 원문 따라 쓰기', onclick: function () { write(i, s.han, back, isToday); } }) : null
+    ]);
+    c.appendChild(row);
+    main.appendChild(c);
+    K.speak((s.read ? s.read + '. ' : '') + s.mean);
+    K.event('read');
+  }
+  function write(i, text, back, isToday) {
+    var s = S[i];
+    KidCopy.open({
+      main: main, text: text, title: s.src, sub: text === s.mean ? '' : s.read + ' — ' + s.mean, say: text === s.han ? s.read : s.mean,
+      back: function () { card(i, back, isToday); },
+      onDone: function (n) {
+        if (!n) return;
+        K.mutate(function (d) { var pr = d.progress.classic || (d.progress.classic = {}); var c = pr.copied || (pr.copied = {}); c[s.id] = K.todayKey(); });
+      }
+    });
+  }
+
+  function list() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var c = copied(), groups = [];
+    S.forEach(function (s, i) { var g = s.src.split(' ')[0]; var grp = groups.filter(function (x) { return x.k === g; })[0]; if (!grp) groups.push(grp = { k: g, items: [] }); grp.items.push(i); });
+    groups.forEach(function (g) {
+      main.appendChild(el('div', { class: 'grp', text: '📖 ' + g.k }));
+      var box = el('div', { class: 'slist' });
+      g.items.forEach(function (i) {
+        var s = S[i];
+        var b = el('button', { class: 'sitem' }, [
+          s.han ? el('div', { class: 'h hz', text: s.han }) : null,
+          el('div', { class: 'm', text: s.mean }),
+          c[s.id] ? el('span', { class: 'ok', text: '✍️' }) : null
+        ]);
+        b.addEventListener('click', function () { K.sfx.click(); card(i, list, false); });
+        box.appendChild(b);
+      });
+      main.appendChild(box);
+    });
+  }
+
+  function notes() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var c = copied(), ids = Object.keys(c).sort(function (a, b) { return c[b] < c[a] ? -1 : 1; });
+    main.appendChild(el('div', { class: 'kl-prompt', text: '✍️ 필사 노트 · ' + ids.length + ' / ' + S.length + '문장', style: 'font-size:24px' }));
+    if (!ids.length) main.appendChild(el('div', { class: 'kl-hint', text: '아직 따라 쓴 문장이 없어요. 오늘의 한 문장부터 써 볼까요?' }));
+    ids.forEach(function (id) {
+      var i = S.findIndex(function (s) { return s.id === id; }); if (i < 0) return;
+      var r = el('button', { class: 'note-row', style: 'display:block;width:100%;text-align:left', html: K.esc(S[i].mean) + '<small>' + c[id] + ' · ' + K.esc(S[i].src) + '</small>' });
+      r.addEventListener('click', function () { card(i, notes, false); });
+      main.appendChild(r);
+    });
+  }
+
+  /* 원문을 보고 뜻 고르기 (한문이 있는 문장만) */
+  function meanQuiz() {
+    var pool = S.filter(function (s) { return s.han; });
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var box = el('div'); main.appendChild(box);
+    K.runQuiz({
+      el: box, mode: 'mean', total: 6, onFinish: home,
+      make: function (n, lv) {
+        var s = K.pick(pool);
+        var opts = K.shuffle([s].concat(K.sample(pool.filter(function (x) { return x !== s; }), 3)));
+        return {
+          key: 'm' + s.id,
+          prompt: '<div class="qhan hz">' + K.esc(s.han) + '</div>' + (lv <= 2 ? '<div style="font-size:17px;color:#6b6b6b">' + K.esc(s.read) + '</div>' : '') + '<div style="font-size:18px;margin-top:6px">무슨 뜻일까요?</div>',
+          say: lv <= 2 ? s.read + '. 무슨 뜻일까요?' : '무슨 뜻일까요?', cols: 1,
+          choices: opts.map(function (o) { return { html: '<div class="qmean">' + K.esc(o.mean) + '</div>', correct: o === s }; })
+        };
+      }
+    });
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

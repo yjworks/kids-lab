@@ -174,8 +174,9 @@
        (3) 그린 길이가 지나치게 길지 않은지 (덧칠·낙서 거르기) 를 본다 */
     /* 회색 본보기의 굵기는 100칸 기준 15칸이다. 그 띠 안에 들어가면 인정한다.
        덮었는지 볼 때는 아이가 그은 굵은 선의 두께까지 감안해 조금 더 넉넉하게 본다. */
-    var TOL_ON = 9;       /* 밖으로 나갔는지 보는 거리 */
-    var TOL_COVER = 11;   /* 선을 지나갔는지 보는 거리 */
+    /* 쓰기는 써 보는 것이 목적이라 넉넉하게 본다 (낙서만 거른다) */
+    var TOL_ON = 10;      /* 밖으로 나갔는지 보는 거리 */
+    var TOL_COVER = 12;   /* 선을 지나갔는지 보는 거리 */
     function resample(st, step) {
       var out = [[st[0][0], st[0][1]]], cx = st[0][0], cy = st[0][1];
       for (var i = 1; i < st.length; i++) {
@@ -257,8 +258,8 @@
         (s.covered * 0.6 + s.on * 0.4) * 100 - Math.max(0, s.ratio - 2) * 10)));
       meter.querySelector('i').style.width = pct + '%';
       var say = sayOf(set.id, ch);
-      var ok = s.minStroke >= 0.65 && s.covered >= 0.8 && s.on >= 0.7 && s.ratio <= 3.2;
-      var great = s.minStroke >= 0.85 && s.covered >= 0.93 && s.on >= 0.85 && s.ratio <= 2.2 && s.inOrder;
+      var ok = s.minStroke >= 0.6 && s.covered >= 0.75 && s.on >= 0.62 && s.ratio <= 3.0;
+      var great = s.minStroke >= 0.8 && s.covered >= 0.88 && s.on >= 0.78 && s.ratio <= 2.6 && s.inOrder;
       if (great) {
         verdict.textContent = '🌟 아주 잘 썼어요! (' + pct + '점)';
         K.addStar(2); K.event('trace'); K.sfx.win(); K.confetti(); markDone(set.id, ch);
@@ -269,16 +270,16 @@
         K.addStar(1); K.event('trace'); K.sfx.correct(); markDone(set.id, ch);
         K.speak(say.text + '. 잘했어요', { lang: say.lang });
         setTimeout(nextChar, 1600);
-      } else if (s.minStroke < 0.65 && s.on >= 0.6 && s.covered >= 0.55) {
+      } else if (s.minStroke < 0.6 && s.on >= 0.55 && s.covered >= 0.5) {
         verdict.textContent = '조금 옆으로 치우쳤어요. 빨간 점을 지나가 봐요 (' + pct + '점)';
         K.sfx.wrong(); K.speak('조금 옆으로 치우쳤어요. 빨간 점을 지나가 봐요'); showMissed();
-      } else if (s.minStroke < 0.65) {
+      } else if (s.minStroke < 0.6) {
         verdict.textContent = '빨간 점을 지나가야 해요. 번호 순서대로! (' + pct + '점)';
         K.sfx.wrong(); K.speak('빠뜨린 곳이 있어요. 빨간 점을 지나가 봐요'); showMissed();
-      } else if (s.ratio > 3.2) {
+      } else if (s.ratio > 3.0) {
         verdict.textContent = '너무 많이 그렸어요. 회색 글자만 따라 그려요 (' + pct + '점)';
         K.sfx.wrong(); K.speak('너무 많이 그렸어요. 회색 글자만 따라 그려요');
-      } else if (s.on < 0.7) {
+      } else if (s.on < 0.62) {
         verdict.textContent = '회색 글자 안쪽으로 그려 봐요 (' + pct + '점)';
         K.sfx.wrong(); K.speak('회색 글자 안쪽으로 그려 봐요');
       } else {
