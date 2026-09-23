@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>읽기 지문</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .glist { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+  .pcard { background: #fff; border-radius: 20px; padding: 14px 14px 12px; box-shadow: 0 5px 0 rgba(0,0,0,.08); text-align: left; position: relative; }
+  .pcard .gn { font-size: 14px; font-weight: 900; color: #6a4c93; }
+  .pcard .t { font-size: 20px; font-weight: 900; color: #333; margin: 4px 0; word-break: keep-all; }
+  .pcard .s { font-size: 15px; font-weight: 800; color: #5e5e5e; }
+  .pcard .ok { position: absolute; top: 10px; right: 12px; font-size: 18px; }
+  .rd { display: flex; flex-direction: column; gap: 8px; flex: 1 1 0; min-height: 0; }
+  .rd-head { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+  .rd-title { flex: 1; font-weight: 900; font-size: 20px; min-width: 0; }
+  .rd-title small { display: inline-block; background: #ece6f5; color: #5b3c86; border-radius: 12px; padding: 2px 8px; font-size: 14px; margin-left: 6px; }
+  .rd-text { flex: 1 1 0; min-height: 0; overflow: auto; background: #fffdf7; border-radius: 20px; box-shadow: inset 0 0 0 2px #efe6d3;
+    padding: 18px 20px; font-size: 21px; line-height: 1.9; color: #2d2d2d; word-break: keep-all; white-space: pre-wrap; }
+  .rd-text.poem { text-align: center; font-size: 24px; }
+  .rd-text.big { font-size: 24px; line-height: 2; }
+  .rd-foot { display: flex; gap: 10px; flex: 0 0 auto; }
+  .rd-foot button { flex: 1; min-height: 60px; border-radius: 18px; font-size: 20px; font-weight: 900; background: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.1); }
+  .rd-foot .go { background: #ffca3a; }
+  .qtag { display: inline-block; border-radius: 12px; padding: 2px 10px; font-size: 15px; font-weight: 900; margin-right: 6px; vertical-align: middle; }
+  .qtag.사실 { background: #e3f0ff; color: #1d5a8a; } .qtag.중심 { background: #ffe9ee; color: #a3244a; }
+  .qtag.낱말 { background: #e3f7cf; color: #2f6b12; } .qtag.추론 { background: #fff3c4; color: #7a5300; } .qtag.짜임 { background: #ece6f5; color: #5b3c86; }
+  .ans { font-size: 20px; font-weight: 800; text-align: left; line-height: 1.4; word-break: keep-all; }
+  .peek { position: fixed; right: 14px; bottom: 14px; z-index: 40; background: #6a4c93; color: #fff; border-radius: 30px; padding: 12px 18px; font-weight: 900; font-size: 18px; box-shadow: 0 6px 16px rgba(0,0,0,.25); min-height: 48px; }
+  .peek-panel { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .peek-panel .box { background: #fffdf7; border-radius: 22px; max-width: 720px; width: 100%; max-height: 86%; overflow: auto; padding: 18px 20px; font-size: 19px; line-height: 1.8; white-space: pre-wrap; word-break: keep-all; position: relative; }
+  .peek-panel .x { position: sticky; top: 0; float: right; background: #ff595e; color: #fff; border-radius: 12px; width: 48px; height: 44px; font-size: 22px; font-weight: 900; }
+  body[data-app="passage"] .kl-choice { min-height: 0; padding: 14px 16px; }
+  body[data-app="passage"] .kl-stage .kl-prompt { font-size: 24px; line-height: 1.45; word-break: keep-all; }
+  @media (max-width: 760px) { body[data-app="passage"] .kl-stage .kl-prompt { font-size: 19px; } }
+  .types { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 6px 0 12px; font-size: 15px; }
+  @media (max-width: 760px) {
+    .glist { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+    .pcard .t { font-size: 17px; }
+    .rd-title { font-size: 16px; }
+    .rd-text { font-size: 18px; padding: 14px 14px; line-height: 1.8; }
+    .rd-text.big { font-size: 20px; }
+    .rd-text.poem { font-size: 20px; }
+    .rd-foot button { min-height: 54px; font-size: 17px; }
+    .ans { font-size: 16px; }
+    .peek { font-size: 15px; padding: 10px 14px; }
+  }
+</style>
+</head>
+<body data-app="passage">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script src="passages.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el, P = window.PASSAGES;
+  K.header({ title: '읽기 지문', icon: '📰', say: '읽기 지문' });
+  var main = document.getElementById('main');
+  var GNAME = { 1: '초등 1학년', 2: '초등 2학년', 3: '초등 3학년', 4: '초등 4학년', 5: '초등 5학년', 6: '초등 6학년', 7: '중학교 1학년' };
+  var GCOLOR = { 1: '#ffe9ee', 2: '#fff3c4', 3: '#e3f7cf', 4: '#e9f3ff', 5: '#ece6f5', 6: '#ffe4d6', 7: '#d0f4de' };
+
+  function best() { return K.progress().best || {}; }
+  function doneIn(g) { var b = best(); return P.filter(function (p) { return p.g === g && b[p.id] != null; }).length; }
+  function closePeek() { main.style.paddingBottom = ''; var x = document.querySelector('.peek'); if (x) x.remove(); var y = document.querySelector('.peek-panel'); if (y) y.remove(); }
+
+  function home() {
+    closePeek(); document.body.classList.remove('fixed');
+    main.innerHTML = '';
+    var items = [];
+    for (var g = 1; g <= 7; g++) (function (g) {
+      var n = P.filter(function (p) { return p.g === g; }).length;
+      items.push({ icon: g <= 6 ? g + '️⃣' : '🎓', label: GNAME[g] + ' (' + doneIn(g) + '/' + n + ')', color: GCOLOR[g], run: function () { grade(g); } });
+    })(g);
+    K.menu(main, items);
+    main.appendChild(el('div', { class: 'types', html: '문제 갈래: <span class="qtag 사실">사실</span>글에 나온 것 <span class="qtag 중심">중심</span>글 전체의 생각 <span class="qtag 낱말">낱말</span>뜻 <span class="qtag 추론">추론</span>짐작하기 <span class="qtag 짜임">짜임</span>글의 종류' }));
+  }
+
+  function grade(g) {
+    closePeek(); document.body.classList.remove('fixed');
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    main.appendChild(el('div', { class: 'kl-prompt', text: GNAME[g], style: 'font-size:26px;margin-bottom:10px' }));
+    var b = best();
+    var list = el('div', { class: 'glist' });
+    P.filter(function (p) { return p.g === g; }).forEach(function (p) {
+      var sc = b[p.id];
+      var c = el('button', { class: 'pcard' }, [
+        el('div', { class: 'gn', text: p.genre }), el('div', { class: 't', text: p.title }),
+        el('div', { class: 's', text: sc != null ? '최고 ' + sc + ' / ' + p.q.length : '문제 ' + p.q.length + '개' }),
+        sc != null ? el('span', { class: 'ok', text: sc === p.q.length ? '🏆' : '✅' }) : null
+      ]);
+      c.addEventListener('click', function () { K.sfx.click(); read(p); });
+      list.appendChild(c);
+    });
+    main.appendChild(list);
+  }
+
+  /* ---------- 글 읽기: 문제 단추는 아래에 고정 ---------- */
+  function read(p) {
+    closePeek();
+    document.body.classList.add('fixed');
+    main.innerHTML = '';
+    var wrap = el('div', { class: 'rd' });
+    wrap.appendChild(el('div', { class: 'rd-head' }, [K.backButton(function () { grade(p.g); }),
+      el('div', { class: 'rd-title', html: K.esc(p.title) + '<small>' + GNAME[p.g].replace('초등 ', '초').replace('중학교 ', '중').replace('학년', '') + ' · ' + p.genre + '</small>' })]));
+    var cls = 'rd-text' + (p.genre === '동시' ? ' poem' : '') + (p.g <= 2 ? ' big' : '');
+    wrap.appendChild(el('div', { class: cls, text: p.text }));
+    var reading = false;
+    var readBtn = el('button', { text: '🔊 읽어 주기' });
+    readBtn.addEventListener('click', function () {
+      if (reading && window.speechSynthesis) { speechSynthesis.cancel(); reading = false; readBtn.textContent = '🔊 읽어 주기'; return; }
+      reading = K.speak(p.text.replace(/[■·\[\]]/g, ' ')); readBtn.textContent = reading ? '⏹ 그만 읽기' : '🔊 읽어 주기';
+    });
+    wrap.appendChild(el('div', { class: 'rd-foot' }, [readBtn, el('button', { class: 'go', text: '❓ 문제 풀기 (' + p.q.length + ')', onclick: function () { K.sfx.click(); if (window.speechSynthesis) speechSynthesis.cancel(); ask(p); } })]));
+    main.appendChild(wrap);
+    K.event('open');
+  }
+
+  /* ---------- 문제: 언제든 글을 다시 볼 수 있다 ---------- */
+  function ask(p) {
+    document.body.classList.remove('fixed');
+    main.innerHTML = ''; main.style.paddingBottom = '84px'; main.appendChild(K.backButton(function () { read(p); }));
+    main.appendChild(el('div', { class: 'kl-prompt', text: '📰 ' + p.title, style: 'font-size:20px;margin-bottom:6px' }));
+    var box = el('div'); main.appendChild(box);
+    var peek = el('button', { class: 'peek', text: '📖 글 다시 보기' });
+    peek.addEventListener('click', function () {
+      K.sfx.click();
+      var panel = el('div', { class: 'peek-panel' });
+      var inner = el('div', { class: 'box' }, [el('button', { class: 'x', text: '✕', onclick: function () { panel.remove(); } }), el('div', { text: p.text })]);
+      panel.appendChild(inner);
+      panel.addEventListener('click', function (e) { if (e.target === panel) panel.remove(); });
+      document.body.appendChild(panel);
+    });
+    document.body.appendChild(peek);
+    K.runQuiz({
+      el: box, total: p.q.length, review: false, autoSay: false,
+      onFinish: function () { closePeek(); grade(p.g); },
+      onDone: function (score) {
+        closePeek();
+        K.mutate(function (d) {
+          var pr = d.progress.passage || (d.progress.passage = {});
+          var b = pr.best || (pr.best = {});
+          b[p.id] = Math.max(b[p.id] || 0, score);
+        });
+        if (score === p.q.length) K.event('win');
+      },
+      make: function (i) {
+        var q = p.q[i];
+        var opts = K.shuffle([q[2]].concat(q[3]));
+        return {
+          key: p.id + 'q' + i,
+          prompt: '<span class="qtag ' + q[0] + '">' + q[0] + '</span>' + K.esc(q[1]),
+          say: q[1], cols: 1,
+          choices: opts.map(function (o, k) { return { html: '<div class="ans">' + '①②③④'.charAt(k) + ' ' + K.esc(o) + '</div>', correct: o === q[2] }; })
+        };
+      }
+    });
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

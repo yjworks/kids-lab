@@ -229,7 +229,8 @@
     { app: 'wordmake', key: 'correct', n: 4, label: '낱말 4개 만들기', icon: '🧩' },
     { app: 'sequence', key: 'correct', n: 3, label: '이야기 순서 3번 맞추기', icon: '🎬' },
     { app: 'hanja', key: 'correct', n: 5, label: '한자 5문제 맞히기', icon: '山' },
-    { app: 'arcade', key: 'win', n: 1, label: '오락실에서 한 판 이기기', icon: '🕹️' }
+    { app: 'arcade', key: 'win', n: 1, label: '오락실에서 한 판 이기기', icon: '🕹️' },
+    { app: 'passage', key: 'correct', n: 3, label: '읽기 지문 3문제 맞히기', icon: '📰' }
   ];
   var DAILY_FIXED = { app: 'diary', key: 'save', n: 1, label: '오늘의 일기 쓰기', icon: '📔' };
   function missions(d) {
@@ -567,6 +568,8 @@
     }
     function finish() {
       stampToast(addActivity());
+      /* 판이 끝날 때 점수를 앱에 알려 준다 (기록용) */
+      if (cfg.onDone) { try { cfg.onDone(score, total); } catch (e) { } }
       stage.innerHTML = '';
       var pct = score / total;
       var up = false;

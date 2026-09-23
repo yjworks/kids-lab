@@ -10,6 +10,7 @@ window.KIDLAB_APPS = [
   { id: 'listen',   name: '듣고 맞히기', icon: '👂', color: '#a0c4ff', desc: '짧은 이야기 30편을 듣고 질문에 답하기', cat: '읽기', how: '이야기를 잘 듣고, 그림으로 답해요.' },
   { id: 'sounds',   name: '소리 놀이',   icon: '👏', color: '#bdb2ff', desc: '글자 수 세기, 소리 합치기, 첫소리·끝소리', cat: '읽기', how: '귀로 듣고 소리를 세거나 합쳐 봐요.' },
   { id: 'vocab',    name: '낱말 뜻 놀이', icon: '💡', color: '#fdffb6', desc: '같은 편, 반대말, 움직임 말, 꾸미는 말', cat: '읽기', how: '낱말의 뜻에 맞는 그림을 골라요.' },
+  { id: 'passage',  name: '읽기 지문',   icon: '📰', color: '#d6e4ff', desc: '초등 1학년~중학교 1학년 수준별 글 21편과 독해 문제', cat: '읽기', how: '글을 읽고 문제를 풀어요. 글은 언제든 다시 볼 수 있어요.' },
   { id: 'sequence', name: '이야기 순서', icon: '🎬', color: '#ffc6ff', desc: '그림 카드 순서 맞추기, 다음 장면 맞히기', cat: '읽기', how: '먼저 일어난 일부터 차례대로 눌러요.' },
   { id: 'hanja',    name: '한자 놀이',   icon: '山', color: '#e7c6a5', desc: '기초 한자 31자 뜻·소리, 요일 한자, 필순 따라 쓰기', cat: '언어', how: '한자의 뜻과 소리를 익히고, 순서대로 따라 써요.' },
   { id: 'shapes',   name: '모양·색깔',   icon: '🔷', color: '#b8e0d2', desc: '모양 찾기, 색 맞추기, 패턴', cat: '수학', how: '같은 모양과 같은 색을 찾아 눌러요.' },
