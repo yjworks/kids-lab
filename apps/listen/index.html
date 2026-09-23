@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>듣고 맞히기</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .ear { text-align: center; }
+  .ear .big { font-size: 110px; line-height: 1.1; }
+  .ear .sc { font-size: 64px; letter-spacing: 6px; margin: 6px 0 10px; }
+  .ear .play { font-size: 26px; font-weight: 900; background: #e3f0ff; border-radius: 40px; padding: 16px 30px; min-height: 64px; }
+  .ear .play.on { background: #ffca3a; }
+  .ear .text { background: #fff; border-radius: 20px; padding: 14px 18px; font-size: 22px; line-height: 1.7; font-weight: 700; max-width: 640px; margin: 12px auto 0; text-align: left; word-break: keep-all; }
+  .ear .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+  @media (max-width: 760px) { .ear .big { font-size: 80px; } .ear .sc { font-size: 48px; } .ear .play { font-size: 20px; padding: 12px 22px; } .ear .text { font-size: 18px; } }
+</style>
+</head>
+<body data-app="listen">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '듣고 맞히기', icon: '👂', say: '듣고 맞히기' });
+  var main = document.getElementById('main');
+
+  /* 이야기 30편 - 세 문장, 질문 세 개(누가·무엇을·어디/언제). 답은 모두 그림. 앞 10편이 더 쉽다. */
+  var S = [
+    { s: '🐰🥕', t: '토끼가 밭에 갔어요. 토끼는 당근을 뽑았어요. 토끼는 당근을 들고 집으로 갔어요.', q: [['누가 밭에 갔어요?', '🐰', ['🐻', '🐷']], ['무엇을 뽑았어요?', '🥕', ['🍎', '🌽']], ['어디로 갔어요?', '🏠', ['🏫', '🌊']]] },
+    { s: '🐻🍯', t: '곰이 숲에서 벌집을 찾았어요. 곰은 달콤한 꿀을 먹었어요. 벌들이 윙윙 날아와서 곰은 도망갔어요.', q: [['누가 꿀을 먹었어요?', '🐻', ['🐰', '🐷']], ['무엇을 먹었어요?', '🍯', ['🍎', '🐟']], ['누가 날아왔어요?', '🐝', ['🦋', '🐦']]] },
+    { s: '🌧️☂️', t: '비가 주룩주룩 와요. 민지는 노란 우산을 썼어요. 민지는 장화를 신고 물웅덩이에서 첨벙첨벙 놀았어요.', q: [['날씨가 어땠어요?', '🌧️', ['☀️', '❄️']], ['무엇을 썼어요?', '☂️', ['🧢', '👓']], ['어디서 놀았어요?', '💧', ['🌳', '🏠']]] },
+    { s: '🎂🎵', t: '오늘은 준이의 생일이에요. 엄마가 딸기 케이크를 만들었어요. 친구들이 와서 생일 노래를 불러 줬어요.', q: [['오늘은 무슨 날이에요?', '🎂', ['🎄', '🎃']], ['어떤 케이크를 만들었어요?', '🍓', ['🍫', '🍋']], ['친구들이 무엇을 했어요?', '🎵', ['💤', '⚽']]] },
+    { s: '🐶⚽', t: '아빠와 강아지가 공원에 갔어요. 강아지는 공을 물고 신나게 뛰었어요. 집에 와서 강아지는 물을 벌컥벌컥 마셨어요.', q: [['누구와 공원에 갔어요?', '👨', ['👵', '👶']], ['강아지가 무엇을 물었어요?', '⚽', ['🦴', '👟']], ['집에 와서 무엇을 마셨어요?', '💧', ['🥛', '☕']]] },
+    { s: '🐸🍃', t: '연못에 개구리가 살아요. 개구리는 연잎 위에서 폴짝 뛰었어요. 개구리는 모기를 날름 잡아먹었어요.', q: [['연못에 누가 살아요?', '🐸', ['🐟', '🦆']], ['어디서 뛰었어요?', '🍃', ['🌳', '🏠']], ['무엇을 잡아먹었어요?', '🦟', ['🍎', '🧀']]] },
+    { s: '🏖️🏰', t: '여름에 바닷가에 갔어요. 모래로 커다란 성을 쌓았어요. 파도가 와서 성이 무너졌어요.', q: [['어디에 갔어요?', '🏖️', ['⛰️', '🏫']], ['무엇을 쌓았어요?', '🏰', ['🏠', '⛄']], ['무엇이 와서 무너졌어요?', '🌊', ['🐕', '🌧️']]] },
+    { s: '❄️⛄', t: '밤새 하얀 눈이 내렸어요. 아이들은 눈싸움을 했어요. 그리고 커다란 눈사람을 만들었어요.', q: [['무엇이 내렸어요?', '❄️', ['🌧️', '🍂']], ['무엇을 만들었어요?', '⛄', ['🏰', '🎂']], ['언제 눈이 내렸어요?', '🌙', ['☀️', '🌈']]] },
+    { s: '🐔🐥', t: '암탉이 알을 품었어요. 며칠 뒤 알에서 병아리가 나왔어요. 병아리는 삐약삐약 엄마를 따라다녀요.', q: [['누가 알을 품었어요?', '🐔', ['🦆', '🐦']], ['알에서 누가 나왔어요?', '🐥', ['🐢', '🐍']], ['병아리는 누구를 따라다녀요?', '🐔', ['🐶', '🐱']]] },
+    { s: '👵🍎', t: '할머니 집 마당에 사과나무가 있어요. 나는 빨간 사과를 세 개 땄어요. 할머니와 사과를 나눠 먹었어요.', q: [['누구 집에 갔어요?', '👵', ['👨', '👶']], ['무엇을 땄어요?', '🍎', ['🍐', '🍊']], ['몇 개 땄어요?', '3️⃣', ['1️⃣', '5️⃣']]] },
+
+    { s: '🧺🍙', t: '우리 반은 소풍을 갔어요. 선생님이 주먹밥 도시락을 나눠 주셨어요. 우리는 잔디밭에서 공놀이를 했어요.', q: [['무엇을 먹었어요?', '🍙', ['🍕', '🍜']], ['어디서 놀았어요?', '🌿', ['🌊', '🏫']], ['무슨 놀이를 했어요?', '⚽', ['💤', '🎨']]] },
+    { s: '🦷🏥', t: '민호는 이가 아팠어요. 엄마와 치과에 갔어요. 의사 선생님이 청진기로 진찰하고 이를 치료해 주셨어요.', q: [['어디가 아팠어요?', '🦷', ['👂', '🦶']], ['어디에 갔어요?', '🏥', ['🏫', '🏪']], ['의사 선생님은 무엇을 썼어요?', '🩺', ['🍳', '🚒']]] },
+    { s: '🐱🧶', t: '고양이가 털실 뭉치를 발견했어요. 고양이는 털실을 굴리며 놀았어요. 놀다가 소파에서 쿨쿨 잠들었어요.', q: [['누가 나왔어요?', '🐱', ['🐶', '🐰']], ['무엇을 가지고 놀았어요?', '🧶', ['⚽', '🦴']], ['놀고 나서 무엇을 했어요?', '💤', ['🍽️', '🛁']]] },
+    { s: '🚗🧼', t: '아빠 차가 흙투성이가 됐어요. 나는 아빠와 함께 비누로 차를 닦았어요. 차가 반짝반짝 깨끗해졌어요.', q: [['무엇이 더러워졌어요?', '🚗', ['🚲', '🚌']], ['무엇으로 닦았어요?', '🧼', ['🍯', '🖍️']], ['누구와 함께 닦았어요?', '👨', ['👵', '👶']]] },
+    { s: '🍂🐿️', t: '가을이 되자 나뭇잎이 노랗게 물들었어요. 바람이 불어 나뭇잎이 우수수 떨어졌어요. 다람쥐는 밤을 부지런히 모았어요.', q: [['어떤 계절이에요?', '🍂', ['🌸', '❄️']], ['무엇이 불었어요?', '🌬️', ['🔥', '🌧️']], ['다람쥐가 무엇을 모았어요?', '🌰', ['🍎', '🧀']]] },
+    { s: '✈️☁️', t: '우리 가족은 비행기를 타고 제주도에 갔어요. 창밖으로 하얀 구름이 보였어요. 제주도에서 귤을 많이 먹었어요.', q: [['무엇을 탔어요?', '✈️', ['🚂', '🚢']], ['창밖으로 무엇이 보였어요?', '☁️', ['🐟', '🌙']], ['무엇을 많이 먹었어요?', '🍊', ['🍌', '🍉']]] },
+    { s: '🛒🐟', t: '엄마와 시장에 갔어요. 생선 가게에서 고등어를 샀어요. 과일 가게에서는 커다란 수박을 샀어요.', q: [['누구와 시장에 갔어요?', '👩', ['👨', '👵']], ['생선 가게에서 무엇을 샀어요?', '🐟', ['🥩', '🍞']], ['과일 가게에서 무엇을 샀어요?', '🍉', ['🍇', '🍓']]] },
+    { s: '🐌🥬', t: '비 오는 날 달팽이가 나왔어요. 달팽이는 아주 느릿느릿 기어갔어요. 달팽이는 상추 잎을 오물오물 먹었어요.', q: [['누가 나왔어요?', '🐌', ['🐛', '🐜']], ['어떤 날 나왔어요?', '🌧️', ['☀️', '❄️']], ['무엇을 먹었어요?', '🥬', ['🍖', '🧀']]] },
+    { s: '🤖🚀', t: '로봇 삐삐는 달에 가고 싶었어요. 삐삐는 로켓을 타고 슝 날아갔어요. 달에서 지구를 보며 손을 흔들었어요.', q: [['누가 달에 가고 싶었어요?', '🤖', ['👶', '🐶']], ['무엇을 탔어요?', '🚀', ['🚗', '⛵']], ['어디에 갔어요?', '🌙', ['☀️', '🌈']]] },
+    { s: '🥐🥛', t: '빵집에 갔어요. 크루아상과 우유를 샀어요. 공원 의자에 앉아서 맛있게 먹었어요.', q: [['어디에 갔어요?', '🍞', ['🏥', '🏫']], ['어떤 빵을 샀어요?', '🥐', ['🍕', '🍔']], ['어디서 먹었어요?', '🌳', ['🚌', '🛁']]] },
+
+    { s: '🏊🥽', t: '여름 방학에 수영장에 갔어요. 물안경을 쓰고 물장구를 쳤어요. 신나게 놀고 나니 배가 꼬르륵 고팠어요.', q: [['어디에 갔어요?', '🏊', ['⛷️', '🏫']], ['무엇을 썼어요?', '🥽', ['👓', '🧢']], ['언제 갔어요?', '☀️', ['❄️', '🍂']]] },
+    { s: '📚🦕', t: '토요일에 도서관에 갔어요. 공룡 책을 두 권 빌렸어요. 집에서 아빠가 공룡 책을 읽어 주셨어요.', q: [['어디에 갔어요?', '📚', ['🏥', '🏪']], ['무슨 책을 빌렸어요?', '🦕', ['🚗', '🌸']], ['누가 책을 읽어 주었어요?', '👨', ['👩', '👵']]] },
+    { s: '🐶🛁', t: '강아지 뭉치가 진흙에서 뒹굴었어요. 뭉치는 욕조에서 거품 목욕을 했어요. 목욕이 끝나자 뭉치가 몸을 부르르 털었어요.', q: [['누가 나왔어요?', '🐶', ['🐱', '🐷']], ['어디서 목욕했어요?', '🛁', ['🌳', '🚗']], ['목욕이 끝나고 무엇을 했어요?', '💦', ['💤', '🍖']]] },
+    { s: '👴🐔', t: '할아버지 농장에는 소와 돼지가 살아요. 아침마다 닭이 꼬끼오 울어요. 나는 달걀을 바구니에 담았어요.', q: [['누구의 농장이에요?', '👴', ['👩', '👶']], ['누가 꼬끼오 울어요?', '🐔', ['🐮', '🐷']], ['무엇을 바구니에 담았어요?', '🥚', ['🍎', '🥕']]] },
+    { s: '🌈☀️', t: '비가 그치고 해가 나왔어요. 하늘에 일곱 빛깔 무지개가 떴어요. 우리는 무지개를 보고 소원을 빌었어요.', q: [['무엇이 나왔어요?', '☀️', ['🌙', '⭐']], ['하늘에 무엇이 떴어요?', '🌈', ['🎈', '✈️']], ['무지개는 몇 빛깔이에요?', '7️⃣', ['3️⃣', '5️⃣']]] },
+    { s: '🎄🎁', t: '크리스마스 아침이에요. 트리 밑에 선물 상자가 있었어요. 상자를 열어 보니 곰 인형이 들어 있었어요.', q: [['오늘은 무슨 날이에요?', '🎄', ['🎂', '🎃']], ['트리 밑에 무엇이 있었어요?', '🎁', ['🍎', '⚽']], ['상자 안에 무엇이 있었어요?', '🧸', ['🚗', '📖']]] },
+    { s: '🚂🐮', t: '할머니 댁에 기차를 타고 갔어요. 기차는 칙칙폭폭 터널을 지났어요. 창밖으로 소들이 풀을 먹고 있었어요.', q: [['무엇을 탔어요?', '🚂', ['✈️', '🚌']], ['누구 댁에 갔어요?', '👵', ['👨', '👶']], ['창밖에 무엇이 있었어요?', '🐮', ['🐧', '🦁']]] },
+    { s: '🐢🌊', t: '모래 속 알에서 아기 거북이 나왔어요. 아기 거북은 엉금엉금 바다로 갔어요. 바다에서 친구 물고기를 만났어요.', q: [['알에서 누가 나왔어요?', '🐢', ['🐊', '🐍']], ['어디로 갔어요?', '🌊', ['⛰️', '🏠']], ['누구를 만났어요?', '🐟', ['🐦', '🐶']]] },
+    { s: '🧸📦', t: '방에 장난감이 가득 흩어져 있어요. 나는 블록을 상자에 담았어요. 곰 인형은 침대 위에 앉혔어요.', q: [['방에 무엇이 흩어져 있었어요?', '🧸', ['🍎', '👟']], ['블록을 어디에 담았어요?', '📦', ['🛁', '🚗']], ['곰 인형은 어디에 앉혔어요?', '🛏️', ['🚪', '🚲']]] },
+    { s: '🌙🧸', t: '밤이 되었어요. 이를 닦고 곰 인형을 꼭 안았어요. 엄마가 불을 끄고 잘 자라고 말해 주었어요.', q: [['언제예요?', '🌙', ['☀️', '🌈']], ['무엇을 안았어요?', '🧸', ['⚽', '📖']], ['누가 불을 껐어요?', '👩', ['👨', '👶']]] }
+  ];
+  var ALL_ANS = [];
+  S.forEach(function (x) { x.q.forEach(function (q) { [q[1]].concat(q[2]).forEach(function (e) { if (ALL_ANS.indexOf(e) < 0) ALL_ANS.push(e); }); }); });
+
+  function recent() { return K.progress().recent || []; }
+  function pickStory(lv) {
+    var pool = lv <= 1 ? S.slice(0, 10) : lv === 2 ? S.slice(0, 20) : S;
+    var rc = recent();
+    var fresh = pool.filter(function (x) { return rc.indexOf(S.indexOf(x)) < 0; });
+    return K.pick(fresh.length ? fresh : pool);
+  }
+
+  function home() {
+    main.innerHTML = '';
+    var lv = K.getLevel('listen');
+    K.menu(main, [
+      { icon: '👂', label: '이야기 듣고 맞히기', mode: 'listen', color: '#e9f3ff', run: function () { start(pickStory(K.getLevel('listen'))); } },
+      { icon: '📜', label: '이야기 모음 (' + heard() + '/' + S.length + ')', color: '#fff3c4', run: list }
+    ]);
+    main.appendChild(el('div', { class: 'kl-hint', text: '글을 몰라도 괜찮아요. 잘 듣고 그림으로 답해요' }));
+  }
+  function heard() { return (K.progress().heard || []).length; }
+
+  function list() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var h = K.progress().heard || [];
+    var g = el('div', { class: 'kl-menu' });
+    S.forEach(function (x, i) {
+      var b = el('button', { class: 'kl-menu-item', style: 'min-height:120px;background:' + (h.indexOf(i) >= 0 ? '#e3f7cf' : '#fff') }, [
+        el('div', { class: 'kl-menu-icon', text: x.s, style: 'font-size:40px' }),
+        el('div', { class: 'kl-menu-label', text: (i + 1) + '번 이야기' + (h.indexOf(i) >= 0 ? ' ✔' : ''), style: 'font-size:17px' })
+      ]);
+      b.addEventListener('click', function () { K.sfx.click(); start(x); });
+      g.appendChild(b);
+    });
+    main.appendChild(g);
+  }
+
+  /* ---------- 듣기 ---------- */
+  function start(story) {
+    var lv = K.getLevel('listen');
+    var idx = S.indexOf(story);
+    K.mutate(function (d) {
+      var pr = d.progress.listen || (d.progress.listen = {});
+      var rc = pr.recent || []; rc = rc.filter(function (x) { return x !== idx; }); rc.push(idx); if (rc.length > 8) rc.shift(); pr.recent = rc;
+    });
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var box = el('div', { class: 'ear' });
+    box.appendChild(el('div', { class: 'big', text: '👂' }));
+    box.appendChild(el('div', { class: 'sc', text: story.s }));
+    var play = el('button', { class: 'play', text: '🔊 이야기 듣기' });
+    var go = el('button', { class: 'kl-btn primary big', text: '❓ 문제 풀기', style: 'display:none' });
+    var textBox = el('div', { class: 'text', text: story.t, style: 'display:none' });
+    var showText = el('button', { class: 'kl-btn', text: '📜 글 보기', style: lv >= 3 ? '' : 'display:none' });
+    play.addEventListener('click', function () { playStory(story, play, go); });
+    go.addEventListener('click', function () { K.sfx.click(); ask(story); });
+    showText.addEventListener('click', function () { textBox.style.display = textBox.style.display === 'none' ? '' : 'none'; });
+    box.appendChild(play);
+    box.appendChild(el('div', { class: 'row' }, [go, showText]));
+    box.appendChild(textBox);
+    main.appendChild(box);
+    setTimeout(function () { playStory(story, play, go); }, 400);
+  }
+  function playStory(story, play, go) {
+    play.classList.add('on'); play.textContent = '🔊 듣는 중...';
+    var ok = K.speak(story.t);
+    /* 음성이 끝나는 때를 알 수 없는 기기가 있어 글 길이로 넉넉히 잡는다 */
+    var ms = ok ? Math.max(3000, story.t.length * 190) : 800;
+    setTimeout(function () { play.classList.remove('on'); play.textContent = '🔊 다시 듣기'; go.style.display = ''; }, ms);
+  }
+  function ask(story) {
+    var lv = K.getLevel('listen');
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var box = el('div'); main.appendChild(box);
+    K.runQuiz({
+      el: box, mode: 'listen', total: story.q.length, review: false, onFinish: home,
+      make: function (i) {
+        var q = story.q[i];
+        var opts = [q[1]].concat(q[2]);
+        if (lv >= 4) { var extra = K.pick(ALL_ANS.filter(function (e) { return opts.indexOf(e) < 0; })); opts.push(extra); }
+        return {
+          key: 'L' + S.indexOf(story) + 'q' + i,
+          prompt: K.esc(q[0]) + '<div style="margin-top:8px"><button class="rd-help" data-say="' + K.esc(story.t) + '">🔊 이야기 다시 듣기</button></div>',
+          say: q[0], cols: opts.length,
+          choices: K.shuffle(opts).map(function (o) { return { html: '<div class="rd-choice-pic">' + o + '</div>', correct: o === q[1] }; })
+        };
+      }
+    });
+    /* 문제까지 왔으면 한 편 들은 것으로 친다 */
+    K.mutate(function (d) {
+      var pr = d.progress.listen || (d.progress.listen = {});
+      var h = pr.heard || []; var idx = S.indexOf(story); if (h.indexOf(idx) < 0) h.push(idx); pr.heard = h;
+    });
+    K.event('heard');
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

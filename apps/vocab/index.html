@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>낱말 뜻 놀이</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .opp { font-size: 60px; line-height: 1.1; }
+  @media (max-width: 760px) { .opp { font-size: 46px; } }
+</style>
+</head>
+<body data-app="vocab">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script src="../../shared/hangul.js"></script>
+<script src="../../shared/words.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el, H = Hangul, B = WordBank;
+  K.header({ title: '낱말 뜻 놀이', icon: '💡', say: '낱말 뜻 놀이' });
+  var main = document.getElementById('main');
+
+  /* 반대말: [낱말, 그림, 반대말, 그림] */
+  var OPP = [
+    ['크다', '🐘', '작다', '🐭'], ['길다', '🐍', '짧다', '🐛'], ['많다', '🍎🍎🍎🍎', '적다', '🍎'], ['뜨겁다', '🔥', '차갑다', '🧊'],
+    ['빠르다', '🐇', '느리다', '🐢'], ['높다', '🏢', '낮다', '🏠'], ['밝다', '☀️', '어둡다', '🌙'], ['무겁다', '🧱', '가볍다', '🎈'],
+    ['웃다', '😄', '울다', '😢'], ['열다', '📂', '닫다', '📁'], ['위', '⬆️', '아래', '⬇️'], ['배부르다', '😋', '배고프다', '🍽️']
+  ];
+  /* 움직임 말: [그림, 말] */
+  var VERB = [
+    ['🏊', '헤엄쳐요'], ['😴', '자요'], ['🏃', '달려요'], ['📖', '읽어요'], ['🎨', '그려요'], ['🎤', '노래해요'], ['🚴', '자전거 타요'],
+    ['🧹', '청소해요'], ['🚿', '씻어요'], ['😢', '울어요'], ['😄', '웃어요'], ['👏', '손뼉 쳐요'], ['💃', '춤춰요'], ['🥛', '마셔요'], ['✍️', '글씨를 써요'], ['🧗', '올라가요']
+  ];
+  /* 꾸미는 말: [말, 정답, 헷갈리는 것들] */
+  var ADJ = [
+    ['빨간 것', '🍎', ['🍌', '🥦', '🍇']], ['노란 것', '🍌', ['🍎', '🥦', '🍇']], ['초록색인 것', '🥦', ['🍎', '🍌', '🍊']],
+    ['동그란 것', '⚽', ['📦', '✏️', '📐']], ['뾰족한 것', '🌵', ['🎈', '🧸', '🍩']], ['부드러운 것', '🧸', ['🧱', '🌵', '🔨']],
+    ['차가운 것', '🧊', ['☕', '🔥', '☀️']], ['뜨거운 것', '☕', ['🧊', '⛄', '🍦']], ['달콤한 것', '🍬', ['🍋', '🌶️', '🧂']],
+    ['매운 것', '🌶️', ['🍬', '🍦', '🥛']], ['신 것', '🍋', ['🍬', '🍞', '🥛']], ['반짝이는 것', '⭐', ['🪵', '🧱', '🥔']],
+    ['큰 동물', '🐘', ['🐭', '🐜', '🐤']], ['작은 동물', '🐜', ['🐘', '🦒', '🐳']], ['물에 사는 동물', '🐟', ['🐶', '🐔', '🐒']], ['하늘을 나는 것', '🦅', ['🐢', '🐌', '🐖']]
+  ];
+  var FAMILY = { '과일': 'food', '채소': 'food', '먹을거리': 'food', '물건': 'thing', '악기': 'thing', '옷': 'thing', '동물': 'animal', '탈것': 'ride', '몸': 'body', '자연': 'nature', '장소': 'place' };
+  var CATS = Object.keys(B.cats).filter(function (c) { return B.where(function (w) { return w.cat === c; }).length >= 4; });
+  var CAT_SAY = { '과일': '과일', '채소': '채소', '먹을거리': '먹을거리', '동물': '동물', '탈것': '탈것', '옷': '입거나 쓰는 것', '몸': '우리 몸', '자연': '자연', '물건': '물건', '악기': '악기', '장소': '장소' };
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '🧺', label: '같은 편 찾기', mode: 'cat', color: '#e3f7cf', run: catQuiz },
+      { icon: '↔️', label: '반대말', mode: 'opp', color: '#ffe9ee', run: oppQuiz },
+      { icon: '🏃', label: '움직임 말', mode: 'verb', color: '#e9f3ff', run: verbQuiz },
+      { icon: '🎨', label: '꾸미는 말', mode: 'adj', color: '#fff3c4', run: adjQuiz }
+    ]);
+  }
+  function quiz(mode, total, make) {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var box = el('div'); main.appendChild(box);
+    K.runQuiz({ el: box, mode: mode, total: total, make: make, onFinish: home });
+  }
+  function pic(e, lbl) { return '<div class="rd-choice-pic">' + e + '</div>' + (lbl ? '<div class="rd-choice-lbl">' + lbl + '</div>' : ''); }
+
+  /* ---------- 같은 편 찾기 / 다른 하나 찾기 ---------- */
+  function catQuiz() {
+    quiz('cat', 8, function (i, lv) {
+      var c = K.pick(CATS);
+      /* 과일·채소·먹을거리처럼 겹치는 갈래끼리는 보기로 섞지 않는다 (사과는 먹을거리이기도 하다) */
+      var inCat = B.where(function (w) { return w.cat === c; }), outCat = B.where(function (w) { return FAMILY[w.cat] !== FAMILY[c]; });
+      if (lv <= 2) {
+        var ans = K.pick(inCat), others = K.sample(outCat, lv <= 1 ? 2 : 3);
+        var opts = K.shuffle([ans].concat(others));
+        return {
+          key: 'cat' + c + ans.word, prompt: B.cats[c] + ' ' + CAT_SAY[c] + H.josa(CAT_SAY[c], '은/는') + ' 어느 것?', say: CAT_SAY[c] + H.josa(CAT_SAY[c], '은/는') + ' 어느 것일까요?',
+          cols: opts.length,
+          choices: opts.map(function (o) { return { html: pic(o.pic, lv <= 1 ? o.word : ''), correct: o === ans, say: o.word }; })
+        };
+      }
+      /* 3단계부터: 다른 하나 찾기 */
+      var three = K.sample(inCat, 3), odd = K.pick(outCat);
+      var all = K.shuffle(three.concat([odd]));
+      return {
+        key: 'odd' + c + odd.word, prompt: '🤔 다른 하나는 어느 것?', say: '셋은 같은 편이에요. 다른 하나는 어느 것일까요?', cols: 4,
+        choices: all.map(function (o) { return { html: pic(o.pic, lv <= 3 ? o.word : ''), correct: o === odd, say: o === odd ? odd.word + '. 나머지는 ' + CAT_SAY[c] + '이에요' : null }; })
+      };
+    });
+  }
+
+  /* ---------- 반대말 ---------- */
+  function oppQuiz() {
+    quiz('opp', 8, function (i, lv) {
+      var p = K.pick(OPP), flip = Math.random() < 0.5;
+      var word = flip ? p[2] : p[0], wPic = flip ? p[3] : p[1], other = flip ? p[0] : p[2], oPic = flip ? p[1] : p[3];
+      if (lv <= 2) {
+        /* 그림 두 개 중 낱말에 맞는 쪽 */
+        var opts = K.shuffle([{ e: wPic, ok: true }, { e: oPic, ok: false }]);
+        return {
+          key: 'oppA' + word, prompt: '어느 쪽이 "' + word + '"일까요?', say: '어느 쪽이 ' + word + '일까요?', cols: 2,
+          choices: opts.map(function (o) { return { html: '<div class="opp">' + o.e + '</div>', correct: o.ok }; })
+        };
+      }
+      /* 3단계부터: 글자로 반대말 고르기 */
+      var wrong = K.sample(OPP.filter(function (x) { return x !== p; }).map(function (x) { return Math.random() < 0.5 ? x[0] : x[2]; }), lv <= 3 ? 2 : 3);
+      var opts2 = K.shuffle([other].concat(wrong));
+      return {
+        key: 'oppB' + word, prompt: '<div class="opp">' + wPic + '</div>"' + word + '"의 반대말은?', say: word + '의 반대말은 무엇일까요?', cols: opts2.length,
+        choices: opts2.map(function (o) { return { html: '<div class="rd-choice-word" style="font-size:30px">' + o + '</div>', correct: o === other, say: o === other ? word + ', ' + other : null }; })
+      };
+    });
+  }
+
+  /* ---------- 움직임 말 ---------- */
+  function verbQuiz() {
+    quiz('verb', 8, function (i, lv) {
+      var v = K.pick(VERB), others = K.sample(VERB.filter(function (x) { return x !== v; }), lv <= 1 ? 2 : 3);
+      var opts = K.shuffle([v].concat(others));
+      if (lv <= 2) {
+        return {
+          key: 'verbA' + v[1], prompt: '🔊 "' + v[1] + '" 하는 그림은?', say: v[1] + '. 어느 그림일까요?', cols: opts.length,
+          choices: opts.map(function (o) { return { html: pic(o[0]), correct: o === v }; })
+        };
+      }
+      return {
+        key: 'verbB' + v[1], prompt: '<div class="opp">' + v[0] + '</div>무엇을 하고 있을까요?', say: '무엇을 하고 있을까요?', cols: 2,
+        choices: opts.map(function (o) { return { html: '<div class="rd-choice-word" style="font-size:26px">' + o[1] + '</div>', correct: o === v, say: o === v ? v[1] : null }; })
+      };
+    });
+  }
+
+  /* ---------- 꾸미는 말 ---------- */
+  function adjQuiz() {
+    quiz('adj', 8, function (i, lv) {
+      var a = K.pick(ADJ);
+      var opts = K.shuffle([a[1]].concat(K.shuffle(a[2]).slice(0, lv <= 1 ? 2 : 3)));
+      return {
+        key: 'adj' + a[0], prompt: (lv >= 3 ? '' : '🔊 ') + '"' + a[0] + '"' + H.josa(a[0], '은/는') + ' 어느 것?', say: a[0] + H.josa(a[0], '은/는') + ' 어느 것일까요?', cols: opts.length,
+        choices: opts.map(function (o) { return { html: pic(o), correct: o === a[1] }; })
+      };
+    });
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

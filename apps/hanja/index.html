@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>한자 놀이</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .hz { font-family: "Malgun Gothic", "Noto Sans KR", "Noto Sans CJK KR", "Apple SD Gothic Neo", serif; }
+  .grp { font-size: 20px; font-weight: 900; color: #6a4c93; margin: 14px 4px 8px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+  .hcard { background: #fff; border-radius: 18px; padding: 8px 4px; box-shadow: 0 4px 0 rgba(0,0,0,.08); text-align: center; position: relative; }
+  .hcard .h { font-size: 50px; font-weight: 900; line-height: 1.1; color: #333; }
+  .hcard .m { font-size: 15px; font-weight: 800; color: #555; }
+  .hcard .ok { position: absolute; top: 4px; right: 6px; font-size: 14px; }
+  .detail { text-align: center; }
+  .detail .h { font-size: 150px; font-weight: 900; line-height: 1.1; color: #333; }
+  .detail .say { font-size: 34px; font-weight: 900; margin: 4px 0; }
+  .detail .pic { font-size: 64px; }
+  .detail .ex { background: #fff3c4; border-radius: 16px; padding: 10px 14px; font-weight: 800; font-size: 20px; display: inline-block; margin-top: 10px; }
+  .detail .row { display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+  .hz-choice { font-size: 54px; font-weight: 900; line-height: 1.1; }
+  @media (max-width: 760px) {
+    .cards { grid-template-columns: repeat(auto-fill, minmax(74px, 1fr)); gap: 8px; }
+    .hcard .h { font-size: 38px; } .hcard .m { font-size: 13px; }
+    .detail .h { font-size: 110px; } .detail .say { font-size: 26px; } .detail .pic { font-size: 48px; } .detail .ex { font-size: 17px; }
+    .hz-choice { font-size: 42px; }
+  }
+</style>
+</head>
+<body data-app="hanja">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script src="../../shared/glyphs.js"></script>
+<script src="../../shared/trace.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el, G = GLYPHS;
+  K.header({ title: '한자 놀이', icon: '山', say: '한자 놀이' });
+  var main = document.getElementById('main');
+
+  /* 뜻 그림과 생활 속 낱말 */
+  var INFO = {
+    '一': ['1️⃣', '일월 (1월)'], '二': ['2️⃣', '이층 (2층)'], '三': ['3️⃣', '삼각형'], '四': ['4️⃣', '사계절'], '五': ['5️⃣', '오월 (5월)'],
+    '六': ['6️⃣', '육각형'], '七': ['7️⃣', '칠월 (7월)'], '八': ['8️⃣', '팔월 (8월)'], '九': ['9️⃣', '구월 (9월)'], '十': ['🔟', '십 원'],
+    '日': ['☀️', '일요일'], '月': ['🌙', '월요일'], '火': ['🔥', '화요일'], '水': ['💧', '수요일'], '木': ['🌳', '목요일'], '金': ['🥇', '금요일'], '土': ['🌱', '토요일'],
+    '人': ['🧑', '인형'], '大': ['🐘', '대문'], '小': ['🐜', '소형차'], '山': ['⛰️', '등산'], '口': ['👄', '입구'], '中': ['🎯', '중간'],
+    '上': ['⬆️', '상자 위 (상)'], '下': ['⬇️', '하교'], '王': ['👑', '왕자'], '女': ['👧', '여자'], '子': ['👦', '자녀'], '川': ['🏞️', '인천'],
+    '田': ['🌾', '전원'], '目': ['👁️', '목차']
+  };
+  var GROUPS = [
+    ['🔢 숫자', '一二三四五六七八九十'], ['📅 요일', '日月火水木金土'], ['🌳 자연과 몸', '山川田口目人'], ['🧭 크기와 자리', '大小中上下'], ['👑 사람', '王女子']
+  ];
+  /* 모양이 비슷해 헷갈리는 짝 */
+  var LOOK = ['日目田口中', '人大火八', '土王上十', '一二三', '小川水山', '子女', '九七五六四', '木金'];
+  var ALL = G.order.hanja;
+  function say(ch) { return G.hanjaSay[ch]; }
+  function mean(ch) { return say(ch).split(' ')[0]; }
+  function seen() { return K.progress().seen || []; }
+
+  function home() {
+    document.body.classList.remove('fixed');
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '🃏', label: '한자 카드', color: '#fde2c8', run: cards },
+      { icon: '🖼️', label: '뜻 맞히기', mode: 'mean', color: '#e3f7cf', run: meanQuiz },
+      { icon: '👂', label: '듣고 한자 찾기', mode: 'sound', color: '#e9f3ff', run: soundQuiz },
+      { icon: '📅', label: '요일 한자', mode: 'week', color: '#fff3c4', run: weekQuiz },
+      { icon: '✏️', label: '한자 따라 쓰기', color: '#ffe9ee', run: function () { KidTrace.start(main, ['hanja'], home); } }
+    ]);
+    main.appendChild(el('div', { class: 'kl-hint', text: '한자는 "뜻"과 "소리"를 같이 불러요. 山은 "메 산"!' }));
+  }
+
+  /* ---------- 카드 ---------- */
+  function cards() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var s = seen();
+    GROUPS.forEach(function (g) {
+      main.appendChild(el('div', { class: 'grp', text: g[0] }));
+      var box = el('div', { class: 'cards' });
+      g[1].split('').forEach(function (ch) {
+        var b = el('button', { class: 'hcard' }, [
+          el('div', { class: 'h hz', text: ch }), el('div', { class: 'm', text: say(ch) }),
+          s.indexOf(ch) >= 0 ? el('span', { class: 'ok', text: '✔' }) : null
+        ]);
+        b.addEventListener('click', function () { K.sfx.click(); detail(ch); });
+        box.appendChild(b);
+      });
+      main.appendChild(box);
+    });
+  }
+  function detail(ch) {
+    main.innerHTML = ''; main.appendChild(K.backButton(cards));
+    var inf = INFO[ch];
+    var d = el('div', { class: 'detail' }, [
+      el('div', { class: 'h hz', text: ch }),
+      el('div', { class: 'say', text: say(ch) }),
+      el('div', { class: 'pic', text: inf[0] }),
+      el('div', { class: 'ex', text: '💬 ' + inf[1] }),
+      el('div', { class: 'row' }, [
+        el('button', { class: 'speak-btn', text: '🔊 다시 듣기', onclick: function () { K.speak(say(ch)); } }),
+        el('button', { class: 'kl-btn primary', text: '✏️ 따라 쓰기', onclick: function () { KidTrace.start(main, ['hanja'], home); } })
+      ])
+    ]);
+    main.appendChild(d);
+    K.speak(say(ch) + '. ' + inf[1].replace(/\(.*\)/, ''));
+    K.mutate(function (dd) { var pr = dd.progress.hanja || (dd.progress.hanja = {}); var sn = pr.seen || (pr.seen = []); if (sn.indexOf(ch) < 0) sn.push(ch); });
+    K.event('learn');
+  }
+
+  function quiz(mode, total, make) {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var box = el('div'); main.appendChild(box);
+    K.runQuiz({ el: box, mode: mode, total: total, make: make, onFinish: home });
+  }
+  function poolFor(lv) { return lv <= 1 ? '一二三四五日月山人大小'.split('') : lv === 2 ? '一二三四五六七八九十日月火水木山人大小口'.split('') : ALL; }
+  function lookAlike(ch, n, pool) {
+    var g = LOOK.filter(function (x) { return x.indexOf(ch) >= 0; })[0] || '';
+    var near = K.shuffle(g.split('').filter(function (c) { return c !== ch; }));
+    var out = near.slice(0, n);
+    while (out.length < n) { var r = K.pick(pool); if (r !== ch && out.indexOf(r) < 0) out.push(r); }
+    return out;
+  }
+
+  /* ---------- 한자를 보고 뜻 그림 고르기 ---------- */
+  function meanQuiz() {
+    quiz('mean', 8, function (i, lv) {
+      var pool = poolFor(lv), ch = K.pick(pool);
+      var others = lookAlike(ch, lv <= 1 ? 2 : 3, pool);
+      var opts = K.shuffle([ch].concat(others));
+      return {
+        key: 'mean' + ch,
+        prompt: '<div class="hz" style="font-size:110px;line-height:1.1">' + ch + '</div>무슨 뜻일까요?',
+        say: '이 한자는 무슨 뜻일까요?', cols: opts.length,
+        choices: opts.map(function (o) { return { html: '<div class="rd-choice-pic">' + INFO[o][0] + '</div>' + (lv <= 2 ? '<div class="rd-choice-lbl">' + mean(o) + '</div>' : ''), correct: o === ch, say: o === ch ? say(ch) : null }; })
+      };
+    });
+  }
+
+  /* ---------- 소리를 듣고 한자 찾기 ---------- */
+  function soundQuiz() {
+    quiz('sound', 8, function (i, lv) {
+      var pool = poolFor(lv), ch = K.pick(pool);
+      var opts = K.shuffle([ch].concat(lookAlike(ch, lv <= 1 ? 2 : 3, pool)));
+      return {
+        key: 'sound' + ch,
+        prompt: '🔊 "' + say(ch) + '"' + (lv <= 2 ? '<div style="font-size:54px">' + INFO[ch][0] + '</div>' : ''),
+        say: say(ch) + '. 어느 한자일까요?', cols: opts.length,
+        choices: opts.map(function (o) { return { html: '<div class="hz-choice hz">' + o + '</div>', correct: o === ch }; })
+      };
+    });
+  }
+
+  /* ---------- 요일 한자 ---------- */
+  var WEEK = [['일요일', '日'], ['월요일', '月'], ['화요일', '火'], ['수요일', '水'], ['목요일', '木'], ['금요일', '金'], ['토요일', '土']];
+  function weekQuiz() {
+    quiz('week', 7, function (i, lv) {
+      var w = K.pick(WEEK);
+      var others = K.sample(WEEK.filter(function (x) { return x !== w; }), lv <= 1 ? 2 : 3).map(function (x) { return x[1]; });
+      var opts = K.shuffle([w[1]].concat(others));
+      return {
+        key: 'week' + w[1],
+        prompt: '📅 "' + w[0] + '"의 "' + w[0].charAt(0) + '"은 어느 한자?',
+        say: w[0] + '의 ' + w[0].charAt(0) + '은 어느 한자일까요?', cols: opts.length,
+        choices: opts.map(function (o) { return { html: '<div class="hz-choice hz">' + o + '</div>' + (lv <= 2 ? '<div class="rd-choice-lbl">' + INFO[o][0] + '</div>' : ''), correct: o === w[1], say: o === w[1] ? say(o) : null }; })
+      };
+    });
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

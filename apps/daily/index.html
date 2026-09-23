@@ -33,6 +33,7 @@
 <body data-app="daily">
 <main id="main"></main>
 <script src="../../shared/kid.js"></script>
+<script src="elevator.js"></script>
 <script>
 (function () {
   var K = KidLab, el = K.el;
@@ -62,7 +63,8 @@
       { icon: '🧥', label: '무엇을 입을까?', mode: 'cloth', color: '#e9f3ff', run: clothQuiz },
       { icon: '🧹', label: '정리 정돈', mode: 'tidy', color: '#ffe4a1', run: tidyGame },
       { icon: '🙏', label: '바른 말 바른 행동', mode: 'manner', color: '#ffe9ee', run: mannerQuiz },
-      { icon: '🥦', label: '몸에 좋은 음식', mode: 'health', color: '#d0f4de', run: healthQuiz }
+      { icon: '🥦', label: '몸에 좋은 음식', mode: 'health', color: '#d0f4de', run: healthQuiz },
+      { icon: '🏢', label: '엘리베이터 타기', mode: 'elevator', color: '#e2ece9', run: function () { Elevator.start(main, home); } }
     ]);
   }
   function quiz(mode, total, make) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: total, make: make, onFinish: home }); }

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>소리 놀이</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .claps { font-size: 34px; letter-spacing: 2px; line-height: 1.2; }
+  @media (max-width: 760px) { .claps { font-size: 24px; } }
+</style>
+</head>
+<body data-app="sounds">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script src="../../shared/hangul.js"></script>
+<script src="../../shared/words.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el, H = Hangul, B = WordBank;
+  K.header({ title: '소리 놀이', icon: '👏', say: '소리 놀이' });
+  var main = document.getElementById('main');
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '👏', label: '몇 글자일까?', mode: 'count', color: '#fff3c4', run: countQuiz },
+      { icon: '🧲', label: '소리 합치기', mode: 'blend', color: '#e3f7cf', run: blendQuiz },
+      { icon: '🔠', label: '첫소리 같은 말', mode: 'first', color: '#e9f3ff', run: firstQuiz },
+      { icon: '🎶', label: '끝소리 같은 말', mode: 'rhyme', color: '#ffe9ee', run: rhymeQuiz },
+      { icon: '✂️', label: '소리 빼기', mode: 'drop', color: '#ece6f5', run: dropQuiz }
+    ]);
+    main.appendChild(el('div', { class: 'kl-hint', text: '글자를 몰라도 돼요. 귀로 듣고 맞혀요' }));
+  }
+  function quiz(mode, total, make) {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var box = el('div'); main.appendChild(box);
+    K.runQuiz({ el: box, mode: mode, total: total, make: make, onFinish: home });
+  }
+  function card(w, showWord) {
+    return '<div class="rd-choice-pic">' + w.pic + '</div>' + (showWord ? '<div class="rd-choice-lbl">' + w.word + '</div>' : '');
+  }
+
+  /* ---------- 몇 글자일까? (음절 세기) ---------- */
+  function countQuiz() {
+    quiz('count', 8, function (i, lv) {
+      var max = lv <= 1 ? 3 : 4;
+      var w = K.pick(B.where(function (x) { return x.word.length <= max; }));
+      var n = w.word.length;
+      var opts = lv <= 2 ? [1, 2, 3] : [1, 2, 3, 4];
+      if (opts.indexOf(n) < 0) opts[opts.length - 1] = n;
+      return {
+        key: 'count' + w.word,
+        prompt: '<div class="rd-pic">' + w.pic + '</div>🔊 손뼉을 몇 번 칠까요?',
+        say: w.word + '. 손뼉을 몇 번 칠까요?', cols: opts.length,
+        choices: opts.map(function (k) { return { html: '<div class="claps">' + new Array(k + 1).join('👏') + '</div><div class="rd-choice-lbl">' + k + '번</div>', correct: k === n }; }),
+        onCorrect: function () { K.speak(w.word.split('').join(', ') + '. ' + n + '글자!'); }
+      };
+    });
+  }
+
+  /* ---------- 소리 합치기: 바... 나... 나 → 바나나 ---------- */
+  function blendQuiz() {
+    quiz('blend', 8, function (i, lv) {
+      var pool = B.where(function (x) { return x.word.length >= 2 && x.word.length <= (lv <= 2 ? 3 : 4); });
+      var ans = K.pick(pool);
+      /* 헷갈리게: 같은 글자로 시작하거나 길이가 같은 것 */
+      var near = pool.filter(function (x) { return x !== ans && (x.word.charAt(0) === ans.word.charAt(0) || x.word.length === ans.word.length); });
+      var need = lv <= 1 ? 2 : 3;
+      var others = K.shuffle(near).slice(0, need);
+      while (others.length < need) { var r = K.pick(pool); if (r !== ans && others.indexOf(r) < 0) others.push(r); }
+      var opts = K.shuffle([ans].concat(others));
+      return {
+        key: 'blend' + ans.word,
+        prompt: '🔊 소리를 붙이면 무엇이 될까요?',
+        say: ans.word.split('').join('.  ') + '.', cols: opts.length,
+        choices: opts.map(function (o) { return { html: card(o, false), correct: o === ans, say: o === ans ? o.word : null }; })
+      };
+    });
+  }
+
+  /* ---------- 첫소리 같은 말 ---------- */
+  function firstQuiz() {
+    quiz('first', 8, function (i, lv) {
+      var groups = {};
+      B.list.forEach(function (w) { var f = H.first(w.word); (groups[f] = groups[f] || []).push(w); });
+      var keys = Object.keys(groups).filter(function (k) { return groups[k].length >= 2; });
+      var f = K.pick(keys);
+      var pair = K.shuffle(groups[f]).slice(0, 2), target = pair[0], ans = pair[1];
+      var others = K.sample(B.where(function (w) { return H.first(w.word) !== f; }), lv <= 1 ? 1 : 2);
+      var opts = K.shuffle([ans].concat(others));
+      var show = lv <= 2;
+      return {
+        key: 'first' + target.word + ans.word,
+        prompt: '<div class="rd-pic" style="font-size:72px">' + target.pic + '</div>' + (show ? '<div style="font-size:28px;font-weight:900">' + target.word + '</div>' : '') + '첫소리가 같은 것은?',
+        say: target.word + H.josa(target.word, '과/와') + ' 첫소리가 같은 것은? ' + opts.map(function (o) { return o.word; }).join(', '),
+        cols: opts.length,
+        choices: opts.map(function (o) { return { html: card(o, show), correct: o === ans, say: o === ans ? target.word + ', ' + ans.word + '. 첫소리가 같아요' : null }; })
+      };
+    });
+  }
+
+  /* ---------- 끝소리 같은 말 (라임): 달 · 말 · 발 ---------- */
+  var RHYMES = (function () {
+    var g = {};
+    B.list.forEach(function (w) { var s = H.split(w.word.slice(-1)); var k = s.jung + s.jong; (g[k] = g[k] || []).push(w); });
+    return Object.keys(g).map(function (k) { return g[k]; }).filter(function (arr) {
+      return arr.length >= 2 && arr.some(function (a) { return arr.some(function (b) { return H.rhyme(a.word, b.word); }); });
+    });
+  })();
+  function rhymeQuiz() {
+    quiz('rhyme', 8, function (i, lv) {
+      var grp = K.pick(RHYMES);
+      var target, ans, tries = 0;
+      do { target = K.pick(grp); ans = K.pick(grp); tries++; } while ((target === ans || !H.rhyme(target.word, ans.word)) && tries < 30);
+      var others = K.sample(B.where(function (w) {
+        var a = H.split(w.word.slice(-1)), t = H.split(target.word.slice(-1));
+        return a.jung !== t.jung || a.jong !== t.jong;
+      }), lv <= 1 ? 1 : 2);
+      var opts = K.shuffle([ans].concat(others));
+      var show = lv <= 2;
+      return {
+        key: 'rhyme' + target.word + ans.word,
+        prompt: '<div class="rd-pic" style="font-size:72px">' + target.pic + '</div>' + (show ? '<div style="font-size:28px;font-weight:900">' + target.word + '</div>' : '') + '끝소리가 같은 것은?',
+        say: target.word + H.josa(target.word, '과/와') + ' 끝소리가 같은 것은? ' + opts.map(function (o) { return o.word; }).join(', '),
+        cols: opts.length,
+        choices: opts.map(function (o) { return { html: card(o, show), correct: o === ans, say: o === ans ? target.word + ', ' + ans.word + '. 끝소리가 같아요' : null }; })
+      };
+    });
+  }
+
+  /* ---------- 소리 빼기: 사과에서 '사'를 빼면 → 과 ---------- */
+  function dropQuiz() {
+    quiz('drop', 8, function (i, lv) {
+      var w = K.pick(B.where(function (x) { return x.word.length >= 2 && x.word.length <= (lv <= 2 ? 2 : 3); }));
+      var syl = w.word.split('');
+      var at = lv <= 3 ? 0 : K.randInt(0, syl.length - 1);
+      var cut = syl[at];
+      var rest = syl.filter(function (c, k) { return k !== at; }).join('');
+      var opts = [rest, cut];
+      var pool = B.list.map(function (x) { return x.word.slice(-1); });
+      while (opts.length < (lv <= 1 ? 3 : 4)) { var r = K.pick(pool) + (rest.length > 1 ? K.pick(pool) : ''); if (opts.indexOf(r) < 0) opts.push(r); }
+      opts = K.shuffle(opts);
+      return {
+        key: 'drop' + w.word + at,
+        prompt: '<div class="rd-pic" style="font-size:72px">' + w.pic + '</div><div style="font-size:26px;font-weight:900">' + w.word + '에서 "' + cut + '"' + H.josa(cut, '을/를') + ' 빼면?</div>',
+        say: w.word + '에서 ' + cut + H.josa(cut, '을/를') + ' 빼면 무엇이 남을까요?', cols: opts.length,
+        choices: opts.map(function (o) { return { html: '<div class="rd-choice-word">' + o + '</div>', correct: o === rest, say: o === rest ? rest : null }; })
+      };
+    });
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

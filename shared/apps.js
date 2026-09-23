@@ -3,6 +3,15 @@ window.KIDLAB_APPS = [
   { id: 'hangul',   name: '한글 놀이',   icon: '가', color: '#ff8fa3', desc: '자음·모음, 글자 만들기, 낱말 읽기, 따라 쓰기', cat: '언어', how: '글자를 눌러 소리를 듣고, 맞는 그림을 골라요.' },
   { id: 'english',  name: '영어 놀이',   icon: '🔤', color: '#7fc8ff', desc: 'ABC, 파닉스, 그림 낱말, 따라 쓰기', cat: '언어', how: '영어 글자를 듣고 같은 것을 찾아요.' },
   { id: 'math',     name: '수학 놀이',   icon: '🔢', color: '#ffd166', desc: '세기, 더하기, 빼기, 비교, 숫자 따라 쓰기', cat: '수학', how: '그림을 세어 보고 맞는 숫자를 눌러요.' },
+  { id: 'batchim',  name: '받침 놀이',   icon: '받', color: '#ffb3c6', desc: '받침 소리, 듣고 고르기, 받침 바꾸기, 받침 글자 쓰기', cat: '읽기', how: '받침 소리를 듣고, 알맞은 받침을 골라요.' },
+  { id: 'wordmake', name: '낱말 만들기', icon: '🧩', color: '#ffd6a5', desc: '글자 카드를 붙여 낱말 완성, 빠진 글자', cat: '읽기', how: '그림을 보고 글자 카드를 차례대로 눌러요.' },
+  { id: 'sentence', name: '문장 읽기',   icon: '📝', color: '#caffbf', desc: '문장 읽고 그림 고르기, 이/가 을/를', cat: '읽기', how: '문장을 읽고 맞는 그림을 골라요. 모르는 낱말은 눌러 봐요.' },
+  { id: 'books',    name: '읽기 책',     icon: '📚', color: '#9bf6ff', desc: '한 쪽씩 읽는 그림책 12권과 질문', cat: '읽기', how: '책을 한 쪽씩 넘기며 읽어요. 낱말을 누르면 읽어 줘요.' },
+  { id: 'listen',   name: '듣고 맞히기', icon: '👂', color: '#a0c4ff', desc: '짧은 이야기 30편을 듣고 질문에 답하기', cat: '읽기', how: '이야기를 잘 듣고, 그림으로 답해요.' },
+  { id: 'sounds',   name: '소리 놀이',   icon: '👏', color: '#bdb2ff', desc: '글자 수 세기, 소리 합치기, 첫소리·끝소리', cat: '읽기', how: '귀로 듣고 소리를 세거나 합쳐 봐요.' },
+  { id: 'vocab',    name: '낱말 뜻 놀이', icon: '💡', color: '#fdffb6', desc: '같은 편, 반대말, 움직임 말, 꾸미는 말', cat: '읽기', how: '낱말의 뜻에 맞는 그림을 골라요.' },
+  { id: 'sequence', name: '이야기 순서', icon: '🎬', color: '#ffc6ff', desc: '그림 카드 순서 맞추기, 다음 장면 맞히기', cat: '읽기', how: '먼저 일어난 일부터 차례대로 눌러요.' },
+  { id: 'hanja',    name: '한자 놀이',   icon: '山', color: '#e7c6a5', desc: '기초 한자 31자 뜻·소리, 요일 한자, 필순 따라 쓰기', cat: '언어', how: '한자의 뜻과 소리를 익히고, 순서대로 따라 써요.' },
   { id: 'shapes',   name: '모양·색깔',   icon: '🔷', color: '#b8e0d2', desc: '모양 찾기, 색 맞추기, 패턴', cat: '수학', how: '같은 모양과 같은 색을 찾아 눌러요.' },
   { id: 'clock',    name: '시계 놀이',   icon: '⏰', color: '#c3b1e1', desc: '몇 시일까? 시계 읽기', cat: '수학', how: '시계 바늘을 보고 몇 시인지 골라요.' },
   { id: 'calc',     name: '계산기',     icon: '🧮', color: '#a7c7ff', desc: '휴대폰 계산기, 숫자 읽기, 자릿값', cat: '수학', how: '숫자 단추를 눌러 계산하고, 읽어 주는 소리를 들어요.' },
@@ -18,5 +27,6 @@ window.KIDLAB_APPS = [
   { id: 'draw',     name: '그림 그리기', icon: '🎨', color: '#ffd9e8', desc: '자유 그림, 색칠하기, 내 갤러리', cat: '창작', how: '색을 고르고 손가락으로 그려요.' },
   { id: 'music',    name: '음악 놀이',   icon: '🎹', color: '#d0f4de', desc: '피아노, 리듬 따라하기, 동요', cat: '창작', how: '아래 건반을 눌러 노래를 쳐요.' },
   { id: 'story',    name: '이야기 만들기', icon: '📖', color: '#fde2c8', desc: '카드를 골라 나만의 동화', cat: '창작', how: '카드를 골라 나만의 이야기를 만들어요.' },
-  { id: 'diary',    name: '나의 하루',   icon: '📔', color: '#e2ece9', desc: '오늘 기분·날씨 기록, 달력', cat: '생활', how: '오늘 기분과 날씨를 골라 기록해요.' }
+  { id: 'diary',    name: '나의 하루',   icon: '📔', color: '#e2ece9', desc: '오늘 기분·날씨 기록, 달력', cat: '생활', how: '오늘 기분과 날씨를 골라 기록해요.' },
+  { id: 'arcade',   name: '오락실',     icon: '🕹️', color: '#ff99c8', desc: '인형뽑기, 글자 낚시, 두더지 잡기', cat: '놀이', how: '낚시와 두더지로 별을 모아 인형을 뽑아요.' }
 ];

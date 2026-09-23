@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>낱말 만들기</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .wm-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+  .wm-say { background: #e3f0ff; border-radius: 50%; width: 120px; height: 120px; font-size: 60px; margin: 0 auto; display: block; }
+  .wm-msg { text-align: center; font-size: 22px; font-weight: 800; min-height: 32px; margin: 4px 0 10px; }
+  @media (max-width: 760px) { .wm-say { width: 96px; height: 96px; font-size: 48px; } .wm-msg { font-size: 18px; } }
+</style>
+</head>
+<body data-app="wordmake">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script src="../../shared/hangul.js"></script>
+<script src="../../shared/words.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el, H = Hangul, B = WordBank;
+  K.header({ title: '낱말 만들기', icon: '🧩', say: '낱말 만들기' });
+  var main = document.getElementById('main');
+
+  /* 단계별 낱말: 1 받침 없는 두 글자 → 2 세 글자까지 → 3 받침 있는 낱말 → 4 보기 카드 늘리기 → 5 그림 없이 소리만 */
+  function hasAnyJong(w) { return w.split('').some(function (c) { return H.hasJong(c); }); }
+  function wordsFor(lv) {
+    return B.where(function (w) {
+      var n = w.word.length;
+      if (lv <= 1) return n === 2 && !hasAnyJong(w.word);
+      if (lv === 2) return n >= 2 && n <= 3 && !hasAnyJong(w.word);
+      return n >= 2 && n <= 4;
+    });
+  }
+  var ALL_SYL = [];
+  B.list.forEach(function (w) { w.word.split('').forEach(function (c) { if (ALL_SYL.indexOf(c) < 0) ALL_SYL.push(c); }); });
+  /* 헷갈리는 글자: 첫소리나 모음이 같은 것 */
+  function lookAlikes(ch, n, avoid) {
+    var s = H.split(ch);
+    var near = ALL_SYL.filter(function (c) {
+      if (c === ch || (avoid && avoid.indexOf(c) >= 0)) return false;
+      var t = H.split(c); return t && (t.cho === s.cho || t.jung === s.jung);
+    });
+    var out = K.shuffle(near).slice(0, n);
+    while (out.length < n) { var r = K.pick(ALL_SYL); if (r !== ch && out.indexOf(r) < 0 && (!avoid || avoid.indexOf(r) < 0)) out.push(r); }
+    return out;
+  }
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '🧩', label: '글자 붙여 낱말', mode: 'build', color: '#fff3c4', run: build },
+      { icon: '🕳️', label: '빠진 글자', mode: 'gap', color: '#e3f7cf', run: gapQuiz },
+      { icon: '👂', label: '듣고 낱말 찾기', mode: 'find', color: '#e9f3ff', run: findQuiz }
+    ]);
+  }
+  function quiz(mode, total, make, extra) {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var box = el('div'); main.appendChild(box);
+    K.runQuiz(Object.assign({ el: box, mode: mode, total: total, make: make, onFinish: home }, extra || {}));
+  }
+
+  /* ---------- 글자 카드를 차례로 눌러 낱말 완성 ---------- */
+  function build() {
+    var lv = K.getLevel('build'), total = 5, round = 0, firstTry = 0, used = [];
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var box = el('div', { class: 'kl-stage' }); main.appendChild(box);
+    function next() {
+      if (round >= total) return finish();
+      var pool = wordsFor(lv).filter(function (w) { return used.indexOf(w.word) < 0; });
+      var w = K.pick(pool.length ? pool : wordsFor(lv)); used.push(w.word);
+      var syl = w.word.split(''), pos = 0, miss = 0;
+      var extra = lv >= 4 ? 2 : 1;
+      var tiles = K.shuffle(syl.concat(lookAlikes(syl[syl.length - 1], extra, syl)));
+      box.innerHTML = '';
+      var dots = el('div', { class: 'kl-dots', style: 'justify-content:center;margin-bottom:8px' });
+      for (var i = 0; i < total; i++) dots.appendChild(el('i', { class: i < round ? 'ok' : '' }));
+      box.appendChild(dots);
+      if (lv >= 5) box.appendChild(el('button', { class: 'wm-say', text: '🔊', onclick: function () { K.speak(w.word); } }));
+      else box.appendChild(el('div', { class: 'rd-pic', text: w.pic, style: 'cursor:pointer', onclick: function () { K.speak(w.word); } }));
+      var msg = el('div', { class: 'wm-msg', text: lv >= 5 ? '소리를 듣고 낱말을 만들어요' : '그림에 맞게 글자를 차례로 눌러요' });
+      box.appendChild(msg);
+      var slots = el('div', { class: 'rd-slots' });
+      syl.forEach(function () { slots.appendChild(el('div', { class: 'rd-slot' })); });
+      box.appendChild(slots);
+      var tray = el('div', { class: 'rd-tiles' });
+      tiles.forEach(function (t) {
+        var b = el('button', { class: 'rd-tile', text: t });
+        b.addEventListener('click', function () {
+          if (pos >= syl.length || b.classList.contains('used')) return;
+          if (t === syl[pos]) {
+            b.classList.add('used');
+            var s = slots.children[pos]; s.textContent = t; s.classList.add('filled');
+            pos++; K.sfx.pop();
+            if (pos === syl.length) {
+              if (miss === 0) firstTry++;
+              round++; K.sfx.correct(); K.addStar(1); K.event('correct');
+              msg.textContent = '⭕ ' + w.word + '!'; K.speak(w.word + '! 잘했어요');
+              setTimeout(next, 1400);
+            } else K.speak(t);
+          } else {
+            miss++; b.classList.add('wrong'); setTimeout(function () { b.classList.remove('wrong'); }, 450);
+            K.nope('아니에요', '다음 글자가 아니에요');
+            if (miss >= 2) { msg.textContent = '💡 다음 글자는 "' + syl[pos] + '"예요'; slots.children[pos].style.borderColor = '#ffca3a'; }
+          }
+        });
+        tray.appendChild(b);
+      });
+      box.appendChild(tray);
+      K.speak(lv >= 5 ? w.word : '그림에 맞게 글자를 눌러요');
+    }
+    function finish() {
+      box.innerHTML = '';
+      var up = firstTry >= 4 && lv < 5;
+      if (up) K.setLevel('build', lv + 1);
+      box.appendChild(el('div', { class: 'kl-result' }, [
+        el('div', { class: 'kl-result-emoji', text: firstTry === total ? '🏆' : '🎉' }),
+        el('div', { class: 'kl-result-title', text: '낱말 ' + total + '개를 만들었어요!' }),
+        el('div', { class: 'kl-result-score', html: '⭐ 한 번에 ' + firstTry + ' / ' + total + (up ? '<div class="kl-levelup">🎊 단계 ' + (lv + 1) + '로 올라갔어요!</div>' : '') }),
+        el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '🔁 한 번 더', onclick: build }), el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: home })])
+      ]));
+      K.sfx.win(); K.confetti(); K.event('win');
+    }
+    next();
+  }
+
+  /* ---------- 빠진 글자 채우기 ---------- */
+  function gapQuiz() {
+    quiz('gap', 8, function (i, lv) {
+      var w = K.pick(wordsFor(Math.max(2, lv)));
+      var syl = w.word.split('');
+      var at = lv <= 2 ? syl.length - 1 : K.randInt(0, syl.length - 1);
+      var ans = syl[at];
+      var shown = syl.map(function (c, k) { return k === at ? '<span class="gap">?</span>' : K.esc(c); }).join('');
+      var opts = [ans].concat(lookAlikes(ans, lv <= 1 ? 2 : 3, syl));
+      return {
+        key: 'gap' + w.word + at,
+        prompt: '<div class="rd-pic">' + w.pic + '</div><div class="rd-word">' + shown + '</div>',
+        say: w.word + '. 빠진 글자는 무엇일까요?', cols: opts.length,
+        choices: K.shuffle(opts).map(function (o) { return { html: '<div class="rd-choice-word">' + o + '</div>', correct: o === ans }; })
+      };
+    });
+  }
+
+  /* ---------- 듣고 낱말 찾기 (글자만 보고 고르기) ---------- */
+  function findQuiz() {
+    quiz('find', 8, function (i, lv) {
+      var ans = K.pick(wordsFor(Math.max(2, lv)));
+      /* 비슷하게 생긴 낱말: 첫 글자가 같거나 길이가 같은 것 */
+      var near = B.where(function (w) { return w !== ans && (w.word.charAt(0) === ans.word.charAt(0) || (w.word.length === ans.word.length && H.first(w.word) === H.first(ans.word))); });
+      var n = lv <= 1 ? 2 : lv <= 3 ? 3 : 4;
+      var others = K.shuffle(near).slice(0, n - 1);
+      while (others.length < n - 1) { var r = K.pick(B.list); if (r !== ans && others.indexOf(r) < 0 && r.word.length === ans.word.length) others.push(r); }
+      var opts = [ans].concat(others);
+      return {
+        key: 'find' + ans.word,
+        prompt: '🔊 무슨 낱말일까요? <button class="rd-help" data-say="' + ans.word + '">다시 듣기</button>' + (lv <= 2 ? '<div class="rd-pic" style="font-size:64px;margin-top:6px">' + ans.pic + '</div>' : ''),
+        say: ans.word, cols: Math.min(opts.length, 2),
+        choices: K.shuffle(opts).map(function (o) { return { html: '<div class="rd-choice-word">' + o.word + '</div>', correct: o === ans }; })
+      };
+    });
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

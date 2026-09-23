@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>문장 읽기</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .sc { font-size: 52px; }
+  .sc .big { font-size: 78px; }
+  .sc .small { font-size: 34px; }
+  .sc .act { font-size: 36px; }
+  .sent-choice { font-size: 26px; font-weight: 900; line-height: 1.4; word-break: keep-all; }
+  .hint-row { display: flex; justify-content: center; gap: 8px; margin: 8px 0 0; }
+  @media (max-width: 760px) {
+    .sc { font-size: 40px; } .sc .big { font-size: 58px; } .sc .small { font-size: 26px; } .sc .act { font-size: 28px; }
+    .sent-choice { font-size: 20px; }
+  }
+</style>
+</head>
+<body data-app="sentence">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script src="../../shared/hangul.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el, H = Hangul;
+  K.header({ title: '문장 읽기', icon: '📝', say: '문장 읽기' });
+  var main = document.getElementById('main');
+
+  var P = {
+    '강아지': '🐶', '고양이': '🐱', '토끼': '🐰', '곰': '🐻', '아기': '👶', '새': '🐦', '오리': '🦆', '물고기': '🐟',
+    '돼지': '🐷', '원숭이': '🐒', '사자': '🦁', '거북이': '🐢', '나비': '🦋', '벌': '🐝', '쥐': '🐭', '판다': '🐼', '다람쥐': '🐿️', '소': '🐮',
+    '당근': '🥕', '바나나': '🍌', '꿀': '🍯', '치즈': '🧀', '우유': '🥛', '사과': '🍎', '뼈다귀': '🦴', '대나무': '🎋', '밤': '🌰', '풀': '🌿', '벌레': '🐛',
+    '나무': '🌳', '상자': '📦', '의자': '🪑', '산': '⛰️', '구름': '☁️', '달': '🌙', '해': '☀️', '공': '⚽', '꽃': '🌸', '별': '⭐'
+  };
+  /* 2어절: 누가 + 어찌해요 */
+  var ACT = {
+    '자요': { pic: '💤', who: ['강아지', '고양이', '토끼', '곰', '아기', '돼지', '사자', '판다'] },
+    '달려요': { pic: '💨', who: ['강아지', '고양이', '토끼', '사자', '돼지', '원숭이'] },
+    '헤엄쳐요': { pic: '🌊', who: ['물고기', '오리', '거북이'] },
+    '날아요': { pic: '☁️', who: ['새', '나비', '벌'] },
+    '노래해요': { pic: '🎵', who: ['새', '아기'] }
+  };
+  /* 3어절: 누가 + 무엇을 + 먹어요 */
+  var EAT = [['토끼', '당근'], ['원숭이', '바나나'], ['곰', '꿀'], ['쥐', '치즈'], ['아기', '우유'], ['돼지', '사과'],
+    ['고양이', '물고기'], ['강아지', '뼈다귀'], ['판다', '대나무'], ['새', '벌레'], ['소', '풀'], ['다람쥐', '밤']];
+  var DRINK = ['우유'];
+  /* 위·아래 */
+  var POS = [['새', '나무'], ['고양이', '상자'], ['공', '의자'], ['달', '산'], ['해', '구름'], ['나비', '꽃']];
+  var COUNT_WORD = ['', '한', '두', '세', '네'];
+
+  function subj(n) { return n + H.josa(n, '이/가'); }
+  function obj(n) { return n + H.josa(n, '을/를'); }
+  function verbFor(o) { return DRINK.indexOf(o) >= 0 ? '마셔요' : '먹어요'; }
+  function unitFor(n) { return ['강아지', '고양이', '토끼', '곰', '새', '오리', '물고기', '돼지', '원숭이', '사자', '거북이', '나비', '벌', '쥐', '판다', '다람쥐', '소'].indexOf(n) >= 0 ? '마리' : '개'; }
+
+  /* ---------- 문장 만들기 (단계별) ---------- */
+  function makeItem(lv) {
+    var kind = lv <= 1 ? 'act' : lv <= 3 ? 'eat' : lv === 4 ? K.pick(['size', 'count']) : K.pick(['pos', 'count', 'size', 'eat']);
+    if (kind === 'act') {
+      var v = K.pick(Object.keys(ACT)), s = K.pick(ACT[v].who);
+      var v2 = K.pick(Object.keys(ACT).filter(function (x) { return x !== v; }));
+      var s2 = K.pick(Object.keys(P).filter(function (x) { return x !== s && ACT.자요.who.concat(ACT.날아요.who, ACT.헤엄쳐요.who).indexOf(x) >= 0; }));
+      return {
+        words: [subj(s), v],
+        scene: sc([P[s], '<span class="act">' + ACT[v].pic + '</span>']),
+        wrong: [
+          { words: [subj(s), v2], scene: sc([P[s], '<span class="act">' + ACT[v2].pic + '</span>']) },
+          { words: [subj(s2), v], scene: sc([P[s2], '<span class="act">' + ACT[v].pic + '</span>']) }
+        ]
+      };
+    }
+    if (kind === 'eat') {
+      var pr = K.pick(EAT), others = EAT.filter(function (x) { return x !== pr; });
+      var o2 = K.pick(others)[1], s3 = K.pick(others)[0];
+      return {
+        words: [subj(pr[0]), obj(pr[1]), verbFor(pr[1])],
+        scene: sc([P[pr[0]], P[pr[1]]]),
+        wrong: [
+          { words: [subj(pr[0]), obj(o2), verbFor(o2)], scene: sc([P[pr[0]], P[o2]]) },
+          { words: [subj(s3), obj(pr[1]), verbFor(pr[1])], scene: sc([P[s3], P[pr[1]]]) }
+        ]
+      };
+    }
+    if (kind === 'size') {
+      var a = K.pick(ACT.자요.who), b = K.pick(ACT.자요.who.filter(function (x) { return x !== a; }));
+      var big = Math.random() < 0.5, adj = big ? '큰' : '작은', other = big ? '작은' : '큰';
+      var cls = big ? 'big' : 'small', ocls = big ? 'small' : 'big';
+      return {
+        words: [adj, subj(a), '자요'],
+        scene: sc(['<span class="' + cls + '">' + P[a] + '</span>', '<span class="act">💤</span>']),
+        wrong: [
+          { words: [other, subj(a), '자요'], scene: sc(['<span class="' + ocls + '">' + P[a] + '</span>', '<span class="act">💤</span>']) },
+          { words: [adj, subj(b), '자요'], scene: sc(['<span class="' + cls + '">' + P[b] + '</span>', '<span class="act">💤</span>']) }
+        ]
+      };
+    }
+    if (kind === 'count') {
+      var thing = K.pick(['사과', '꽃', '별', '공', '토끼', '새', '물고기', '나비']);
+      var n = K.randInt(1, 4), n2 = n === 4 ? 3 : n + 1, n3 = n === 1 ? 3 : n === 4 ? 2 : n - 1;
+      var rep = function (k) { return sc([new Array(k + 1).join(P[thing] + ' ')]); };
+      var line = function (k) { return [subj(thing), COUNT_WORD[k], unitFor(thing), '있어요']; };
+      return { words: line(n), scene: rep(n), wrong: [{ words: line(n2), scene: rep(n2) }, { words: line(n3), scene: rep(n3) }] };
+    }
+    /* pos */
+    var ps = K.pick(POS), up = Math.random() < 0.5, where = up ? '위에' : '아래에', oth = up ? '아래에' : '위에';
+    var col = function (top, bottom) { return '<div class="rd-scene col sc"><span>' + top + '</span><span>' + bottom + '</span></div>'; };
+    var mk = function (w) { return w === '위에' ? col(P[ps[0]], P[ps[1]]) : col(P[ps[1]], P[ps[0]]); };
+    var ps2 = K.pick(POS.filter(function (x) { return x !== ps; }));
+    return {
+      words: [subj(ps[0]), ps[1], where, '있어요'],
+      scene: mk(where),
+      wrong: [
+        { words: [subj(ps[0]), ps[1], oth, '있어요'], scene: mk(oth) },
+        { words: [subj(ps2[0]), ps[1], where, '있어요'], scene: where === '위에' ? col(P[ps2[0]], P[ps[1]]) : col(P[ps[1]], P[ps2[0]]) }
+      ]
+    };
+  }
+  function sc(parts) { return '<div class="rd-scene sc">' + parts.map(function (p) { return '<span>' + p + '</span>'; }).join('') + '</div>'; }
+  /* 낱말마다 눌러서 들을 수 있는 문장 */
+  function sentenceHTML(words) {
+    return '<div class="rd-sentence">' + words.map(function (w) { return '<span class="w" data-say="' + w + '">' + K.esc(w) + '</span>'; }).join(' ') + '</div>';
+  }
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '📖', label: '읽고 그림 고르기', mode: 'read', color: '#fff3c4', run: readQuiz },
+      { icon: '🖼️', label: '그림 보고 문장 고르기', mode: 'pick', color: '#e3f7cf', run: pickQuiz },
+      { icon: '🧷', label: '이/가 을/를 넣기', mode: 'josa', color: '#ffe9ee', run: josaQuiz }
+    ]);
+    main.appendChild(el('div', { class: 'kl-hint', text: '모르는 낱말은 눌러 보면 읽어 줘요' }));
+  }
+  function quiz(mode, total, make) {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var box = el('div'); main.appendChild(box);
+    K.runQuiz({ el: box, mode: mode, total: total, make: make, onFinish: home, autoSay: false });
+  }
+
+  /* ---------- 문장을 읽고 맞는 그림 ---------- */
+  function readQuiz() {
+    quiz('read', 8, function (i, lv) {
+      var it = makeItem(lv);
+      var opts = [{ scene: it.scene, ok: true }].concat(it.wrong.map(function (w) { return { scene: w.scene, ok: false }; }));
+      return {
+        key: 'read' + it.words.join(' '),
+        prompt: sentenceHTML(it.words) + '<div class="hint-row"><button class="rd-help" data-say="' + it.words.join(' ') + '">🔊 문장 듣기</button></div>',
+        say: null, cols: opts.length,
+        choices: K.shuffle(opts).map(function (o) { return { html: o.scene, correct: o.ok, say: o.ok ? it.words.join(' ') : null }; })
+      };
+    });
+  }
+
+  /* ---------- 그림을 보고 맞는 문장 ---------- */
+  function pickQuiz() {
+    quiz('pick', 8, function (i, lv) {
+      var it = makeItem(lv);
+      var opts = [{ words: it.words, ok: true }].concat(it.wrong.map(function (w) { return { words: w.words, ok: false }; }));
+      return {
+        key: 'pick' + it.words.join(' '),
+        prompt: '<div style="font-size:22px;margin-bottom:6px">그림에 맞는 문장은?</div>' + it.scene,
+        say: null, cols: 1,
+        choices: K.shuffle(opts).map(function (o) { return { html: '<div class="sent-choice">' + K.esc(o.words.join(' ')) + '</div>', correct: o.ok, say: o.ok ? o.words.join(' ') : null }; })
+      };
+    });
+  }
+
+  /* ---------- 조사 넣기: 받침이 있으면 이·을, 없으면 가·를 ---------- */
+  function josaQuiz() {
+    quiz('josa', 8, function (i, lv) {
+      var pr = K.pick(EAT);
+      var atSubj = lv <= 1 ? true : lv === 2 ? false : Math.random() < 0.5;
+      var noun = atSubj ? pr[0] : pr[1];
+      var ans = H.josa(noun, atSubj ? '이/가' : '을/를');
+      var sameJong = H.lastJong(noun);
+      var opts;
+      if (lv <= 2) opts = [ans, H.josa(noun, atSubj ? '을/를' : '이/가')];       /* 누가/무엇을 구별 */
+      else if (lv === 3) opts = [ans, atSubj ? (sameJong ? '가' : '이') : (sameJong ? '를' : '을')]; /* 받침 구별 */
+      else opts = ['이', '가', '을', '를'];
+      var parts = atSubj
+        ? ['<span class="w" data-say="' + pr[0] + '">' + pr[0] + '</span><span class="gap">?</span>', '<span class="w" data-say="' + obj(pr[1]) + '">' + obj(pr[1]) + '</span>']
+        : ['<span class="w" data-say="' + subj(pr[0]) + '">' + subj(pr[0]) + '</span>', '<span class="w" data-say="' + pr[1] + '">' + pr[1] + '</span><span class="gap">?</span>'];
+      parts.push('<span class="w" data-say="' + verbFor(pr[1]) + '">' + verbFor(pr[1]) + '</span>');
+      return {
+        key: 'josa' + noun + (atSubj ? 's' : 'o') + lv,
+        prompt: sc([P[pr[0]], P[pr[1]]]) + '<div class="rd-sentence" style="margin-top:8px">' + parts.join(' ') + '</div>',
+        say: null, cols: opts.length,
+        choices: K.shuffle(opts).map(function (o) { return { html: '<div class="rd-choice-word">' + o + '</div>', correct: o === ans, say: o === ans ? subj(pr[0]) + ' ' + obj(pr[1]) + ' ' + verbFor(pr[1]) : null }; })
+      };
+    });
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

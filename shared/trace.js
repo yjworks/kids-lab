@@ -10,7 +10,9 @@
     vow:    { id: 'vow',    icon: 'ㅏ', label: '모음 따라 쓰기', color: '#e9f3ff' },
     syl:    { id: 'syl',    icon: '가', label: '글자 따라 쓰기', color: '#e3f7cf' },
     upper:  { id: 'upper',  icon: 'A', label: '대문자 따라 쓰기', color: '#d0f4de' },
-    lower:  { id: 'lower',  icon: 'a', label: '소문자 따라 쓰기', color: '#ece6f5' }
+    lower:  { id: 'lower',  icon: 'a', label: '소문자 따라 쓰기', color: '#ece6f5' },
+    bat:    { id: 'bat',    icon: '강', label: '받침 글자 따라 쓰기', color: '#ffe4d6' },
+    hanja:  { id: 'hanja',  icon: '山', label: '한자 따라 쓰기', color: '#fde2c8' }
   };
   var NAME = {
     'ㄱ': '기역', 'ㄴ': '니은', 'ㄷ': '디귿', 'ㄹ': '리을', 'ㅁ': '미음', 'ㅂ': '비읍', 'ㅅ': '시옷',
@@ -20,6 +22,7 @@
   function sayOf(set, ch) {
     if (set === 'digits') return { text: K.numToKo(ch), lang: 'ko-KR' };
     if (set === 'upper' || set === 'lower') return { text: ch, lang: 'en-US' };
+    if (set === 'hanja') return { text: (G.hanjaSay && G.hanjaSay[ch]) || ch, lang: 'ko-KR' };
     return { text: NAME[ch] || ch, lang: 'ko-KR' };
   }
   /* 어느 앱에서 열든 따라 쓰기 진도는 한곳에 모아 둔다 */

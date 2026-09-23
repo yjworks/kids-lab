@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>받침 놀이</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .jong-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+  .jong-card { background: #fff; border-radius: 22px; padding: 12px 6px; box-shadow: 0 5px 0 rgba(0,0,0,.08); text-align: center; }
+  .jong-card .j { font-size: 54px; font-weight: 900; color: #e0457b; line-height: 1.1; }
+  .jong-card .ex { font-size: 30px; }
+  .jong-card .nm { font-size: 17px; font-weight: 800; color: #555; }
+  .build { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 64px; font-weight: 900; margin: 10px 0; }
+  .build .op { color: #999; font-size: 44px; }
+  .build .j { color: #e0457b; }
+  .ex-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+  .ex-row button { background: #fff; border-radius: 20px; padding: 10px 16px; box-shadow: 0 4px 0 rgba(0,0,0,.08); min-width: 108px; }
+  .ex-row .p { font-size: 50px; line-height: 1.1; }
+  .ex-row .w { font-size: 28px; font-weight: 900; }
+  .ex-row .s { font-size: 16px; color: #555; font-weight: 700; }
+  .ex-row .s b { color: #e0457b; }
+  .note { background: #fff3c4; border-radius: 16px; padding: 10px 14px; font-weight: 800; text-align: center; margin-top: 12px; }
+  @media (max-width: 760px) {
+    .jong-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+    .jong-card .j { font-size: 40px; }
+    .jong-card .ex { font-size: 24px; }
+    .build { font-size: 46px; gap: 8px; }
+    .build .op { font-size: 30px; }
+    .ex-row button { min-width: 92px; padding: 8px 10px; }
+    .ex-row .p { font-size: 40px; }
+    .ex-row .w { font-size: 24px; }
+  }
+</style>
+</head>
+<body data-app="batchim">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script src="../../shared/hangul.js"></script>
+<script src="../../shared/words.js"></script>
+<script src="../../shared/glyphs.js"></script>
+<script src="../../shared/trace.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el, H = Hangul, B = WordBank;
+  K.header({ title: '받침 놀이', icon: '받', say: '받침 놀이' });
+  var main = document.getElementById('main');
+
+  var NAME = { 'ㄱ': '기역', 'ㄴ': '니은', 'ㄷ': '디귿', 'ㄹ': '리을', 'ㅁ': '미음', 'ㅂ': '비읍', 'ㅅ': '시옷', 'ㅇ': '이응', 'ㅈ': '지읒', 'ㅊ': '치읓', 'ㅋ': '키읔', 'ㅌ': '티읕', 'ㅍ': '피읖', 'ㅎ': '히읗' };
+  /* 받침 일곱 소리와 보기 낱말 (모두 낱말 창고에 있는 것) */
+  var SEVEN = [
+    { j: 'ㄱ', words: ['책', '약', '북', '떡'] },
+    { j: 'ㄴ', words: ['산', '손', '문', '눈'] },
+    { j: 'ㄷ', words: ['옷', '꽃', '붓', '로봇'], note: 'ㅅ ㅈ ㅊ ㅌ ㅎ 받침도 끝에서는 [ㄷ] 소리가 나요' },
+    { j: 'ㄹ', words: ['달', '발', '물', '불'] },
+    { j: 'ㅁ', words: ['곰', '밤', '뱀', '짐'] },
+    { j: 'ㅂ', words: ['밥', '집', '입', '컵'] },
+    { j: 'ㅇ', words: ['공', '빵', '종', '양'] }
+  ];
+  var EASY = ['ㄱ', 'ㄴ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅇ'];
+  /* 겹받침 낱말(닭)은 5세에게 이르므로 뺀다 */
+  function jongOf(w) { var s = H.split(w.slice(-1)); return s ? s.jong : ''; }
+  var JW = B.where(function (w) { var j = jongOf(w.word); return j && j.length === 1 && 'ㄳㄵㄶㄺㄻㄼㄽㄾㄿㅀㅄ'.indexOf(j) < 0; });
+  function jwFor(lv) {
+    return JW.filter(function (w) {
+      var j = jongOf(w.word);
+      if (lv <= 2) return w.word.length <= 2 && EASY.indexOf(j) >= 0;
+      if (lv === 3) return EASY.indexOf(j) >= 0;
+      return true;
+    });
+  }
+
+  function home() {
+    document.body.classList.remove('fixed');
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '🔤', label: '받침 소리 배우기', color: '#ffe9ee', run: learn },
+      { icon: '👂', label: '듣고 고르기', mode: 'hear', color: '#fff3c4', run: hearQuiz },
+      { icon: '🖼️', label: '그림 보고 받침', mode: 'pic', color: '#e3f7cf', run: picQuiz },
+      { icon: '🔁', label: '받침 바꾸기', mode: 'swap', color: '#e9f3ff', run: swapQuiz },
+      { icon: '📖', label: '받침 낱말 읽기', mode: 'read', color: '#ece6f5', run: readQuiz },
+      { icon: '✏️', label: '받침 글자 쓰기', color: '#e2ece9', run: function () { KidTrace.start(main, ['bat'], home); } }
+    ]);
+  }
+  function quiz(mode, total, make, extra) {
+    document.body.classList.remove('fixed');
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var box = el('div'); main.appendChild(box);
+    K.runQuiz(Object.assign({ el: box, mode: mode, total: total, make: make, onFinish: home }, extra || {}));
+  }
+  function partsHTML(word) {
+    var ch = word.slice(-1), s = H.split(ch);
+    return ch + ' = ' + s.cho + ' + ' + s.jung + ' + <b>' + s.jong + '</b>';
+  }
+
+  /* ---------- 배우기 ---------- */
+  function learn() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    main.appendChild(el('div', { class: 'kl-prompt', text: '받침은 글자 아래에 붙는 소리예요' }));
+    var g = el('div', { class: 'jong-grid' });
+    SEVEN.forEach(function (x) {
+      var first = B.get(x.words[0]);
+      var b = el('button', { class: 'jong-card' }, [
+        el('div', { class: 'j', text: x.j }), el('div', { class: 'ex', text: first.pic + ' ' + first.word }), el('div', { class: 'nm', text: NAME[x.j] + ' 받침' })
+      ]);
+      b.addEventListener('click', function () { K.sfx.click(); detail(x); });
+      g.appendChild(b);
+    });
+    main.appendChild(g);
+    K.speak('받침은 글자 아래에 붙는 소리예요. 하나를 눌러 봐요');
+  }
+  function detail(x) {
+    main.innerHTML = ''; main.appendChild(K.backButton(learn));
+    var sample = x.words[0], s = H.split(sample.slice(-1));
+    var open = H.join(s.cho, s.jung, '');
+    main.appendChild(el('div', { class: 'kl-prompt', text: NAME[x.j] + ' 받침' }));
+    main.appendChild(el('div', { class: 'build', html: '<span>' + open + '</span><span class="op">+</span><span class="j">' + s.jong + '</span><span class="op">=</span><span>' + sample.slice(-1) + '</span>' }));
+    var row = el('div', { class: 'ex-row' });
+    x.words.forEach(function (w) {
+      var it = B.get(w);
+      var b = el('button', {}, [el('div', { class: 'p', text: it.pic }), el('div', { class: 'w', text: w }), el('div', { class: 's', html: partsHTML(w) })]);
+      b.addEventListener('click', function () { K.sfx.pop(); K.speak(w); });
+      row.appendChild(b);
+    });
+    main.appendChild(row);
+    if (x.note) main.appendChild(el('div', { class: 'note', text: '💡 ' + x.note }));
+    K.speak(open + '에 ' + NAME[x.j] + '을 붙이면 ' + sample.slice(-1) + '. ' + x.words.join(', '));
+    K.event('learn');
+  }
+
+  /* ---------- 듣고 고르기: 첫소리·모음은 같고 받침만 다른 글자 ---------- */
+  var OPEN = '가나다마바사아자하고노도모보소오조호구누두무부수우주후'.split('');
+  function hearQuiz() {
+    quiz('hear', 8, function (i, lv) {
+      var base = K.pick(OPEN);
+      var n = lv <= 1 ? 3 : lv <= 3 ? 3 : 4;
+      var js = K.shuffle(EASY).slice(0, n);
+      if (lv <= 1) js[0] = '';                      /* 1단계: 받침 없는 글자와 비교 */
+      var opts = js.map(function (j) { return H.withJong(base, j); });
+      var ans = K.pick(opts);
+      return {
+        key: 'hear' + ans + ':' + opts.slice().sort().join(''),
+        prompt: '🔊 잘 듣고 같은 글자를 골라요', say: ans, cols: opts.length,
+        choices: K.shuffle(opts).map(function (o) { return { html: '<div class="rd-choice-word">' + o + '</div>', correct: o === ans }; })
+      };
+    });
+  }
+
+  /* ---------- 그림 보고 받침 고르기 ---------- */
+  function picQuiz() {
+    quiz('pic', 8, function (i, lv) {
+      var w = K.pick(jwFor(lv)).word;
+      var s = H.split(w.slice(-1));
+      var open = H.join(s.cho, s.jung, '');
+      var pool = lv <= 3 ? EASY : ['ㄱ', 'ㄴ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅇ', 'ㅅ', 'ㅊ'];
+      var opts = [s.jong].concat(K.sample(pool, lv <= 1 ? 2 : 3, [s.jong]));
+      return {
+        key: 'pic' + w,
+        prompt: '<div class="rd-pic">' + B.get(w).pic + '</div><div class="rd-word">' + K.esc(w.slice(0, -1)) + open + '<span class="gap">?</span></div>',
+        say: w + '. 어떤 받침이 들어갈까요?', cols: opts.length,
+        choices: K.shuffle(opts).map(function (j) { return { html: '<div class="rd-choice-word">' + j + '</div><div class="rd-choice-lbl">' + NAME[j] + '</div>', correct: j === s.jong }; }),
+        onCorrect: function () { K.speak(w); }
+      };
+    });
+  }
+
+  /* ---------- 받침 바꾸기: 공 → 곰 ---------- */
+  var SWAPS = [];
+  (function () {
+    var ones = B.where(function (w) { return w.word.length === 1 && jongOf(w.word).length <= 1 && 'ㄳㄵㄶㄺㄻㄼㄽㄾㄿㅀㅄ'.indexOf(jongOf(w.word) || '-') < 0; });
+    ones.forEach(function (w) {
+      ['ㄱ', 'ㄴ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅇ', 'ㅅ', ''].forEach(function (j) {
+        var n = H.withJong(w.word, j);
+        if (n && n !== w.word && B.get(n) && 'ㄳㄵㄶㄺㄻㄼㄽㄾㄿㅀㅄ'.indexOf(jongOf(n) || '-') < 0) SWAPS.push([w.word, j, n]);
+      });
+    });
+  })();
+  function swapQuiz() {
+    quiz('swap', 8, function (i, lv) {
+      var sw = K.pick(SWAPS), from = B.get(sw[0]), to = B.get(sw[2]);
+      var others = K.sample(B.where(function (w) { return w.word.length === 1 && w.word !== sw[0] && w.word !== sw[2]; }), lv <= 1 ? 1 : 2);
+      var opts = [to].concat(others);
+      var ask = sw[1] ? '받침을 ' + sw[1] + '(으)로 바꾸면?' : '받침을 빼면?';
+      return {
+        key: 'swap' + sw.join(''),
+        prompt: '<div class="rd-pic">' + from.pic + '</div><div class="rd-word">' + from.word + '</div><div style="font-size:24px;margin-top:6px">' + ask + '</div>',
+        say: from.word + '에서 ' + (sw[1] ? '받침을 ' + NAME[sw[1]] + '으로 바꾸면 무엇이 될까요?' : '받침을 빼면 무엇이 될까요?'),
+        cols: opts.length,
+        choices: K.shuffle(opts).map(function (o) {
+          return { html: '<div class="rd-choice-pic">' + o.pic + '</div><div class="rd-choice-word" style="font-size:28px">' + (lv >= 4 ? '' : o.word) + '</div>', correct: o === to };
+        }),
+        onCorrect: function () { K.speak(to.word); }
+      };
+    });
+  }
+
+  /* ---------- 받침 낱말 읽기: 글자를 읽고 그림 고르기 ---------- */
+  function readQuiz() {
+    quiz('read', 8, function (i, lv) {
+      var pool = jwFor(lv);
+      var ans = K.pick(pool);
+      /* 헷갈리는 보기: 첫 글자가 같거나 받침이 같은 낱말을 먼저 */
+      var near = B.where(function (w) { return w !== ans && (w.word.charAt(0) === ans.word.charAt(0) || jongOf(w.word) === jongOf(ans.word)); });
+      var n = lv <= 1 ? 2 : lv <= 3 ? 3 : 4;
+      var others = K.shuffle(near).slice(0, n - 1);
+      while (others.length < n - 1) { var r = K.pick(B.list); if (r !== ans && others.indexOf(r) < 0) others.push(r); }
+      var opts = [ans].concat(others);
+      return {
+        key: 'read' + ans.word,
+        /* 막히면 도움 단추로 한 번 들어볼 수 있다 */
+        prompt: '<div class="rd-word">' + ans.word + '</div><div style="font-size:22px;margin:6px 0">읽고 맞는 그림을 골라요</div><button class="rd-help" data-say="' + ans.word + '">🔊 도움 듣기</button>',
+        say: null, cols: opts.length,
+        choices: K.shuffle(opts).map(function (o) { return { html: '<div class="rd-choice-pic">' + o.pic + '</div>', correct: o === ans, say: o === ans ? o.word : null }; })
+      };
+    }, { autoSay: false });
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

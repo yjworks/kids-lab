@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>이야기 순서</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .cuts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 8px 0 14px; }
+  .cuts.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cut { background: #fff; border-radius: 18px; min-height: 130px; box-shadow: 0 4px 0 rgba(0,0,0,.08); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px; padding: 8px 4px; position: relative; border: 4px dashed transparent; }
+  .cut.slot { border-color: #c9b6e4; background: #faf7ff; }
+  .cut.slot.filled { border-style: solid; border-color: #8ac926; background: #f1fbe6; animation: pop .35s; }
+  .cut .no { position: absolute; top: 4px; left: 8px; font-weight: 900; color: #6a4c93; font-size: 18px; }
+  .cut .e { font-size: 52px; line-height: 1.1; }
+  .cut .c { font-size: 16px; font-weight: 800; color: #444; text-align: center; word-break: keep-all; line-height: 1.3; }
+  .pool .cut { cursor: pointer; background: #fff3c4; }
+  .pool .cut.used { visibility: hidden; }
+  .pool .cut.wrong { background: #ffc9c9; animation: shake .4s; }
+  .seq-msg { text-align: center; font-weight: 800; font-size: 20px; min-height: 30px; }
+  .ch-cut .e { font-size: 50px; line-height: 1.1; }
+  .ch-cut .c { font-size: 17px; font-weight: 800; word-break: keep-all; }
+  @media (max-width: 760px) {
+    .cuts { gap: 6px; }
+    .cut { min-height: 104px; border-radius: 14px; border-width: 3px; }
+    .cut .e { font-size: 38px; }
+    .cut .c { font-size: 13px; }
+    .cut .no { font-size: 14px; top: 2px; left: 5px; }
+    .ch-cut .e { font-size: 40px; }
+    .ch-cut .c { font-size: 14px; }
+  }
+</style>
+</head>
+<body data-app="sequence">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '이야기 순서', icon: '🎬', say: '이야기 순서' });
+  var main = document.getElementById('main');
+
+  var ST = [
+    { n: '씨앗이 자라요', c: [['🪴', '씨앗을 심어요'], ['🌱', '싹이 나요'], ['🌿', '잎이 자라요'], ['🌻', '꽃이 피어요']] },
+    { n: '병아리', c: [['🥚', '알이 있어요'], ['🐣', '알이 깨져요'], ['🐥', '병아리가 나와요'], ['🐔', '닭이 돼요']] },
+    { n: '눈사람', c: [['❄️', '눈이 와요'], ['⛄', '눈사람을 만들어요'], ['☀️', '해가 떠요'], ['💧', '눈사람이 녹아요']] },
+    { n: '밥 먹기', c: [['😋', '배가 고파요'], ['🍳', '요리를 해요'], ['🍚', '밥을 먹어요'], ['🍽️', '그릇을 치워요']] },
+    { n: '비 오는 날', c: [['☁️', '구름이 몰려와요'], ['🌧️', '비가 와요'], ['☂️', '우산을 써요'], ['🌈', '무지개가 떠요']] },
+    { n: '아침', c: [['⏰', '알람이 울려요'], ['🚿', '씻어요'], ['🍞', '아침을 먹어요'], ['🎒', '유치원에 가요']] },
+    { n: '케이크 만들기', c: [['🥚', '달걀을 깨요'], ['🥣', '반죽을 섞어요'], ['🎂', '케이크를 구워요'], ['🕯️', '촛불을 불어요']] },
+    { n: '그림 그리기', c: [['📄', '종이를 꺼내요'], ['✏️', '밑그림을 그려요'], ['🖍️', '색칠해요'], ['🖼️', '벽에 걸어요']] },
+    { n: '빨래', c: [['👕', '옷이 더러워졌어요'], ['🧼', '비누로 빨아요'], ['☀️', '햇볕에 말려요'], ['✨', '깨끗한 옷을 입어요']] },
+    { n: '모래성', c: [['🏖️', '바닷가에 가요'], ['🏰', '모래성을 쌓아요'], ['🌊', '파도가 와요'], ['😮', '모래성이 무너져요']] },
+    { n: '풍선', c: [['🎈', '풍선을 불어요'], ['🎀', '끈을 묶어요'], ['💨', '바람이 불어요'], ['☁️', '풍선이 날아가요']] },
+    { n: '편지', c: [['✍️', '편지를 써요'], ['✉️', '봉투에 넣어요'], ['📮', '우체통에 넣어요'], ['📬', '친구가 받아요']] },
+    { n: '치과', c: [['🍬', '사탕을 많이 먹어요'], ['🦷', '이가 아파요'], ['🏥', '치과에 가요'], ['😁', '이가 다 나았어요']] },
+    { n: '사과가 익어요', c: [['🌸', '사과꽃이 피어요'], ['🍏', '작은 사과가 열려요'], ['🍎', '빨갛게 익어요'], ['🧺', '사과를 따요']] },
+    { n: '강아지 목욕', c: [['🐾', '진흙에서 놀아요'], ['🛁', '목욕을 해요'], ['💦', '몸을 털어요'], ['🐶', '깨끗해졌어요']] },
+    { n: '장보기', c: [['📝', '살 것을 적어요'], ['🛒', '마트에 가요'], ['💳', '돈을 내요'], ['🏠', '집에 와요']] }
+  ];
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '🎬', label: '순서대로 놓기', mode: 'order', color: '#fff3c4', run: orderGame },
+      { icon: '🔮', label: '다음엔 어떻게 될까?', mode: 'next', color: '#e9f3ff', run: nextQuiz }
+    ]);
+  }
+  function cutHTML(cut, showCap) { return '<div class="e">' + cut[0] + '</div>' + (showCap ? '<div class="c">' + K.esc(cut[1]) + '</div>' : ''); }
+
+  /* ---------- 카드를 차례대로 눌러 칸 채우기 ---------- */
+  function orderGame() {
+    var lv = K.getLevel('order'), total = 4, round = 0, firstTry = 0, used = [];
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var box = el('div', { class: 'kl-stage' }); main.appendChild(box);
+    function next() {
+      if (round >= total) return finish();
+      var pool = ST.filter(function (s) { return used.indexOf(s) < 0; });
+      var st = K.pick(pool); used.push(st);
+      var n = lv <= 1 ? 3 : 4;
+      var cuts = st.c.slice(0, n);
+      var showCap = lv <= 3;
+      var pos = 0, miss = 0;
+      box.innerHTML = '';
+      box.appendChild(el('div', { class: 'kl-prompt', text: '🎬 ' + st.n, style: 'margin-bottom:4px' }));
+      var msg = el('div', { class: 'seq-msg', text: '먼저 일어난 일부터 차례대로 눌러요' });
+      box.appendChild(msg);
+      var slots = el('div', { class: 'cuts' + (n === 3 ? ' three' : '') });
+      cuts.forEach(function (c, i) { slots.appendChild(el('div', { class: 'cut slot', html: '<span class="no">' + (i + 1) + '</span>' })); });
+      box.appendChild(slots);
+      var tray = el('div', { class: 'cuts pool' + (n === 3 ? ' three' : '') });
+      K.shuffle(cuts.map(function (c, i) { return i; })).forEach(function (i) {
+        var b = el('button', { class: 'cut', html: cutHTML(cuts[i], showCap) });
+        b.addEventListener('click', function () {
+          if (b.classList.contains('used') || pos >= n) return;
+          if (i === pos) {
+            b.classList.add('used');
+            var s = slots.children[pos]; s.innerHTML = '<span class="no">' + (pos + 1) + '</span>' + cutHTML(cuts[i], true); s.classList.add('filled');
+            K.sfx.pop(); K.speak(cuts[i][1]); pos++;
+            if (pos === n) {
+              if (miss === 0) firstTry++;
+              round++; K.sfx.correct(); K.addStar(1); K.event('correct');
+              msg.textContent = '⭕ 순서가 맞아요!';
+              setTimeout(function () { K.speak(cuts.map(function (c) { return c[1]; }).join('. ')); }, 700);
+              setTimeout(next, 700 + cuts.length * 1300);
+            }
+          } else {
+            miss++; b.classList.add('wrong'); setTimeout(function () { b.classList.remove('wrong'); }, 450);
+            K.nope('아니에요', '그 다음이 아니에요');
+            if (miss >= 2) msg.textContent = '💡 ' + (pos + 1) + '번째는 "' + cuts[pos][1] + '"예요';
+          }
+        });
+        tray.appendChild(b);
+      });
+      box.appendChild(tray);
+      K.speak(st.n + '. 먼저 일어난 일부터 차례대로 눌러요');
+    }
+    function finish() {
+      box.innerHTML = '';
+      var up = firstTry >= 3 && lv < 5;
+      if (up) K.setLevel('order', lv + 1);
+      box.appendChild(el('div', { class: 'kl-result' }, [
+        el('div', { class: 'kl-result-emoji', text: '🎬' }),
+        el('div', { class: 'kl-result-title', text: '이야기 ' + total + '개를 맞췄어요!' }),
+        el('div', { class: 'kl-result-score', html: '⭐ 한 번에 ' + firstTry + ' / ' + total + (up ? '<div class="kl-levelup">🎊 단계 ' + (lv + 1) + '로 올라갔어요!</div>' : '') }),
+        el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '🔁 한 번 더', onclick: orderGame }), el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: home })])
+      ]));
+      K.sfx.win(); K.confetti(); K.event('win');
+    }
+    next();
+  }
+
+  /* ---------- 다음엔 어떻게 될까? ---------- */
+  function nextQuiz() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var box = el('div'); main.appendChild(box);
+    K.runQuiz({
+      el: box, mode: 'next', total: 6, onFinish: home,
+      make: function (i, lv) {
+        var st = K.pick(ST);
+        var ans = st.c[3];
+        /* 다른 이야기의 뒷장면에서 고르되, 그림이 겹치지 않게 한다 */
+        var need = lv <= 2 ? 2 : 3, others = [], used = [ans[0]].concat(st.c.slice(0, 3).map(function (c) { return c[0]; }));
+        K.shuffle(ST.filter(function (s) { return s !== st; })).forEach(function (s) {
+          if (others.length >= need) return;
+          var c = s.c[K.randInt(2, 3)];
+          if (used.indexOf(c[0]) < 0) { used.push(c[0]); others.push(c); }
+        });
+        var opts = K.shuffle([ans].concat(others));
+        var showCap = lv <= 3;
+        var strip = '<div class="cuts three" style="margin:6px 0 4px">' + st.c.slice(0, 3).map(function (c, k) {
+          return '<div class="cut"><span class="no">' + (k + 1) + '</span>' + cutHTML(c, true) + '</div>';
+        }).join('') + '</div>';
+        return {
+          key: 'next' + st.n,
+          prompt: '<div style="font-size:22px">🔮 다음엔 어떻게 될까요?</div>' + strip,
+          say: st.c.slice(0, 3).map(function (c) { return c[1]; }).join('. ') + '. 다음엔 어떻게 될까요?',
+          cols: opts.length,
+          choices: opts.map(function (o) { return { html: '<div class="ch-cut">' + cutHTML(o, showCap) + '</div>', correct: o === ans, say: o === ans ? ans[1] : null }; })
+        };
+      }
+    });
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

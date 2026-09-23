@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>읽기 책</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+  .cover { position: relative; border-radius: 18px 22px 22px 18px; padding: 16px 10px 12px; text-align: center; min-height: 170px;
+    box-shadow: inset 8px 0 0 rgba(0,0,0,.12), 0 6px 0 rgba(0,0,0,.1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+  .cover .e { font-size: 58px; line-height: 1.1; }
+  .cover .t { font-size: 19px; font-weight: 900; color: #333; word-break: keep-all; }
+  .cover .n { font-size: 14px; font-weight: 800; color: #555; }
+  .cover.locked { filter: grayscale(1); opacity: .45; }
+  .cover .badge { position: absolute; top: 6px; right: 8px; font-size: 20px; }
+  .tier { font-size: 20px; font-weight: 900; margin: 18px 4px 8px; color: #6a4c93; }
+  .auto { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 6px 0 4px; font-weight: 800; }
+  .auto button { border-radius: 24px; padding: 8px 16px; background: #eee; font-weight: 800; min-height: 44px; }
+  .auto button.on { background: #8ac926; color: #fff; }
+  /* 읽는 화면: 넘김 단추는 아래에 고정 */
+  .reader { display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; gap: 8px; }
+  .reader .head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: 0 0 auto; }
+  .reader .pg { font-weight: 900; color: #6a4c93; font-size: 18px; }
+  .reader .page { flex: 1 1 0; min-height: 0; background: #fff; border-radius: 26px; box-shadow: 0 6px 0 rgba(0,0,0,.08);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 14px; overflow: auto; }
+  .reader .scene { font-size: 96px; line-height: 1.1; text-align: center; }
+  .reader .nav { display: flex; gap: 10px; flex: 0 0 auto; }
+  .reader .nav button { flex: 1; min-height: 64px; border-radius: 20px; font-size: 22px; font-weight: 900; background: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.1); }
+  .reader .nav .read { background: #e3f0ff; }
+  .reader .nav .go { background: #ffca3a; }
+  .reader .nav button:disabled { opacity: .35; }
+  .done-box { text-align: center; }
+  @media (max-width: 760px) {
+    .shelf { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+    .cover { min-height: 138px; padding: 12px 8px 10px; }
+    .cover .e { font-size: 44px; }
+    .cover .t { font-size: 16px; }
+    .reader .scene { font-size: 72px; }
+    .reader .nav button { min-height: 56px; font-size: 18px; }
+  }
+  @media (max-height: 500px) { .reader .scene { font-size: 52px; } .reader .page { gap: 8px; } .reader .nav button { min-height: 48px; } }
+</style>
+</head>
+<body data-app="books">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '읽기 책', icon: '📚', say: '읽기 책' });
+  var main = document.getElementById('main');
+
+  /* 책: 단계(tier)가 올라갈수록 쪽수와 문장이 길어진다. 질문 답은 모두 그림. */
+  var BOOKS = [
+    { id: 'b1', tier: 1, title: '토끼의 하루', e: '🐰', color: '#ffe9ee', pages: [
+      ['🐰☀️', '토끼가 일어나요.'], ['🐰🥕', '토끼가 당근을 먹어요.'], ['🐰💨', '토끼가 뛰어요.'], ['🐰💤🌙', '토끼가 자요.']],
+      q: [['토끼가 무엇을 먹었어요?', '🥕', ['🍌', '🧀']], ['밤에 토끼는 무엇을 했어요?', '💤', ['💨', '🥕']]] },
+    { id: 'b2', tier: 1, title: '비가 와요', e: '🌧️', color: '#e3f0ff', pages: [
+      ['🌧️', '비가 와요.'], ['☂️', '우산을 써요.'], ['💧👢', '물웅덩이에 첨벙!'], ['🌈', '무지개가 떴어요.']],
+      q: [['비가 올 때 무엇을 썼어요?', '☂️', ['🧢', '🧤']], ['비가 그치고 무엇이 떴어요?', '🌈', ['⭐', '🌙']]] },
+    { id: 'b3', tier: 1, title: '냠냠 사과', e: '🍎', color: '#ffe4d6', pages: [
+      ['🌳🍎', '나무에 사과가 있어요.'], ['🐻🌳', '곰이 나무에 올라가요.'], ['🐻🍎', '곰이 사과를 따요.'], ['🐻😋', '냠냠, 맛있어요!']],
+      q: [['누가 나왔어요?', '🐻', ['🐰', '🐶']], ['곰이 무엇을 땄어요?', '🍎', ['🍌', '🍇']]] },
+    { id: 'b4', tier: 1, title: '공 어디 있니?', e: '⚽', color: '#e3f7cf', pages: [
+      ['🐶⚽', '강아지가 공을 봐요.'], ['🐶💨', '강아지가 공을 쫓아가요.'], ['🌳⚽', '공이 나무 밑에 있어요.'], ['🐶⚽😄', '찾았다!']],
+      q: [['강아지가 무엇을 쫓아갔어요?', '⚽', ['🦴', '🐱']], ['공은 어디에 있었어요?', '🌳', ['🏠', '🌊']]] },
+
+    { id: 'b5', tier: 2, title: '아기 새', e: '🐣', color: '#fff3c4', pages: [
+      ['🥚', '둥지에 알이 있어요.'], ['🐣', '알이 톡톡 깨져요.'], ['🐥', '아기 새가 나왔어요.'], ['🐦🐛', '엄마 새가 벌레를 가져와요.'],
+      ['🐥😋', '아기 새가 냠냠 먹어요.'], ['🐦☁️', '이제 아기 새도 훨훨 날아요.']],
+      q: [['알에서 누가 나왔어요?', '🐥', ['🐢', '🐍']], ['엄마 새가 무엇을 가져왔어요?', '🐛', ['🍎', '🧀']]] },
+    { id: 'b6', tier: 2, title: '곰의 생일', e: '🎂', color: '#ffe9ee', pages: [
+      ['🐻🎂', '오늘은 곰의 생일이에요.'], ['🐰🎁', '토끼가 선물을 가져와요.'], ['🐶🎈', '강아지는 풍선을 가져와요.'], ['🕯️🎂', '촛불을 후 불어요.'],
+      ['👏👏', '모두 짝짝짝 박수를 쳐요.'], ['🐻😄', '곰은 정말 기뻐요.']],
+      q: [['누구의 생일이었어요?', '🐻', ['🐰', '🐶']], ['강아지는 무엇을 가져왔어요?', '🎈', ['🎁', '🍎']]] },
+    { id: 'b7', tier: 2, title: '눈사람', e: '⛄', color: '#e9f3ff', pages: [
+      ['❄️❄️', '하얀 눈이 펑펑 와요.'], ['🧒❄️', '아이가 눈을 굴려요.'], ['⛄', '커다란 눈사람을 만들어요.'], ['🥕⛄', '당근으로 코를 붙여요.'],
+      ['☀️⛄', '해가 쨍쨍 비춰요.'], ['💧', '눈사람이 녹아서 물이 됐어요.']],
+      q: [['눈사람의 코는 무엇이었어요?', '🥕', ['🍌', '🍎']], ['해가 비추자 눈사람은 어떻게 됐어요?', '💧', ['⛄', '🔥']]] },
+    { id: 'b8', tier: 2, title: '씨앗 하나', e: '🌱', color: '#d0f4de', pages: [
+      ['🪴', '화분에 씨앗을 심어요.'], ['💧', '물을 주어요.'], ['☀️', '햇볕을 쬐어요.'], ['🌱', '싹이 났어요.'],
+      ['🌷', '꽃이 피었어요.'], ['🐝🌷', '벌이 놀러 왔어요.']],
+      q: [['씨앗에게 무엇을 주었어요?', '💧', ['🍞', '🥛']], ['꽃에 누가 놀러 왔어요?', '🐝', ['🐟', '🐘']]] },
+
+    { id: 'b9', tier: 3, title: '길 잃은 아기 오리', e: '🦆', color: '#e3f0ff', pages: [
+      ['🦆🌊', '아기 오리가 연못에서 놀아요.'], ['🦆🌸', '예쁜 꽃을 보다가 길을 잃었어요.'], ['🦆😢', '"엄마, 어디 있어요?"'],
+      ['🐸', '개구리가 물었어요. "왜 울어?"'], ['🐸👉', '개구리가 연못 쪽을 알려 줘요.'], ['🦆💨', '아기 오리가 뒤뚱뒤뚱 달려가요.'],
+      ['🦆🦆', '엄마 오리를 만났어요!'], ['🦆🐸', '"고마워, 개구리야!"']],
+      q: [['아기 오리는 무엇을 보다가 길을 잃었어요?', '🌸', ['🍎', '⚽']], ['누가 길을 알려 줬어요?', '🐸', ['🐢', '🐟']], ['마지막에 누구를 만났어요?', '🦆', ['🐻', '🐰']]] },
+    { id: 'b10', tier: 3, title: '소방차 출동', e: '🚒', color: '#ffe4d6', pages: [
+      ['🏠🔥', '집에서 불이 났어요.'], ['☎️', '119에 전화를 걸어요.'], ['🚒', '삐뽀삐뽀 소방차가 와요.'], ['🚒💧', '소방관이 물을 뿌려요.'],
+      ['🏠💨', '불이 꺼졌어요.'], ['🐱', '고양이도 무사해요.'], ['👏', '모두 고맙다고 인사해요.'], ['🚒👋', '소방차가 돌아가요.']],
+      q: [['불이 나면 어디에 전화해요?', '1️⃣1️⃣9️⃣', ['1️⃣1️⃣2️⃣', '1️⃣1️⃣4️⃣']], ['소방관이 무엇을 뿌렸어요?', '💧', ['🍞', '🌸']], ['누가 무사했어요?', '🐱', ['🐶', '🐰']]] },
+    { id: 'b11', tier: 3, title: '달님 안녕', e: '🌙', color: '#ece6f5', pages: [
+      ['🌇', '해가 지고 어두워졌어요.'], ['🌙', '하늘에 달님이 떴어요.'], ['⭐⭐', '별들이 반짝반짝 빛나요.'], ['🦉', '부엉이가 부엉부엉 울어요.'],
+      ['🛁', '아이는 목욕을 해요.'], ['📖', '엄마가 책을 읽어 줘요.'], ['😴', '아이는 스르르 잠이 들어요.'], ['🌙', '"달님 안녕, 잘 자요."']],
+      q: [['밤에 누가 부엉부엉 울었어요?', '🦉', ['🐶', '🐔']], ['엄마가 무엇을 읽어 주었어요?', '📖', ['✉️', '📺']], ['하늘에 무엇이 떴어요?', '🌙', ['☀️', '🌈']]] },
+    { id: 'b12', tier: 3, title: '개미와 베짱이', e: '🐜', color: '#fff3c4', pages: [
+      ['☀️🐜', '여름에 개미는 부지런히 일해요.'], ['🦗🎻', '베짱이는 노래만 불러요.'], ['🐜🌾', '개미는 먹이를 차곡차곡 모아요.'], ['🍂', '가을이 지나고'],
+      ['❄️', '추운 겨울이 왔어요.'], ['🦗😢', '베짱이는 배가 고파요.'], ['🐜🍞', '개미가 먹을 것을 나눠 줘요.'], ['🐜🦗', '둘은 사이좋은 친구가 됐어요.']],
+      q: [['여름에 개미는 무엇을 했어요?', '🌾', ['🎻', '💤']], ['겨울에 베짱이는 어땠어요?', '😢', ['😄', '😴']], ['개미가 무엇을 나눠 줬어요?', '🍞', ['⚽', '🎁']]] }
+  ];
+  var TIER_NAME = { 1: '🌱 첫 책 (4쪽)', 2: '🌿 조금 긴 책 (6쪽)', 3: '🌳 긴 책 (8쪽)' };
+
+  function stateOf() { var p = K.progress(); return { read: p.read || {}, auto: p.auto !== false }; }
+  /* 처음 네 권은 열려 있고, 한 권을 읽을 때마다 다음 책이 열린다 */
+  function unlocked(i, read) { if (i < 4) return true; return !!read[BOOKS[i - 1].id]; }
+
+  function home() {
+    document.body.classList.remove('fixed');
+    main.innerHTML = '';
+    var st = stateOf();
+    var total = BOOKS.filter(function (b) { return st.read[b.id]; }).length;
+    main.appendChild(el('div', { class: 'kl-prompt', text: '📚 내 책장 · 다 읽은 책 ' + total + ' / ' + BOOKS.length, style: 'font-size:24px;margin-bottom:6px' }));
+    var autoBtn = el('button', { class: st.auto ? 'on' : '', text: st.auto ? '켜짐' : '꺼짐' });
+    autoBtn.addEventListener('click', function () { var v = !stateOf().auto; K.setProgress({ auto: v }); autoBtn.className = v ? 'on' : ''; autoBtn.textContent = v ? '켜짐' : '꺼짐'; K.sfx.click(); });
+    main.appendChild(el('div', { class: 'auto' }, [el('span', { text: '🔊 쪽마다 읽어 주기' }), autoBtn]));
+    [1, 2, 3].forEach(function (t) {
+      main.appendChild(el('div', { class: 'tier', text: TIER_NAME[t] }));
+      var g = el('div', { class: 'shelf' });
+      BOOKS.forEach(function (b, i) {
+        if (b.tier !== t) return;
+        var open = unlocked(i, st.read), r = st.read[b.id];
+        var c = el('button', { class: 'cover' + (open ? '' : ' locked'), style: 'background:' + b.color }, [
+          el('div', { class: 'e', text: open ? b.e : '🔒' }), el('div', { class: 't', text: b.title }),
+          el('div', { class: 'n', text: r ? '⭐ ' + r.n + '번 읽었어요' : (open ? '새 책!' : '앞의 책을 읽으면 열려요') }),
+          r ? el('span', { class: 'badge', text: '✅' }) : null
+        ]);
+        c.addEventListener('click', function () {
+          if (!open) { K.nope('아직 잠겨 있어요', '앞의 책을 먼저 읽어요'); return; }
+          K.sfx.click(); read(b, 0);
+        });
+        g.appendChild(c);
+      });
+      main.appendChild(g);
+    });
+  }
+
+  /* ---------- 읽기 ---------- */
+  function wordsHTML(text) {
+    return '<div class="rd-sentence">' + text.split(' ').map(function (w) {
+      var bare = w.replace(/[.,!?"]/g, '');
+      return '<span class="w" data-say="' + K.esc(bare) + '">' + K.esc(w) + '</span>';
+    }).join(' ') + '</div>';
+  }
+  function read(b, p) {
+    document.body.classList.add('fixed');
+    main.innerHTML = '';
+    var wrap = el('div', { class: 'reader' });
+    var head = el('div', { class: 'head' }, [K.backButton(home), el('span', { class: 'pg', text: b.e + ' ' + b.title + ' · ' + (p + 1) + ' / ' + b.pages.length })]);
+    var pg = b.pages[p];
+    var page = el('div', { class: 'page' }, [el('div', { class: 'scene', text: pg[0] }), el('div', { html: wordsHTML(pg[1]) })]);
+    var last = p === b.pages.length - 1;
+    var nav = el('div', { class: 'nav' }, [
+      el('button', { text: '◀ 앞', disabled: p === 0 ? 'disabled' : null, onclick: function () { K.sfx.click(); read(b, p - 1); } }),
+      el('button', { class: 'read', text: '🔊 읽어 줘', onclick: function () { K.speak(pg[1]); } }),
+      el('button', { class: 'go', text: last ? '다 읽었어요 ✔' : '다음 ▶', onclick: function () { K.sfx.click(); if (last) finished(b); else read(b, p + 1); } })
+    ]);
+    wrap.appendChild(head); wrap.appendChild(page); wrap.appendChild(nav);
+    main.appendChild(wrap);
+    if (stateOf().auto) setTimeout(function () { K.speak(pg[1]); }, 250);
+  }
+  function finished(b) {
+    /* 끝까지 넘긴 것이 곧 한 권 읽기. 질문은 덤이다. */
+    K.mutate(function (d) {
+      var pr = d.progress.books || (d.progress.books = {});
+      var rd = pr.read || (pr.read = {});
+      var r = rd[b.id] || { n: 0 };
+      r.n++; r.last = K.todayKey(); rd[b.id] = r;
+    });
+    K.addStar(2); K.event('read'); K.event('win');
+    document.body.classList.remove('fixed');
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    K.sfx.win(); K.confetti();
+    main.appendChild(el('div', { class: 'kl-result done-box' }, [
+      el('div', { class: 'kl-result-emoji', text: b.e }),
+      el('div', { class: 'kl-result-title', text: '「' + b.title + '」 책을 다 읽었어요!' }),
+      el('div', { class: 'kl-result-score', text: '⭐ 별 2개! 이제 질문 ' + b.q.length + '개를 풀어 볼까요?' }),
+      el('div', { class: 'kl-row' }, [
+        el('button', { class: 'kl-btn primary', text: '❓ 질문 풀기', onclick: function () { questions(b); } }),
+        el('button', { class: 'kl-btn', text: '📚 책장으로', onclick: home })
+      ])
+    ]));
+    K.speak(b.title + ', 다 읽었어요! 질문을 풀어 볼까요?');
+  }
+  function questions(b) {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var box = el('div'); main.appendChild(box);
+    var qs = b.q;
+    K.runQuiz({
+      el: box, total: qs.length, review: false, onFinish: home,
+      make: function (i) {
+        var q = qs[i];
+        var opts = [q[1]].concat(q[2]);
+        return {
+          key: b.id + 'q' + i, prompt: q[0], say: q[0], cols: 3,
+          choices: K.shuffle(opts).map(function (o) { return { html: '<div class="rd-choice-pic">' + o + '</div>', correct: o === q[1] }; })
+        };
+      }
+    });
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

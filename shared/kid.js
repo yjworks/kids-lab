@@ -219,7 +219,17 @@
     { app: 'blocks', key: 'correct', n: 5, label: '숫자 블록 5문제 맞히기', icon: '🧱' },
     { app: 'hangul', key: 'trace', n: 3, label: '한글 3글자 따라 쓰기', icon: '✏️' },
     { app: 'english', key: 'trace', n: 3, label: '영어 3글자 따라 쓰기', icon: '✏️' },
-    { app: 'math', key: 'trace', n: 3, label: '숫자 3개 따라 쓰기', icon: '✏️' }
+    { app: 'math', key: 'trace', n: 3, label: '숫자 3개 따라 쓰기', icon: '✏️' },
+    { app: 'books', key: 'read', n: 1, label: '읽기 책 한 권 읽기', icon: '📚' },
+    { app: 'batchim', key: 'correct', n: 5, label: '받침 놀이 5문제 맞히기', icon: '받' },
+    { app: 'sentence', key: 'correct', n: 5, label: '문장 5개 읽고 맞히기', icon: '📝' },
+    { app: 'listen', key: 'heard', n: 1, label: '이야기 한 편 듣고 맞히기', icon: '👂' },
+    { app: 'sounds', key: 'correct', n: 5, label: '소리 놀이 5문제 맞히기', icon: '👏' },
+    { app: 'vocab', key: 'correct', n: 5, label: '낱말 뜻 5문제 맞히기', icon: '💡' },
+    { app: 'wordmake', key: 'correct', n: 4, label: '낱말 4개 만들기', icon: '🧩' },
+    { app: 'sequence', key: 'correct', n: 3, label: '이야기 순서 3번 맞추기', icon: '🎬' },
+    { app: 'hanja', key: 'correct', n: 5, label: '한자 5문제 맞히기', icon: '山' },
+    { app: 'arcade', key: 'win', n: 1, label: '오락실에서 한 판 이기기', icon: '🕹️' }
   ];
   var DAILY_FIXED = { app: 'diary', key: 'save', n: 1, label: '오늘의 일기 쓰기', icon: '📔' };
   function missions(d) {
@@ -438,6 +448,15 @@
     return h;
   }
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') notify('close'); });
+  /* 문제 글 안에 넣은 [data-say] 단추는 눌러도 답이 되지 않고 소리만 낸다.
+     함수 없이 글로만 된 문제라 오답 노트에 그대로 저장할 수 있다. */
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest ? e.target.closest('[data-say]') : null;
+    if (!t) return;
+    e.stopPropagation(); e.preventDefault();
+    sfx.click();
+    speak(t.getAttribute('data-say'), { lang: t.getAttribute('data-lang') || 'ko-KR' });
+  }, true);
 
   /* ---------- 퀴즈 엔진 ---------- */
   /* runQuiz({ el, total, mode, make(i, level)->{prompt, say, sayLang, choices:[{html,correct,say,sayLang}], cols, big}, onFinish(score,total) }) */

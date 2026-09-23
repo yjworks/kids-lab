@@ -299,3 +299,48 @@ body[data-app] main { overflow-x: auto; }
 .kl-again { background: #ece6f5; color: #5b3c86; font-weight: 800; border-radius: 16px;
   padding: 6px 14px; text-align: center; margin: 0 auto 8px; max-width: 520px; font-size: 18px; }
 @media (max-width: 760px) { .kl-again { font-size: 15px; padding: 5px 10px; } }
+
+/* ---------- 읽기 앱 공통 ---------- */
+.rd-pic { font-size: 110px; line-height: 1.1; text-align: center; }
+.rd-word { font-size: 64px; font-weight: 900; text-align: center; letter-spacing: 4px; color: #2d2d2d; }
+.rd-word .hl { color: #e0457b; }
+.rd-word .gap, .rd-sentence .gap { display: inline-block; min-width: 1.1em; border-bottom: 6px dashed #b08fd8; color: #b08fd8; }
+.rd-parts { text-align: center; font-size: 26px; font-weight: 800; color: #555; margin-top: 6px; }
+.rd-parts b { color: #e0457b; }
+.rd-choice-word { font-size: 40px; font-weight: 900; }
+.rd-choice-pic { font-size: 56px; line-height: 1.1; }
+.rd-choice-lbl { font-size: 18px; font-weight: 800; color: #555; }
+/* 글자 카드 (낱말 만들기) */
+.rd-slots { display: flex; gap: 10px; justify-content: center; margin: 12px 0 18px; flex-wrap: wrap; }
+.rd-slot { width: 86px; height: 86px; border-radius: 20px; border: 4px dashed #c9b6e4; background: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 50px; font-weight: 900; color: #333; }
+.rd-slot.filled { border-style: solid; border-color: #8ac926; background: #f1fbe6; animation: pop .35s; }
+.rd-tiles { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.rd-tile { width: 86px; height: 86px; border-radius: 20px; background: #fff3c4; font-size: 50px; font-weight: 900;
+  box-shadow: 0 5px 0 rgba(0,0,0,.12); color: #333; }
+.rd-tile.used { visibility: hidden; }
+.rd-tile.wrong { background: #ffc9c9; animation: shake .4s; }
+/* 문장·장면 */
+.rd-sentence { font-size: 38px; font-weight: 900; text-align: center; line-height: 1.5; word-break: keep-all; }
+.rd-sentence .w { display: inline-block; padding: 0 4px; border-radius: 10px; cursor: pointer; }
+.rd-sentence .w:hover, .rd-sentence .w.on { background: #fff3c4; }
+.rd-sentence .josa { color: #e0457b; }
+.rd-scene { display: flex; align-items: flex-end; justify-content: center; gap: 6px; line-height: 1; }
+.rd-scene.col { flex-direction: column; align-items: center; }
+.rd-help { background: #e3f0ff; border-radius: 30px; padding: 8px 18px; font-size: 18px; font-weight: 800; min-height: 44px; }
+@media (max-width: 760px) {
+  .rd-pic { font-size: 84px; }
+  .rd-word { font-size: 48px; letter-spacing: 2px; }
+  .rd-parts { font-size: 20px; }
+  .rd-choice-word { font-size: 30px; }
+  .rd-choice-pic { font-size: 44px; }
+  .rd-choice-lbl { font-size: 15px; }
+  .rd-slot, .rd-tile { width: 66px; height: 66px; font-size: 38px; border-radius: 16px; }
+  .rd-sentence { font-size: 28px; }
+}
+@media (max-height: 500px) {
+  .rd-pic { font-size: 60px; }
+  .rd-word { font-size: 38px; }
+  .rd-slot, .rd-tile { width: 54px; height: 54px; font-size: 30px; }
+  .rd-sentence { font-size: 24px; }
+}
