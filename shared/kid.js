@@ -198,7 +198,7 @@
 
   /* ---------- 오늘의 미션 ---------- */
   var MISSION_POOL = [
-    { app: 'hangul', key: 'correct', n: 5, label: '한글 놀이에서 5문제 맞히기', icon: '가' },
+    { app: 'hangul', key: 'correct', n: 5, svg: 'icons/app-hangul.svg', label: '한글 놀이에서 5문제 맞히기', icon: '' },
     { app: 'english', key: 'correct', n: 5, label: '영어 놀이에서 5문제 맞히기', icon: '🔤' },
     { app: 'math', key: 'correct', n: 6, label: '수학 놀이에서 6문제 맞히기', icon: '🔢' },
     { app: 'shapes', key: 'correct', n: 5, label: '모양·색깔 5문제 맞히기', icon: '🔷' },
@@ -221,14 +221,14 @@
     { app: 'english', key: 'trace', n: 3, label: '영어 3글자 따라 쓰기', icon: '✏️' },
     { app: 'math', key: 'trace', n: 3, label: '숫자 3개 따라 쓰기', icon: '✏️' },
     { app: 'books', key: 'read', n: 1, label: '읽기 책 한 권 읽기', icon: '📚' },
-    { app: 'batchim', key: 'correct', n: 5, label: '받침 놀이 5문제 맞히기', icon: '받' },
+    { app: 'batchim', key: 'correct', n: 5, svg: 'icons/app-batchim.svg', label: '받침 놀이 5문제 맞히기', icon: '' },
     { app: 'sentence', key: 'correct', n: 5, label: '문장 5개 읽고 맞히기', icon: '📝' },
     { app: 'listen', key: 'heard', n: 1, label: '이야기 한 편 듣고 맞히기', icon: '👂' },
     { app: 'sounds', key: 'correct', n: 5, label: '소리 놀이 5문제 맞히기', icon: '👏' },
     { app: 'vocab', key: 'correct', n: 5, label: '낱말 뜻 5문제 맞히기', icon: '💡' },
     { app: 'wordmake', key: 'correct', n: 4, label: '낱말 4개 만들기', icon: '🧩' },
     { app: 'sequence', key: 'correct', n: 3, label: '이야기 순서 3번 맞추기', icon: '🎬' },
-    { app: 'hanja', key: 'correct', n: 5, label: '한자 5문제 맞히기', icon: '山' },
+    { app: 'hanja', key: 'correct', n: 5, svg: 'icons/app-hanja.svg', label: '한자 5문제 맞히기', icon: '' },
     { app: 'arcade', key: 'win', n: 1, label: '오락실에서 한 판 이기기', icon: '🕹️' },
     { app: 'passage', key: 'correct', n: 3, label: '읽기 지문 3문제 맞히기', icon: '📰' },
     { app: 'korean', key: 'correct', n: 5, label: '우리말 5문제 맞히기', icon: '💬' },
@@ -256,7 +256,7 @@
     var day = d.days[todayKey()] || { events: {}, missions: [] };
     return chosen.map(function (m, i) {
       var cur = (day.events[m.app] && day.events[m.app][m.key]) || 0;
-      return { id: 'm' + i, app: m.app, label: m.label, icon: m.icon, n: m.n, cur: Math.min(cur, m.n), done: cur >= m.n, rewarded: (day.missions || []).indexOf('m' + i) >= 0 };
+      return { id: 'm' + i, app: m.app, label: m.label, icon: m.icon, svg: m.svg, n: m.n, cur: Math.min(cur, m.n), done: cur >= m.n, rewarded: (day.missions || []).indexOf('m' + i) >= 0 };
     });
   }
   function checkMissions() {

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 받침 놀이: 글자 한 칸을 위(첫소리·가운뎃소리)와 아래(받침)로 나눈 블록, 받침 칸이 반짝인다 -->
+  <g stroke="#5a3d00" stroke-width="2" stroke-linejoin="round">
+    <rect x="7" y="5" width="23" height="25" rx="5" fill="#fff4d6"/>
+    <rect x="34" y="5" width="23" height="25" rx="5" fill="#fff4d6"/>
+    <rect x="7" y="34" width="50" height="24" rx="6" fill="#ffca3a"/>
+  </g>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="4.5">
+    <path d="M12 11 H24 V24" stroke="#7a5300"/>
+    <path d="M44 10 V25 M44 17.5 H51" stroke="#7a5300"/>
+    <circle cx="32" cy="46" r="6.5" stroke="#c0395f"/>
+  </g>
+  <path d="M52 38 l1.6 3.4 3.4 1.6 -3.4 1.6 -1.6 3.4 -1.6 -3.4 -3.4 -1.6 3.4 -1.6z" fill="#fff"/>
+  <path d="M13 48 l1 2 2 1 -2 1 -1 2 -1 -2 -2 -1 2 -1z" fill="#fff"/>
+</svg>

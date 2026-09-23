@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 한글 놀이: 자모가 그려진 장난감 나무 블록 세 개 -->
+  <g stroke="#5a3d00" stroke-width="2" stroke-linejoin="round">
+    <rect x="5" y="31" width="26" height="26" rx="5" fill="#ffd166"/>
+    <rect x="33" y="31" width="26" height="26" rx="5" fill="#8ecae6"/>
+    <rect x="19" y="4" width="26" height="26" rx="5" fill="#b5e48c" transform="rotate(-8 32 17)"/>
+  </g>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="4.5">
+    <path d="M11 38 H24 V51" stroke="#c0392b"/>
+    <path d="M43 37 V51 M43 44 H51" stroke="#1d4f7a"/>
+    <circle cx="32" cy="17" r="6" stroke="#2f6b12" transform="rotate(-8 32 17)"/>
+  </g>
+  <g fill="#fff" opacity=".55">
+    <rect x="8" y="34" width="6" height="3" rx="1.5"/>
+    <rect x="36" y="34" width="6" height="3" rx="1.5"/>
+  </g>
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 한자 놀이: 한지 위의 먹 붓자국, 붓, 빨간 도장 -->
+  <rect x="6" y="8" width="44" height="50" rx="4" fill="#fffaf0" stroke="#a67c52" stroke-width="2"/>
+  <path d="M14 22 C20 18 30 18 38 21" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round"/>
+  <path d="M16 34 C22 31 30 31 36 33" fill="none" stroke="#222" stroke-width="4" stroke-linecap="round"/>
+  <path d="M26 16 C27 28 26 40 22 49" fill="none" stroke="#222" stroke-width="4.5" stroke-linecap="round"/>
+  <rect x="36" y="42" width="10" height="10" rx="1.5" fill="#d62828"/>
+  <path d="M38.5 45 h5 M38.5 49 h5 M41 44.5 v5" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
+  <g transform="rotate(35 50 22)">
+    <rect x="47" y="-2" width="6" height="30" rx="2" fill="#c68b4e" stroke="#7a4a1c" stroke-width="1.5"/>
+    <rect x="47" y="4" width="6" height="2.5" fill="#7a4a1c"/>
+    <path d="M47 28 h6 l-1 6 q-2 6 -4 0z" fill="#222"/>
+  </g>
+</svg>

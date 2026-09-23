@@ -346,3 +346,8 @@ body[data-app] main { overflow-x: auto; }
   .rd-slot, .rd-tile { width: 54px; height: 54px; font-size: 30px; }
   .rd-sentence { font-size: 24px; }
 }
+
+/* 그림 파일 아이콘 (한글·받침·한자 앱 머리말) */
+.kl-svgicon { width: 1.2em; height: 1.2em; vertical-align: -0.22em; display: inline-block; }
+/* 가로로 밀어도 브라우저 뒤로 가기가 되지 않게 (PC 터치패드·크롬) */
+html, body { overscroll-behavior-x: none; }

@@ -1,9 +1,9 @@
 /* 앱 목록 - 런처와 부모님 설정에서 공통 사용 */
 window.KIDLAB_APPS = [
-  { id: 'hangul',   name: '한글 놀이',   icon: '가', color: '#ff8fa3', desc: '자음·모음, 글자 만들기, 낱말 읽기, 따라 쓰기', cat: '한글', how: '글자를 눌러 소리를 듣고, 맞는 그림을 골라요.' },
+  { id: 'hangul',   name: '한글 놀이',   icon: '', svg: 'icons/app-hangul.svg', color: '#ff8fa3', desc: '자음·모음, 글자 만들기, 낱말 읽기, 따라 쓰기', cat: '한글', how: '글자를 눌러 소리를 듣고, 맞는 그림을 골라요.' },
   { id: 'english',  name: '영어 놀이',   icon: '🔤', color: '#7fc8ff', desc: 'ABC, 그림 낱말, 영단어 1~5단계(120개), 따라 쓰기', cat: '영어', how: '영어 글자를 듣고 같은 것을 찾아요.' },
   { id: 'math',     name: '수학 놀이',   icon: '🔢', color: '#ffd166', desc: '세기, 더하기, 빼기, 비교, 숫자 따라 쓰기', cat: '수학', how: '그림을 세어 보고 맞는 숫자를 눌러요.' },
-  { id: 'batchim',  name: '받침 놀이',   icon: '받', color: '#ffb3c6', desc: '받침 소리, 듣고 고르기, 받침 바꾸기, 받침 글자 쓰기', cat: '한글', how: '받침 소리를 듣고, 알맞은 받침을 골라요.' },
+  { id: 'batchim',  name: '받침 놀이',   icon: '', svg: 'icons/app-batchim.svg', color: '#ffb3c6', desc: '받침 소리, 듣고 고르기, 받침 바꾸기, 받침 글자 쓰기', cat: '한글', how: '받침 소리를 듣고, 알맞은 받침을 골라요.' },
   { id: 'wordmake', name: '낱말 만들기', icon: '🧩', color: '#ffd6a5', desc: '글자 카드를 붙여 낱말 완성, 빠진 글자', cat: '한글', how: '그림을 보고 글자 카드를 차례대로 눌러요.' },
   { id: 'sentence', name: '문장 읽기',   icon: '📝', color: '#caffbf', desc: '문장 읽고 그림 고르기, 이/가 을/를', cat: '읽기', how: '문장을 읽고 맞는 그림을 골라요. 모르는 낱말은 눌러 봐요.' },
   { id: 'books',    name: '읽기 책',     icon: '📚', color: '#9bf6ff', desc: '한 쪽씩 읽는 그림책 25권(옛이야기·탈무드 포함)과 질문', cat: '읽기', how: '책을 한 쪽씩 넘기며 읽어요. 낱말을 누르면 읽어 줘요.' },
@@ -12,7 +12,7 @@ window.KIDLAB_APPS = [
   { id: 'vocab',    name: '낱말 뜻 놀이', icon: '💡', color: '#fdffb6', desc: '같은 편, 반대말, 움직임 말, 꾸미는 말', cat: '우리말', how: '낱말의 뜻에 맞는 그림을 골라요.' },
   { id: 'passage',  name: '읽기 지문',   icon: '📰', color: '#d6e4ff', desc: '초등 1학년~중학교 1학년 수준별 글 21편과 독해 문제', cat: '읽기', how: '글을 읽고 문제를 풀어요. 글은 언제든 다시 볼 수 있어요.' },
   { id: 'sequence', name: '이야기 순서', icon: '🎬', color: '#ffc6ff', desc: '그림 카드 순서 맞추기, 다음 장면 맞히기', cat: '읽기', how: '먼저 일어난 일부터 차례대로 눌러요.' },
-  { id: 'hanja',    name: '한자 놀이',   icon: '山', color: '#e7c6a5', desc: '기초 한자 31자 뜻·소리, 요일 한자, 필순 따라 쓰기, 천자문 16구절', cat: '한자·고전', how: '한자의 뜻과 소리를 익히고, 순서대로 따라 써요.' },
+  { id: 'hanja',    name: '한자 놀이',   icon: '', svg: 'icons/app-hanja.svg', color: '#e7c6a5', desc: '기초 한자 31자 뜻·소리, 요일 한자, 필순 따라 쓰기, 천자문 16구절', cat: '한자·고전', how: '한자의 뜻과 소리를 익히고, 순서대로 따라 써요.' },
   { id: 'korean',   name: '우리말 탐험', icon: '💬', color: '#b9e8c8', desc: '학년별 낱말 뜻(초1~6), 속담, 사자성어', cat: '우리말', how: '낱말과 속담의 뜻을 읽고 알맞은 것을 골라요.' },
   { id: 'classic',  name: '고전 한 문장', icon: '📜', color: '#f3e3c3', desc: '논어·명심보감·탈무드 명구 22개, 오늘의 한 문장, 필사', cat: '한자·고전', how: '옛 책의 좋은 말을 읽고, 회색 글자 위에 따라 써요.' },
   { id: 'shapes',   name: '모양·색깔',   icon: '🔷', color: '#b8e0d2', desc: '모양 찾기, 색 맞추기, 패턴', cat: '수학', how: '같은 모양과 같은 색을 찾아 눌러요.' },
