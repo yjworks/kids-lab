@@ -20,7 +20,7 @@ window.KIDLAB_APPS = [
   { id: 'calc',     name: '계산기',     icon: '🧮', color: '#a7c7ff', desc: '휴대폰 계산기, 숫자 읽기, 자릿값', cat: '수학', how: '숫자 단추를 눌러 계산하고, 읽어 주는 소리를 들어요.' },
   { id: 'blocks',   name: '숫자 블록',   icon: '🧱', color: '#ffc09f', desc: '블록을 쌓아 수 익히기, 짝꿍 수, 홀짝', cat: '수학', how: '블록을 쌓았다 빼면서 수를 익혀요.' },
   { id: 'science',  name: '과학 탐험',   icon: '🔬', color: '#9be7a0', desc: '동물, 날씨, 우리 몸, 뜨고 가라앉기', cat: '과학·사회', how: '그림을 보고 맞는 답을 골라요.' },
-  { id: 'daily',    name: '생활 습관',   icon: '🪥', color: '#ffe0b3', desc: '순서 맞추기, 옷 고르기, 정리하기', cat: '생활', how: '하루 순서를 차례대로 골라요.' },
+  { id: 'daily',    name: '생활 습관',   icon: '', svg: 'icons/app-daily.svg', color: '#ffe0b3', desc: '순서 맞추기, 옷 고르기, 정리하기', cat: '생활', how: '하루 순서를 차례대로 골라요.' },
   { id: 'feelings', name: '마음 알기',   icon: '😊', color: '#ffc6ff', desc: '표정 읽기, 어떻게 할까요?', cat: '생활', how: '표정을 보고 어떤 마음인지 골라요.' },
   { id: 'safety',   name: '안전 지킴이', icon: '🚦', color: '#ffb3a7', desc: '신호등, 위험한 것, 119', cat: '생활', how: '위험한 것을 찾고, 신호등을 지켜요.' },
   { id: 'shop',     name: '가게 놀이',   icon: '🛒', color: '#ffe4a1', desc: '동전 세기, 물건 사기', cat: '생활', how: '동전을 세어 물건 값을 내요.' },

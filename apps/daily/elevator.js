@@ -314,7 +314,7 @@
       main.appendChild(el('div', { class: 'kl-result' }, [
         el('div', { class: 'kl-result-emoji', text: '🏢' }),
         el('div', { class: 'kl-result-title', text: KIND_NAME[bld.kind].slice(3) + ' 엘리베이터를 ' + TRIPS + '번 잘 탔어요!' }),
-        el('div', { class: 'kl-result-score', html: (safeAll ? '🦺 안전 질문 ' + safeOk + ' / ' + safeAll + '<br>' : '') + '다음엔 다른 건물이 나와요' + (up ? '<div class="kl-levelup">🎊 단계 ' + (lv + 1) + '로 올라갔어요!</div>' : '') }),
+        el('div', { class: 'kl-result-score', html: (safeAll ? '🦺 안전 질문 ' + safeOk + ' / ' + safeAll + '<br>' : '') + '다음엔 다른 건물이 나와요' + (up ? '<div class="kl-levelup">🎊 단계 ' + (lv + 1) + K.josa(lv + 1, '으로/로') + ' 올라갔어요!</div>' : '') }),
         el('div', { class: 'kl-row' }, [
           el('button', { class: 'kl-btn primary', text: '🔁 다른 건물 타기', onclick: function () { start(main, back); } }),
           el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: back })

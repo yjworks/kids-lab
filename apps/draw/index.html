@@ -58,7 +58,7 @@
     K.menu(main, [
       { icon: '🖌️', label: '자유롭게 그리기', color: '#ffd9e8', run: function () { studio(null); } },
       { icon: '🖍️', label: '따라 그리기', color: '#fff3c4', run: templates },
-      { icon: '💡', label: '오늘의 그림 주제', color: '#e9f3ff', run: function () { var t = TOPICS[new Date().getDate() % TOPICS.length]; K.speak('오늘의 주제는 ' + t + '이에요'); studio(null, t); } },
+      { icon: '💡', label: '오늘의 그림 주제', color: '#e9f3ff', run: function () { var t = TOPICS[new Date().getDate() % TOPICS.length]; K.speak('오늘의 주제는 ' + t + K.josa(t, '이에요/예요')); studio(null, t); } },
       { icon: '🖼️', label: '내 갤러리 (' + d.drawings.length + ')', color: '#e3f7cf', run: gallery }
     ]);
   }
@@ -87,7 +87,7 @@
     var sizes = el('div', { class: 'sizes' });
     [[4, '●'], [10, '⬤'], [22, '⚫'], [40, '🔵']].forEach(function (s) { var b = el('button', { text: s[1], class: s[0] === size ? 'sel' : '', style: 'font-size:' + (10 + s[0] / 2) + 'px' }); b.addEventListener('click', function () { size = s[0]; sizes.querySelectorAll('button').forEach(function (x) { x.classList.remove('sel'); }); b.classList.add('sel'); K.sfx.pop(); }); sizes.appendChild(b); });
     var toolRow = el('div', { class: 'sizes' }); var toolBtns = {};
-    [['pen', '✏️ 펜'], ['eraser', '🧽 지우개'], ['fill', '🪣 배경'], ['stamp', '⭐ 도장']].forEach(function (t) { var b = el('button', { text: t[1], style: 'font-size:16px;font-weight:800' }); b.addEventListener('click', function () { setTool(t[0]); K.sfx.pop(); }); toolBtns[t[0]] = b; toolRow.appendChild(b); });
+    [['pen', '✏️ 펜'], ['eraser', '🧽 지우개'], ['fill', '🎨 배경'], ['stamp', '⭐ 도장']].forEach(function (t) { var b = el('button', { text: t[1], style: 'font-size:16px;font-weight:800' }); b.addEventListener('click', function () { setTool(t[0]); K.sfx.pop(); }); toolBtns[t[0]] = b; toolRow.appendChild(b); });
     function setTool(t) { tool = t; for (var k in toolBtns) toolBtns[k].classList.toggle('sel', k === t); stampBox.style.display = t === 'stamp' ? 'grid' : 'none'; }
     var stampBox = el('div', { class: 'stamps', style: 'display:none' });
     STAMPS.forEach(function (s) { var b = el('button', { text: s, class: s === stamp ? 'sel' : '' }); b.addEventListener('click', function () { stamp = s; stampBox.querySelectorAll('button').forEach(function (x) { x.classList.remove('sel'); }); b.classList.add('sel'); }); stampBox.appendChild(b); });

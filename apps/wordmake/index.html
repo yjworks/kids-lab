@@ -116,7 +116,7 @@
       box.appendChild(el('div', { class: 'kl-result' }, [
         el('div', { class: 'kl-result-emoji', text: firstTry === total ? '🏆' : '🎉' }),
         el('div', { class: 'kl-result-title', text: '낱말 ' + total + '개를 만들었어요!' }),
-        el('div', { class: 'kl-result-score', html: '⭐ 한 번에 ' + firstTry + ' / ' + total + (up ? '<div class="kl-levelup">🎊 단계 ' + (lv + 1) + '로 올라갔어요!</div>' : '') }),
+        el('div', { class: 'kl-result-score', html: '⭐ 한 번에 ' + firstTry + ' / ' + total + (up ? '<div class="kl-levelup">🎊 단계 ' + (lv + 1) + K.josa(lv + 1, '으로/로') + ' 올라갔어요!</div>' : '') }),
         el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '🔁 한 번 더', onclick: build }), el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: home })])
       ]));
       K.sfx.win(); K.confetti(); K.event('win');

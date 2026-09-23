@@ -201,7 +201,7 @@
       }
       var line = show(a) + ' ' + op + ' ' + show(b) + ' = ' + show(r);
       addTape(line, a, op, b, r);
-      if (speakOn) K.speak(K.numToKo(a) + ' ' + OPW[op] + ' ' + K.numToKo(b) + '는 ' + K.numToKo(r));
+      if (speakOn) K.speak(K.numToKo(a) + ' ' + OPW[op] + ' ' + K.numToKo(b) + K.josa(K.numToKo(b), '은/는') + ' ' + K.numToKo(r));
       K.sfx.correct();
       count++; K.event('calc');
       if (count % 5 === 0) K.addStar(1);
@@ -282,7 +282,7 @@
       if (!history.length) { tape.appendChild(el('div', { class: 'kl-hint', text: '계산한 것이 여기에 쌓여요' })); return; }
       history.slice().reverse().forEach(function (h) {
         var row = el('div', { class: 'row' }, [el('span', { text: h.line.split(' = ')[0] }), el('b', { text: '= ' + h.line.split(' = ')[1] })]);
-        row.addEventListener('click', function () { K.speak(K.numToKo(h.a) + ' ' + OPW[h.op] + ' ' + K.numToKo(h.b) + '는 ' + K.numToKo(h.r)); cur = String(h.r); fresh = true; err = false; render(); sheet.classList.remove('open'); backdrop.classList.remove('on'); });
+        row.addEventListener('click', function () { K.speak(K.numToKo(h.a) + ' ' + OPW[h.op] + ' ' + K.numToKo(h.b) + K.josa(K.numToKo(h.b), '은/는') + ' ' + K.numToKo(h.r)); cur = String(h.r); fresh = true; err = false; render(); sheet.classList.remove('open'); backdrop.classList.remove('on'); });
         tape.appendChild(row);
       });
     }

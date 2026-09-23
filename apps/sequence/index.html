@@ -41,7 +41,7 @@
   var main = document.getElementById('main');
 
   var ST = [
-    { n: '씨앗이 자라요', c: [['🪴', '씨앗을 심어요'], ['🌱', '싹이 나요'], ['🌿', '잎이 자라요'], ['🌻', '꽃이 피어요']] },
+    { n: '씨앗이 자라요', c: [['🌰', '씨앗을 심어요'], ['🌱', '싹이 나요'], ['🌿', '잎이 자라요'], ['🌻', '꽃이 피어요']] },
     { n: '병아리', c: [['🥚', '알이 있어요'], ['🐣', '알이 깨져요'], ['🐥', '병아리가 나와요'], ['🐔', '닭이 돼요']] },
     { n: '눈사람', c: [['❄️', '눈이 와요'], ['⛄', '눈사람을 만들어요'], ['☀️', '해가 떠요'], ['💧', '눈사람이 녹아요']] },
     { n: '밥 먹기', c: [['😋', '배가 고파요'], ['🍳', '요리를 해요'], ['🍚', '밥을 먹어요'], ['🍽️', '그릇을 치워요']] },
@@ -122,7 +122,7 @@
       box.appendChild(el('div', { class: 'kl-result' }, [
         el('div', { class: 'kl-result-emoji', text: '🎬' }),
         el('div', { class: 'kl-result-title', text: '이야기 ' + total + '개를 맞췄어요!' }),
-        el('div', { class: 'kl-result-score', html: '⭐ 한 번에 ' + firstTry + ' / ' + total + (up ? '<div class="kl-levelup">🎊 단계 ' + (lv + 1) + '로 올라갔어요!</div>' : '') }),
+        el('div', { class: 'kl-result-score', html: '⭐ 한 번에 ' + firstTry + ' / ' + total + (up ? '<div class="kl-levelup">🎊 단계 ' + (lv + 1) + K.josa(lv + 1, '으로/로') + ' 올라갔어요!</div>' : '') }),
         el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '🔁 한 번 더', onclick: orderGame }), el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: home })])
       ]));
       K.sfx.win(); K.confetti(); K.event('win');

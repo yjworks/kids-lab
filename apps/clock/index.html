@@ -57,7 +57,7 @@
     card.appendChild(svgBox); card.appendChild(el('div', { class: 'kl-center' }, [dig, txt]));
     function upd() { var d = new Date(); svgBox.innerHTML = clockSVG(d.getHours(), d.getMinutes(), { sec: d.getSeconds() }); dig.textContent = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); var h = d.getHours(); txt.textContent = (h < 12 ? '오전 ' : '오후 ') + label(h, d.getMinutes()) + (h < 6 ? ' 🌙 아직 밤이에요' : h < 12 ? ' 🌅 아침이에요' : h < 18 ? ' ☀️ 낮이에요' : ' 🌆 저녁이에요'); }
     upd(); var t = setInterval(function () { if (!document.body.contains(card)) clearInterval(t); else upd(); }, 1000);
-    card.appendChild(el('button', { class: 'speak-btn', text: '🔊 몇 시인지 들어요', onclick: function () { var d = new Date(); var h = d.getHours(); K.speak('지금은 ' + (h < 12 ? '오전 ' : '오후 ') + say(h, d.getMinutes()) + '이에요'); K.event('learn'); } }));
+    card.appendChild(el('button', { class: 'speak-btn', text: '🔊 몇 시인지 들어요', onclick: function () { var d = new Date(); var h = d.getHours(); K.speak('지금은 ' + (h < 12 ? '오전 ' : '오후 ') + say(h, d.getMinutes()) + K.josa(say(h, d.getMinutes()), '이에요/예요')); K.event('learn'); } }));
   }
   function playClock() {
     main.innerHTML = ''; main.appendChild(K.backButton(home));
@@ -84,18 +84,18 @@
     quiz('find', 8, function (i, lv) {
       var t = randTime(lv); var opts = [t]; var guard = 0;
       while (opts.length < 3 && guard++ < 100) { var o = randTime(lv); if (!opts.some(function (x) { return x[0] === o[0] && x[1] === o[1]; })) opts.push(o); }
-      return { prompt: label(t[0], t[1]) + '는 어느 시계?', say: say(t[0], t[1]) + '는 어느 시계일까요?', cols: 3, choices: K.shuffle(opts).map(function (o) { return { html: clockSVG(o[0], o[1]), correct: o === t }; }) };
+      return { prompt: label(t[0], t[1]) + K.josa(say(t[0], t[1]), '은/는') + ' 어느 시계?', say: say(t[0], t[1]) + K.josa(say(t[0], t[1]), '은/는') + ' 어느 시계일까요?', cols: 3, choices: K.shuffle(opts).map(function (o) { return { html: clockSVG(o[0], o[1]), correct: o === t }; }) };
     });
   }
   var DAY = [['🌅', '아침 7시', '일어나기', 7], ['🥣', '아침 8시', '아침 먹기', 8], ['🏫', '아침 9시', '유치원 가기', 9], ['🍱', '낮 12시', '점심 먹기', 12], ['🎈', '낮 3시', '놀이 시간', 15], ['🍽️', '저녁 6시', '저녁 먹기', 18], ['🛁', '저녁 8시', '목욕하기', 20], ['🛏️', '밤 9시', '잠자기', 21]];
   function dayQuiz() {
     quiz('day', 8, function (i, lv) {
       var d = K.pick(DAY); var wrong = K.sample(DAY, lv === 1 ? 2 : 3, [d]);
-      if (i % 2) return { prompt: d[0] + ' ' + d[2], say: d[2] + '는 언제 할까요?', cols: wrong.length + 1, choices: K.shuffle([d].concat(wrong)).map(function (o) { return { html: (lv >= 3 ? clockSVG(o[3], 0) : '') + '<div style="font-size:24px">' + o[1] + '</div>', correct: o === d, say: o[1] }; }) };
+      if (i % 2) return { prompt: d[0] + ' ' + d[2], say: d[2] + K.josa(d[2], '은/는') + ' 언제 할까요?', cols: wrong.length + 1, choices: K.shuffle([d].concat(wrong)).map(function (o) { return { html: (lv >= 3 ? clockSVG(o[3], 0) : '') + '<div style="font-size:24px">' + o[1] + '</div>', correct: o === d, say: o[1] }; }) };
       return { prompt: (lv >= 3 ? clockSVG(d[3], 0) : '') + '<div>' + d[1] + '에는?</div>', say: d[1] + '에는 무엇을 할까요?', cols: wrong.length + 1, choices: K.shuffle([d].concat(wrong)).map(function (o) { return { html: o[0] + '<div style="font-size:20px">' + o[2] + '</div>', correct: o === d, say: o[2] }; }) };
     });
   }
-  var DUR = [['👁️ 눈 깜빡이기', 1], ['🪥 이 닦기', 3], ['🍽️ 밥 먹기', 20], ['😴 밤에 자기', 600], ['🏫 유치원 하루', 300], ['🎬 만화 한 편', 15], ['🚗 할머니 집 가기', 60], ['🖐️ 손 씻기', 1], ['🛁 목욕하기', 15], ['📖 책 한 권 읽기', 10]];
+  var DUR = [['👁️ 눈 깜빡이기', 1], ['🦷 이 닦기', 3], ['🍽️ 밥 먹기', 20], ['😴 밤에 자기', 600], ['🏫 유치원 하루', 300], ['🎬 만화 한 편', 15], ['🚗 할머니 집 가기', 60], ['🖐️ 손 씻기', 1], ['🛁 목욕하기', 15], ['📖 책 한 권 읽기', 10]];
   function durQuiz() {
     quiz('dur', 6, function (i, lv) {
       /* 시간이 같은 둘이 뽑히면 답이 갈리므로 다시 뽑는다 */

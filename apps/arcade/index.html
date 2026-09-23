@@ -276,7 +276,7 @@
     function newTarget() {
       r = makeRound(lv);
       info.innerHTML = '🎣 ' + targetHTML(r, lv) + ' 물고기를 낚아요';
-      K.speak((lv === 4 ? r.say + '. 이 낱말 물고기를 낚아요' : lv === 5 ? r.say + '는? 답 물고기를 낚아요' : r.say + ' 물고기를 낚아요'));
+      K.speak((lv === 4 ? r.say + '. 이 낱말 물고기를 낚아요' : lv === 5 ? r.say + K.josa(r.say, '은/는') + '? 답 물고기를 낚아요' : r.say + ' 물고기를 낚아요'));
       /* 물고기 새로: 정답 2마리 + 다른 것 */
       fishes.forEach(function (f) { f.el.remove(); }); fishes = [];
       var labels = [r.t, r.t].concat(K.sample(r.others, lv <= 1 ? 3 : 4));
@@ -325,7 +325,7 @@
       main.appendChild(el('div', { class: 'kl-result' }, [
         el('div', { class: 'kl-result-emoji', text: '🎣' }),
         el('div', { class: 'kl-result-title', text: '물고기 ' + GOAL + '마리를 낚았어요!' }),
-        el('div', { class: 'kl-result-score', html: '⭐ 별 2개!' + (up ? '<div class="kl-levelup">🎊 단계 ' + (lv + 1) + '로 올라갔어요!</div>' : '') }),
+        el('div', { class: 'kl-result-score', html: '⭐ 별 2개!' + (up ? '<div class="kl-levelup">🎊 단계 ' + (lv + 1) + K.josa(lv + 1, '으로/로') + ' 올라갔어요!</div>' : '') }),
         el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '🔁 한 번 더', onclick: fishing }), el('button', { class: 'kl-btn', text: '🧸 인형뽑기', onclick: claw })])
       ]));
     }
@@ -391,7 +391,7 @@
       main.appendChild(el('div', { class: 'kl-result' }, [
         el('div', { class: 'kl-result-emoji', text: win ? '🏆' : '🐹' }),
         el('div', { class: 'kl-result-title', text: '두더지 ' + score + '마리를 잡았어요!' }),
-        el('div', { class: 'kl-result-score', html: (win ? '⭐ 별 2개!' : '6마리를 잡으면 별을 받아요') + (miss ? '<br>틀리게 친 것 ' + miss + '번' : '') + (up ? '<div class="kl-levelup">🎊 단계 ' + (lv + 1) + '로 올라갔어요!</div>' : '') }),
+        el('div', { class: 'kl-result-score', html: (win ? '⭐ 별 2개!' : '6마리를 잡으면 별을 받아요') + (miss ? '<br>틀리게 친 것 ' + miss + '번' : '') + (up ? '<div class="kl-levelup">🎊 단계 ' + (lv + 1) + K.josa(lv + 1, '으로/로') + ' 올라갔어요!</div>' : '') }),
         el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '🔁 한 번 더', onclick: moles }), el('button', { class: 'kl-btn', text: '🧸 인형뽑기', onclick: claw })])
       ]));
     }

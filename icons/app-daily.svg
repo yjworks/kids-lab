@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 생활 습관: 치약을 짠 칫솔과 컵 -->
+  <rect x="34" y="30" width="20" height="26" rx="4" fill="#8ecae6" stroke="#1d4f7a" stroke-width="2"/>
+  <rect x="34" y="30" width="20" height="6" rx="3" fill="#bde0fe" stroke="#1d4f7a" stroke-width="2"/>
+  <g transform="rotate(-38 26 30)">
+    <rect x="6" y="27" width="40" height="7" rx="3.5" fill="#ff8fa3" stroke="#a3244a" stroke-width="2"/>
+    <rect x="30" y="17" width="14" height="10" rx="2" fill="#fff" stroke="#6b7785" stroke-width="1.6"/>
+    <path d="M32 17 v10 M35 17 v10 M38 17 v10 M41 17 v10" stroke="#9aa5b1" stroke-width="1.2"/>
+    <path d="M30 14 q7 -6 14 0 q-3 4 -7 3 q-4 1 -7 -3z" fill="#e0fbfc" stroke="#48cae4" stroke-width="1.5"/>
+  </g>
+  <circle cx="14" cy="50" r="3" fill="#fff" opacity=".8"/><circle cx="21" cy="55" r="2" fill="#fff" opacity=".8"/>
+</svg>

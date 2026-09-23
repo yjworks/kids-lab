@@ -127,7 +127,7 @@
       return { key: 'a' + a + '+' + b,
         prompt: '<div class="stage-row">' + fig(a) + '<span class="plus">＋</span>' + fig(b) + '<span class="plus">＝</span><span class="plus">?</span></div>' +
                 '<div style="font-size:30px;margin-top:6px">' + a + ' + ' + b + ' = ?</div>',
-        say: koName(a) + ' 더하기 ' + koName(b) + '는?', cols: 4,
+        say: koName(a) + ' 더하기 ' + koName(b) + K.josa(koName(b), '은/는') + '?', cols: 4,
         choices: K.shuffle([ans].concat(wrong)).map(function (x) { return { html: String(x), correct: x === ans, say: koName(x) }; }) };
     });
   }
@@ -143,7 +143,7 @@
         '<span class="plus" style="color:#d6336c">✂️</span></div>';
       return { key: 's' + a + '-' + b,
         prompt: vis + '<div style="font-size:30px;margin-top:6px">' + a + ' − ' + b + ' = ?</div>',
-        say: koName(a) + ' 빼기 ' + koName(b) + '는?', cols: 4,
+        say: koName(a) + ' 빼기 ' + koName(b) + K.josa(koName(b), '은/는') + '?', cols: 4,
         choices: K.shuffle([ans].concat(wrong)).map(function (x) { return { html: String(x), correct: x === ans, say: koName(x) }; }) };
     });
   }

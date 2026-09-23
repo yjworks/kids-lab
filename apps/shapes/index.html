@@ -77,7 +77,7 @@
       var pool = SHAPES.slice(0, lv === 1 ? 4 : lv === 2 ? 6 : lv === 3 ? 8 : 11); var n = lv === 1 ? 3 : 4;
       var opts = K.sample(pool, n); var ans = K.pick(opts);
       if (lv >= 3 && i % 2) return { prompt: svg(ans[0], K.pick(COLORS)[0]), say: '이 모양의 이름은?', cols: n, choices: opts.map(function (o) { return { html: o[1], cls: 'text', correct: o === ans, say: o[1] }; }) };
-      return { prompt: ans[1] + '를 찾아요', say: ans[1] + '를 찾아요', cols: n, choices: opts.map(function (o) { return { html: svg(o[0], K.pick(COLORS)[0]), correct: o === ans, say: o[1] }; }) };
+      return { prompt: ans[1] + K.josa(ans[1], '을/를') + ' 찾아요', say: ans[1] + K.josa(ans[1], '을/를') + ' 찾아요', cols: n, choices: opts.map(function (o) { return { html: svg(o[0], K.pick(COLORS)[0]), correct: o === ans, say: o[1] }; }) };
     });
   }
   function colorQuiz() {
@@ -85,7 +85,7 @@
       var pool = COLORS.slice(0, lv === 1 ? 5 : lv === 2 ? 8 : 12); var n = lv === 1 ? 3 : 4;
       var opts = K.sample(pool, n); var ans = K.pick(opts);
       if (lv >= 3 && i % 2) return { prompt: '<span class="chip" style="background:' + ans[0] + '"></span>', say: '무슨 색일까요?', cols: n, choices: opts.map(function (o) { return { html: o[1], cls: 'text', correct: o === ans, say: o[1] }; }) };
-      return { prompt: ans[1] + '을 찾아요', say: ans[1] + '색을 찾아요', cols: n, choices: opts.map(function (o) { return { html: '<span class="chip" style="background:' + o[0] + '"></span>', correct: o === ans, say: o[1] }; }) };
+      return { prompt: ans[1] + K.josa(ans[1], '을/를') + ' 찾아요', say: ans[1] + '색을 찾아요', cols: n, choices: opts.map(function (o) { return { html: '<span class="chip" style="background:' + o[0] + '"></span>', correct: o === ans, say: o[1] }; }) };
     });
   }
   function thingQuiz() {

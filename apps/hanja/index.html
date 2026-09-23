@@ -164,7 +164,7 @@
       return {
         key: 'week' + w[1],
         prompt: '📅 "' + w[0] + '"의 "' + w[0].charAt(0) + '"은 어느 한자?',
-        say: w[0] + '의 ' + w[0].charAt(0) + '은 어느 한자일까요?', cols: opts.length,
+        say: w[0] + '의 ' + w[0].charAt(0) + K.josa(w[0].charAt(0), '은/는') + ' 어느 한자일까요?', cols: opts.length,
         choices: opts.map(function (o) { return { html: '<div class="hz-choice hz">' + o + '</div>' + (lv <= 2 ? '<div class="rd-choice-lbl">' + INFO[o][0] + '</div>' : ''), correct: o === w[1], say: o === w[1] ? say(o) : null }; })
       };
     });

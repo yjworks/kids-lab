@@ -103,7 +103,7 @@
     main.innerHTML = ''; main.appendChild(K.backButton(home));
     var d = el('div', { class: 'drums' });
     var count = 0;
-    [['🥁', function () { K.sfx.drum(); }], ['🔔', function () { K.sfx.note(1760, 0.6); }], ['🪘', function () { K.sfx.note(110, 0.25); }], ['👏', function () { K.sfx.drum(); K.sfx.note(2000, 0.05); }], ['🎺', function () { K.sfx.note(523, 0.3); }], ['🔊', function () { K.sfx.note(80, 0.4); }], ['🎸', function () { K.sfx.note(196, 0.5); }], ['🎷', function () { K.sfx.note(349, 0.4); }]].forEach(function (x) { var b = el('button', { text: x[0] }); b.addEventListener('pointerdown', function () { x[1](); count++; if (count === 20) { K.addStar(1); K.event('play'); } }); d.appendChild(b); });
+    [['🥁', function () { K.sfx.drum(); }], ['🔔', function () { K.sfx.note(1760, 0.6); }], ['🎻', function () { K.sfx.note(110, 0.25); }], ['👏', function () { K.sfx.drum(); K.sfx.note(2000, 0.05); }], ['🎺', function () { K.sfx.note(523, 0.3); }], ['🔊', function () { K.sfx.note(80, 0.4); }], ['🎸', function () { K.sfx.note(196, 0.5); }], ['🎷', function () { K.sfx.note(349, 0.4); }]].forEach(function (x) { var b = el('button', { text: x[0] }); b.addEventListener('pointerdown', function () { x[1](); count++; if (count === 20) { K.addStar(1); K.event('play'); } }); d.appendChild(b); });
     main.appendChild(d);
     var bpm = 100, running = false, beat = 0, timer;
     var row = el('div', { class: 'beat' }); for (var i = 0; i < 4; i++) row.appendChild(el('i', { text: i === 0 ? '💥' : '·' }));

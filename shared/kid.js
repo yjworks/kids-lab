@@ -204,7 +204,7 @@
     { app: 'shapes', key: 'correct', n: 5, label: '모양·색깔 5문제 맞히기', icon: '🔷' },
     { app: 'clock', key: 'correct', n: 4, label: '시계 놀이 4문제 맞히기', icon: '⏰' },
     { app: 'science', key: 'correct', n: 5, label: '과학 탐험 5문제 맞히기', icon: '🔬' },
-    { app: 'daily', key: 'correct', n: 4, label: '생활 습관 4문제 맞히기', icon: '🪥' },
+    { app: 'daily', key: 'correct', n: 4, label: '생활 습관 4문제 맞히기', icon: '', svg: 'icons/app-daily.svg' },
     { app: 'feelings', key: 'correct', n: 4, label: '마음 알기 4문제 맞히기', icon: '😊' },
     { app: 'safety', key: 'correct', n: 4, label: '안전 지킴이 4문제 맞히기', icon: '🚦' },
     { app: 'memory', key: 'win', n: 1, label: '기억 카드 한 판 완성하기', icon: '🃏' },
@@ -375,6 +375,8 @@
     var ch = w.replace(/\s+$/, '').slice(-1);
     var code = ch.charCodeAt(0) - 0xAC00;
     if (code < 0 || code > 11171) return parts[0];
+    /* '으로/로'는 ㄹ 받침 뒤에도 '로' (일로, 칠로, 연필로) */
+    if (parts[0] === '으로' && code % 28 === 8) return parts[1];
     return (code % 28) ? parts[0] : parts[1];   /* 받침 있으면 앞, 없으면 뒤 */
   }
 
@@ -592,7 +594,7 @@
       var res = el('div', { class: 'kl-result' }, [
         el('div', { class: 'kl-result-emoji', text: pct === 1 ? '🏆' : pct >= 0.75 ? '🎉' : pct >= 0.5 ? '😄' : '🙂' }),
         el('div', { class: 'kl-result-title', text: msg }),
-        el('div', { class: 'kl-result-score', html: '⭐ ' + score + ' / ' + total + (up ? '<div class="kl-levelup">🎊 단계 ' + (level + 1) + '로 올라갔어요!</div>' : '') }),
+        el('div', { class: 'kl-result-score', html: '⭐ ' + score + ' / ' + total + (up ? '<div class="kl-levelup">🎊 단계 ' + (level + 1) + josa(level + 1, '으로/로') + ' 올라갔어요!</div>' : '') }),
         el('div', { class: 'kl-row' }, [
           el('button', { class: 'kl-btn primary', text: '🔁 한 번 더', onclick: function () { sfx.click(); runQuiz(cfg); } }),
           el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: function () { sfx.click(); if (cfg.onFinish) cfg.onFinish(score, total); } })

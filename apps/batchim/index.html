@@ -179,11 +179,13 @@
       var sw = K.pick(SWAPS), from = B.get(sw[0]), to = B.get(sw[2]);
       var others = K.sample(B.where(function (w) { return w.word.length === 1 && w.word !== sw[0] && w.word !== sw[2]; }), lv <= 1 ? 1 : 2);
       var opts = [to].concat(others);
-      var ask = sw[1] ? '받침을 ' + sw[1] + '(으)로 바꾸면?' : '받침을 빼면?';
+      /* 자음 이름은 모두 받침이 있고, ㄹ(리을)만 '로'가 붙는다 */
+      var ro = sw[1] === 'ㄹ' ? '로' : '으로';
+      var ask = sw[1] ? '받침을 ' + sw[1] + ro + ' 바꾸면?' : '받침을 빼면?';
       return {
         key: 'swap' + sw.join(''),
         prompt: '<div class="rd-pic">' + from.pic + '</div><div class="rd-word">' + from.word + '</div><div style="font-size:24px;margin-top:6px">' + ask + '</div>',
-        say: from.word + '에서 ' + (sw[1] ? '받침을 ' + NAME[sw[1]] + '으로 바꾸면 무엇이 될까요?' : '받침을 빼면 무엇이 될까요?'),
+        say: from.word + '에서 ' + (sw[1] ? '받침을 ' + NAME[sw[1]] + ro + ' 바꾸면 무엇이 될까요?' : '받침을 빼면 무엇이 될까요?'),
         cols: opts.length,
         choices: K.shuffle(opts).map(function (o) {
           return { html: '<div class="rd-choice-pic">' + o.pic + '</div><div class="rd-choice-word" style="font-size:28px">' + (lv >= 4 ? '' : o.word) + '</div>', correct: o === to };

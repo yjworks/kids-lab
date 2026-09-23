@@ -29,7 +29,7 @@
   var K = KidLab, el = K.el;
   K.header({ title: '기억 카드', icon: '🃏', say: '기억 카드' });
   var main = document.getElementById('main');
-  var SETS = { animals: ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔'], fruits: ['🍎', '🍌', '🍇', '🍓', '🍉', '🍑', '🍒', '🥝', '🍍', '🥭', '🍋', '🍊', '🫐', '🍈', '🥥', '🍐'], vehicles: ['🚗', '🚕', '🚌', '🚑', '🚒', '🚂', '✈️', '🚀', '⛵', '🚲', '🛵', '🚁', '🛸', '🚜', '🏍️', '🚤'], hangul: ['가', '나', '다', '라', '마', '바', '사', '아', '자', '차', '카', '타', '파', '하', '거', '너'], abc: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'], numbers: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16'] };
+  var SETS = { animals: ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔'], fruits: ['🍎', '🍌', '🍇', '🍓', '🍉', '🍑', '🍒', '🥝', '🍍', '🥭', '🍋', '🍊', '🍅', '🍈', '🥥', '🍐'], vehicles: ['🚗', '🚕', '🚌', '🚑', '🚒', '🚂', '✈️', '🚀', '⛵', '🚲', '🛵', '🚁', '🛸', '🚜', '🏍️', '🚤'], hangul: ['가', '나', '다', '라', '마', '바', '사', '아', '자', '차', '카', '타', '파', '하', '거', '너'], abc: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'], numbers: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16'] };
   function home() {
     main.innerHTML = '';
     K.menu(main, [
@@ -70,7 +70,7 @@
       var sec = Math.round((Date.now() - start) / 1000); var great = moves <= pairs * 2;
       if (great && lv < 5) K.setLevel(set, lv + 1);
       K.event('win'); K.addStar(2); K.sfx.win(); K.confetti();
-      var res = el('div', { class: 'kl-card kl-result' }, [el('div', { class: 'kl-result-emoji', text: '🏆' }), el('div', { class: 'kl-result-title', text: '모두 찾았어요!' }), el('div', { class: 'kl-result-score', html: '뒤집기 ' + moves + '번 · ' + sec + '초' + (great && lv < 5 ? '<div class="kl-levelup">🎊 단계 ' + (lv + 1) + '로 올라갔어요!</div>' : '') }), el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '🔁 한 번 더', onclick: function () { game(set); } }), el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: home })])]);
+      var res = el('div', { class: 'kl-card kl-result' }, [el('div', { class: 'kl-result-emoji', text: '🏆' }), el('div', { class: 'kl-result-title', text: '모두 찾았어요!' }), el('div', { class: 'kl-result-score', html: '뒤집기 ' + moves + '번 · ' + sec + '초' + (great && lv < 5 ? '<div class="kl-levelup">🎊 단계 ' + (lv + 1) + K.josa(lv + 1, '으로/로') + ' 올라갔어요!</div>' : '') }), el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '🔁 한 번 더', onclick: function () { game(set); } }), el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: home })])]);
       main.insertBefore(res, board); K.speak('모두 찾았어요! 잘했어요');
     }
     K.speak('같은 그림을 찾아요');
