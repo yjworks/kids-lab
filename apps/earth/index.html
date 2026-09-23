@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>지구 지킴이</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .thing { font-size: 80px; line-height: 1.1; }
+  .thing-l { font-size: 23px; font-weight: 900; word-break: keep-all; }
+  .bin { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 18px; font-weight: 900; }
+  .bin i { font-style: normal; font-size: 40px; }
+  .opt { font-size: 19px; font-weight: 800; text-align: left; line-height: 1.4; word-break: keep-all; }
+  .sit { font-size: 22px; font-weight: 900; line-height: 1.5; word-break: keep-all; }
+  .chain { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 60px; }
+  .chain .ar { font-size: 30px; color: #6a4c93; font-weight: 900; }
+  .chain .gap { display: inline-block; width: 70px; height: 70px; border: 4px dashed #b08fd8; border-radius: 16px; font-size: 36px; line-height: 62px; color: #b08fd8; }
+  .why { margin-top: 8px; font-size: 17px; font-weight: 800; color: #2f6b12; background: #e3f7cf; border-radius: 12px; padding: 8px 12px; display: inline-block; word-break: keep-all; }
+  .check { max-width: 620px; margin: 0 auto; display: grid; gap: 10px; }
+  .check button { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 18px; padding: 12px 16px; font-size: 20px; font-weight: 900; box-shadow: 0 4px 0 rgba(0,0,0,.07); text-align: left; word-break: keep-all; }
+  .check button i { font-style: normal; font-size: 34px; }
+  .check button b { margin-left: auto; font-size: 28px; }
+  .check button.on { background: #d0f4de; }
+  .earthbar { text-align: center; font-size: 20px; font-weight: 900; margin: 6px 0 12px; }
+  body[data-app="earth"] .kl-choice { min-height: 0; padding: 12px; }
+  @media (max-width: 760px) { .thing { font-size: 62px; } .thing-l { font-size: 19px; } .bin { font-size: 15px; } .bin i { font-size: 32px; } .opt, .sit { font-size: 16px; } .chain { font-size: 44px; } .chain .gap { width: 54px; height: 54px; line-height: 46px; font-size: 28px; } .check button { font-size: 17px; } }
+</style>
+</head>
+<body data-app="earth">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '지구 지킴이', icon: '♻️', say: '지구 지킴이' });
+  var main = document.getElementById('main');
+  function jo(w, p) { return K.josa(w, p); }
+
+  /* 분리배출 - 지역마다 조금씩 다른 것(우유팩·스티로폼·건전지 등)은 뺐다 */
+  var BINS = { paper: ['📦', '종이'], plastic: ['🧴', '플라스틱'], can: ['🥫', '캔'], glass: ['🍾', '유리병'], vinyl: ['🛍️', '비닐'], food: ['🍎', '음식물'], trash: ['🗑️', '일반 쓰레기'] };
+  var ITEMS = [
+    ['📰', '다 읽은 신문지', 'paper', '종이는 종이끼리 모아요.'],
+    ['📦', '테이프를 뗀 택배 상자', 'paper', '테이프를 떼고 납작하게 접어서 내놓아요.'],
+    ['🧴', '다 쓴 샴푸 통', 'plastic', '안을 헹구고 플라스틱으로 내놓아요.'],
+    ['🥤', '헹군 음료 페트병', 'plastic', '내용물을 비우고 라벨을 떼요.'],
+    ['🥫', '다 먹은 참치 캔', 'can', '안을 비우고 헹궈요.'],
+    ['🍾', '빈 주스 유리병', 'glass', '뚜껑을 따로 빼고 내놓아요.'],
+    ['🛍️', '깨끗한 비닐봉지', 'vinyl', '비닐은 흩날리지 않게 모아요.'],
+    ['🍿', '과자 봉지', 'vinyl', '과자 봉지도 비닐로 분리해요.'],
+    ['🍌', '바나나 껍질', 'food', '과일 껍질은 음식물 쓰레기예요.'],
+    ['🍚', '먹다 남은 밥', 'food', '남은 밥은 음식물 쓰레기예요.'],
+    ['🍉', '수박 껍질', 'food', '잘게 잘라서 음식물로 버려요.'],
+    ['🥚', '달걀 껍데기', 'trash', '달걀 껍데기는 음식물이 아니라 일반 쓰레기예요.'],
+    ['🍗', '닭 뼈', 'trash', '뼈는 딱딱해서 일반 쓰레기예요.'],
+    ['🍑', '복숭아 씨', 'trash', '딱딱한 씨는 일반 쓰레기예요.'],
+    ['🧻', '쓴 휴지', 'trash', '쓴 휴지는 일반 쓰레기예요.'],
+    ['🪥', '헌 칫솔', 'trash', '여러 재료가 섞인 칫솔은 일반 쓰레기예요.']
+  ];
+  /* [상황, 좋은 행동, 아쉬운 행동들, 까닭] */
+  var SAVE = [
+    ['🪥 양치할 때 물은?', '🥛 컵에 받아서 써요', ['🚿 계속 틀어 놓아요'], '물을 아낄 수 있어요.'],
+    ['💡 방에서 나갈 때 불은?', '🔌 불을 꺼요', ['💡 켜 두고 나가요'], '전기를 아낄 수 있어요.'],
+    ['🧊 냉장고 문은?', '🚪 꺼낼 것을 생각하고 빨리 닫아요', ['👀 열어 놓고 한참 구경해요'], '문을 오래 열면 전기를 많이 써요.'],
+    ['🏫 가까운 곳에 갈 때는?', '🚶 걸어가거나 자전거를 타요', ['🚗 꼭 자동차를 타요'], '자동차 연기가 줄어들어요.'],
+    ['🛒 장 보러 갈 때는?', '👜 장바구니를 챙겨요', ['🛍️ 비닐봉지를 새로 많이 받아요'], '비닐 쓰레기가 줄어요.'],
+    ['🥤 물을 마실 때는?', '🧴 내 물병을 써요', ['🥤 일회용 컵을 여러 개 써요'], '일회용 쓰레기가 줄어요.'],
+    ['📄 한쪽만 쓴 종이는?', '✏️ 뒷면에 그림을 그려요', ['🗑️ 바로 버려요'], '종이를 아끼면 나무를 아낄 수 있어요.'],
+    ['🍽️ 밥을 먹을 때는?', '🥄 먹을 만큼만 담아요', ['🍚 많이 담고 남겨요'], '음식물 쓰레기가 줄어요.'],
+    ['🌳 공원에서 쓰레기가 생기면?', '🎒 가방에 넣어 집에 가져가요', ['🌳 풀숲에 몰래 버려요'], '동물과 식물이 아프지 않아요.'],
+    ['🧸 작아진 장난감은?', '🎁 동생이나 친구에게 물려줘요', ['🗑️ 멀쩡한데 버려요'], '다시 쓰면 쓰레기가 줄어요.']
+  ];
+  /* 먹이: [먹는 동물, 이름, 먹이 그림, 먹이 이름, 풀을 먹나(h)/고기를 먹나(c)]
+     보기는 반대쪽 먹이에서만 고른다 (곰처럼 이것저것 먹는 동물은 뺐다) */
+  var FOOD = [
+    ['🐰', '토끼', '🥕', '당근', 'h'], ['🐼', '판다', '🎋', '대나무', 'h'], ['🐝', '벌', '🌸', '꽃꿀', 'h'], ['🐿️', '다람쥐', '🌰', '도토리', 'h'],
+    ['🐄', '소', '🌾', '풀', 'h'], ['🐛', '애벌레', '🍃', '나뭇잎', 'h'],
+    ['🐧', '펭귄', '🐟', '물고기', 'c'], ['🐸', '개구리', '🦟', '모기', 'c'], ['🦁', '사자', '🦓', '얼룩말', 'c'], ['🦉', '부엉이', '🐭', '쥐', 'c']
+  ];
+  /* 먹이 사슬 [풀·열매, 먹는 동물, 그 동물을 먹는 동물] */
+  var CHAIN = [
+    [['🌾', '풀'], ['🐰', '토끼'], ['🦊', '여우']],
+    [['🍃', '나뭇잎'], ['🐛', '애벌레'], ['🐦', '새']],
+    [['🌾', '풀'], ['🦓', '얼룩말'], ['🦁', '사자']],
+    [['🌸', '꽃'], ['🦋', '나비'], ['🕷️', '거미']],
+    [['🌾', '풀'], ['🦗', '메뚜기'], ['🐸', '개구리']],
+    [['🌰', '도토리'], ['🐭', '쥐'], ['🦉', '부엉이']]
+  ];
+  var PRED = [['🦁', '사자'], ['🕷️', '거미'], ['🦉', '부엉이'], ['🐸', '개구리']];
+  var HERB = [['🐰', '토끼'], ['🐛', '애벌레'], ['🦓', '얼룩말'], ['🦋', '나비'], ['🦗', '메뚜기']];
+  var PROMISE = [['💡', '안 쓰는 불 끄기'], ['🚰', '물 아껴 쓰기'], ['🍽️', '밥 남기지 않기'], ['♻️', '분리배출 돕기'], ['🚶', '가까운 곳은 걸어가기'], ['👜', '장바구니·물병 쓰기']];
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '♻️', label: '어디에 버릴까?', mode: 'sort', color: '#e3f7cf', run: sortQuiz },
+      { icon: '💧', label: '아껴 쓰기', mode: 'save', color: '#e9f3ff', run: saveQuiz },
+      { icon: '🥕', label: '무엇을 먹을까?', mode: 'food', color: '#fff3c4', run: foodQuiz },
+      { icon: '🔗', label: '먹이 사슬', mode: 'chain', color: '#ffe9ee', run: chainQuiz },
+      { icon: '🌏', label: '오늘의 지구 약속', color: '#d0f4de', run: promise }
+    ]);
+  }
+  function quiz(mode, make) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: 8, make: make, onFinish: home }); }
+  function why(text) { return function () { var st = document.querySelector('.kl-stage'); if (st) st.appendChild(el('div', { style: 'text-align:center' }, [el('div', { class: 'why', text: '💡 ' + text })])); K.speak(text); }; }
+
+  function sortQuiz() {
+    quiz('sort', function (i, lv) {
+      var it = K.pick(lv <= 1 ? ITEMS.filter(function (x) { return ['paper', 'can', 'food', 'plastic'].indexOf(x[2]) >= 0; }) : ITEMS);
+      var keys = Object.keys(BINS).filter(function (k) { return k !== it[2]; });
+      var opts = K.shuffle([it[2]].concat(K.sample(keys, lv <= 1 ? 2 : 3)));
+      return {
+        key: 's' + it[1], prompt: '<div class="thing">' + it[0] + '</div><div class="thing-l">' + it[1] + '</div>', sub: '어디에 버릴까요?', say: it[1] + '. 어디에 버릴까요?', cols: opts.length === 4 ? 2 : 3,
+        choices: opts.map(function (k) { return { html: '<div class="bin"><i>' + BINS[k][0] + '</i>' + BINS[k][1] + '</div>', correct: k === it[2], say: BINS[k][1] }; }),
+        onCorrect: why(it[3]), hold: 2600
+      };
+    });
+  }
+  function saveQuiz() {
+    quiz('save', function (i, lv) {
+      var s = K.pick(SAVE);
+      return {
+        key: 'v' + s[0], prompt: '<div class="sit">' + s[0] + '</div>', say: s[0].replace(/^\S+\s/, ''), cols: 1,
+        choices: K.shuffle([s[1]].concat(s[2])).map(function (o) { return { html: '<div class="opt">' + o + '</div>', correct: o === s[1] }; }),
+        onCorrect: why(s[3]), hold: 2400
+      };
+    });
+  }
+  function foodQuiz() {
+    quiz('food', function (i, lv) {
+      var f = K.pick(FOOD), n = lv <= 1 ? 2 : 3;
+      var others = K.sample(FOOD.filter(function (x) { return x[4] !== f[4]; }), n);
+      var opts = K.shuffle([f].concat(others));
+      return {
+        key: 'f' + f[1], prompt: '<div class="thing">' + f[0] + '</div><div class="thing-l">' + f[1] + '</div>', sub: '무엇을 먹을까요?', say: f[1] + jo(f[1], '은/는') + ' 무엇을 먹을까요?', cols: opts.length,
+        choices: opts.map(function (o) { return { html: '<div class="bin"><i>' + o[2] + '</i>' + o[3] + '</div>', correct: o === f, say: o[3] }; })
+      };
+    });
+  }
+  function chainQuiz() {
+    quiz('chain', function (i, lv) {
+      var c = K.pick(CHAIN), slot = lv <= 2 ? 1 : K.pick([1, 2]);
+      var ans = c[slot];
+      /* 가운데 칸 보기는 풀을 안 먹는 동물, 끝 칸 보기는 다른 동물을 안 먹는 동물로만 고른다 */
+      var pool = (slot === 1 ? PRED : HERB).filter(function (y) { return y[1] !== ans[1] && c.every(function (z) { return z[1] !== y[1]; }); });
+      var opts = K.shuffle([ans].concat(K.sample(pool, lv <= 1 ? 2 : 3)));
+      var cells = c.map(function (x, k) { return k === slot ? '<span class="gap">?</span>' : '<span title="' + x[1] + '">' + x[0] + '</span>'; });
+      return {
+        key: 'c' + c.map(function (x) { return x[1]; }).join() + slot, prompt: '<div class="chain">' + cells.join('<span class="ar">→</span>') + '</div>',
+        sub: '화살표는 "먹혀요"예요. 빈칸에 들어갈 것은?', say: slot === 1 ? c[0][1] + jo(c[0][1], '을/를') + ' 먹고, ' + c[2][1] + '에게 먹히는 동물은?' : c[1][1] + jo(c[1][1], '을/를') + ' 먹는 동물은?', cols: opts.length,
+        choices: opts.map(function (o) { return { html: '<div class="bin"><i>' + o[0] + '</i>' + o[1] + '</div>', correct: o === ans, say: o[1] }; })
+      };
+    });
+  }
+  function promise() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var today = K.todayKey(), done = (K.progress().promise || {})[today] || [];
+    var bar = el('div', { class: 'earthbar' });
+    main.appendChild(el('div', { class: 'kl-prompt', text: '🌏 오늘 지킨 지구 약속', style: 'font-size:24px' }));
+    main.appendChild(bar);
+    var box = el('div', { class: 'check' });
+    function paint() { bar.textContent = '🌱'.repeat(done.length) + (done.length ? '' : '하나씩 눌러 체크해요') + '  ' + done.length + ' / ' + PROMISE.length; }
+    PROMISE.forEach(function (p, k) {
+      var b = el('button', { class: done.indexOf(k) >= 0 ? 'on' : '', html: '<i>' + p[0] + '</i>' + p[1] + '<b>' + (done.indexOf(k) >= 0 ? '✅' : '⬜') + '</b>' });
+      b.addEventListener('click', function () {
+        var at = done.indexOf(k);
+        if (at >= 0) done.splice(at, 1); else { done.push(k); K.sfx.correct(); K.speak(p[1] + ', 잘했어요!'); }
+        b.classList.toggle('on', at < 0); b.querySelector('b').textContent = at < 0 ? '✅' : '⬜';
+        K.mutate(function (d) { var pr = d.progress.earth || (d.progress.earth = {}); var pm = pr.promise || (pr.promise = {}); pm[today] = done.slice(); var ks = Object.keys(pm).sort(); while (ks.length > 60) delete pm[ks.shift()]; });
+        if (at < 0 && done.length === 3) { K.addStar(2); K.event('save'); K.confetti(); }
+        paint();
+      });
+      box.appendChild(b);
+    });
+    main.appendChild(box);
+    paint();
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

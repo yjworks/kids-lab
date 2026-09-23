@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>자판 연습</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .ty { max-width: 860px; margin: 0 auto; text-align: center; }
+  .ty-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 900; font-size: 17px; color: #555; flex-wrap: wrap; }
+  .target { font-size: 96px; font-weight: 900; line-height: 1.1; margin: 6px 0 2px; min-height: 110px; color: #333; }
+  .target.word { font-size: 64px; letter-spacing: 4px; min-height: 80px; }
+  .typed { font-size: 44px; font-weight: 900; min-height: 56px; color: #1982c4; letter-spacing: 3px; border-bottom: 4px solid #cfe2f3; display: inline-block; min-width: 200px; padding: 0 10px; }
+  .typed.bad { color: #d62839; }
+  .finger { font-size: 18px; font-weight: 900; color: #6a4c93; margin: 6px 0 10px; min-height: 26px; }
+  .kb { display: inline-flex; flex-direction: column; gap: 6px; padding: 10px; background: #e8e2d6; border-radius: 18px; user-select: none; -webkit-user-select: none; max-width: 100%; }
+  .kb .r { display: flex; gap: 6px; }
+  .kb .r1 { padding-left: 0; } .kb .r2 { padding-left: 22px; } .kb .r3 { padding-left: 48px; }
+  .kb button { width: 58px; height: 58px; border-radius: 12px; background: #fff; box-shadow: 0 3px 0 rgba(0,0,0,.15); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; position: relative; flex: 0 0 auto; }
+  .kb button .k { font-size: 24px; font-weight: 900; }
+  .kb button .l { font-size: 12px; font-weight: 800; color: #888; margin-top: 3px; }
+  .kb button.home::after { content: ''; position: absolute; bottom: 2px; width: 14px; height: 3px; border-radius: 2px; background: #999; }
+  .kb button.f0, .kb button.f7 { border-bottom: 4px solid #ff8fa3; } .kb button.f1, .kb button.f6 { border-bottom: 4px solid #ffca3a; }
+  .kb button.f2, .kb button.f5 { border-bottom: 4px solid #8ac926; } .kb button.f3, .kb button.f4 { border-bottom: 4px solid #6ec1ff; }
+  .kb button.hit { background: #ffca3a; transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.15); animation: glow 1s infinite; }
+  .kb button.miss { background: #ffc2c7; }
+  .kb .bs { width: 96px; font-size: 16px; font-weight: 900; }
+  @keyframes glow { 50% { background: #ffe38a; } }
+  .note { font-size: 15px; font-weight: 800; color: #666; margin-top: 8px; }
+  .phone-note { background: #fff4d6; border-radius: 14px; padding: 8px 12px; font-size: 15px; font-weight: 800; color: #7a5300; margin: 6px auto 10px; max-width: 560px; }
+  .res { font-size: 22px; font-weight: 900; line-height: 1.7; }
+  @media (max-width: 760px) {
+    .target { font-size: 70px; min-height: 80px; } .target.word { font-size: 42px; min-height: 56px; } .typed { font-size: 32px; min-width: 150px; }
+    .kb { gap: 4px; padding: 6px; } .kb .r { gap: 4px; } .kb .r2 { padding-left: 12px; } .kb .r3 { padding-left: 26px; }
+    .kb button { width: calc((100vw - 90px) / 10); height: 46px; border-radius: 8px; } .kb button .k { font-size: 18px; } .kb button .l { font-size: 10px; }
+    .kb .bs { width: 64px; font-size: 13px; }
+  }
+</style>
+</head>
+<body data-app="typing">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '자판 연습', icon: '⌨️', say: '자판 연습' });
+  var main = document.getElementById('main');
+
+  /* ---------- 자판 배열: 표준 두벌식(KS X 5002)과 쿼티 ---------- */
+  var ROWS = [
+    ['KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI', 'KeyO', 'KeyP'],
+    ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL'],
+    ['KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'KeyN', 'KeyM']
+  ];
+  var KO = { KeyQ: 'ㅂ', KeyW: 'ㅈ', KeyE: 'ㄷ', KeyR: 'ㄱ', KeyT: 'ㅅ', KeyY: 'ㅛ', KeyU: 'ㅕ', KeyI: 'ㅑ', KeyO: 'ㅐ', KeyP: 'ㅔ',
+    KeyA: 'ㅁ', KeyS: 'ㄴ', KeyD: 'ㅇ', KeyF: 'ㄹ', KeyG: 'ㅎ', KeyH: 'ㅗ', KeyJ: 'ㅓ', KeyK: 'ㅏ', KeyL: 'ㅣ',
+    KeyZ: 'ㅋ', KeyX: 'ㅌ', KeyC: 'ㅊ', KeyV: 'ㅍ', KeyB: 'ㅠ', KeyN: 'ㅜ', KeyM: 'ㅡ' };
+  var FINGER = { KeyQ: 0, KeyA: 0, KeyZ: 0, KeyW: 1, KeyS: 1, KeyX: 1, KeyE: 2, KeyD: 2, KeyC: 2, KeyR: 3, KeyF: 3, KeyV: 3, KeyT: 3, KeyG: 3, KeyB: 3,
+    KeyY: 4, KeyH: 4, KeyN: 4, KeyU: 4, KeyJ: 4, KeyM: 4, KeyI: 5, KeyK: 5, KeyO: 6, KeyL: 6, KeyP: 7 };
+  var FNAME = ['왼손 새끼손가락', '왼손 약손가락', '왼손 가운뎃손가락', '왼손 집게손가락', '오른손 집게손가락', '오른손 가운뎃손가락', '오른손 약손가락', '오른손 새끼손가락'];
+  function latin(code) { return code.slice(3).toLowerCase(); }
+  var BY_KO = {}; Object.keys(KO).forEach(function (c) { BY_KO[KO[c]] = c; });
+
+  /* ---------- 한글 조합 (두벌식 오토마타) ---------- */
+  var CHO = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ', JUNG = 'ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ';
+  var JONG = ['', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+  var VV = { 'ㅗㅏ': 'ㅘ', 'ㅗㅐ': 'ㅙ', 'ㅗㅣ': 'ㅚ', 'ㅜㅓ': 'ㅝ', 'ㅜㅔ': 'ㅞ', 'ㅜㅣ': 'ㅟ', 'ㅡㅣ': 'ㅢ' };
+  var CC = { 'ㄱㅅ': 'ㄳ', 'ㄴㅈ': 'ㄵ', 'ㄴㅎ': 'ㄶ', 'ㄹㄱ': 'ㄺ', 'ㄹㅁ': 'ㄻ', 'ㄹㅂ': 'ㄼ', 'ㄹㅅ': 'ㄽ', 'ㄹㅌ': 'ㄾ', 'ㄹㅍ': 'ㄿ', 'ㄹㅎ': 'ㅀ', 'ㅂㅅ': 'ㅄ' };
+  var CC_SPLIT = {}; Object.keys(CC).forEach(function (k) { CC_SPLIT[CC[k]] = [k.charAt(0), k.charAt(1)]; });
+  function isV(j) { return JUNG.indexOf(j) >= 0; }
+  function syl(c, v, t) { return String.fromCharCode(0xAC00 + (CHO.indexOf(c) * 21 + JUNG.indexOf(v)) * 28 + JONG.indexOf(t || '')); }
+  function compose(seq) {
+    var out = '', c = '', v = '', t = '';
+    function flush() { if (c && v) out += syl(c, v, t); else out += c + v; c = v = t = ''; }
+    seq.forEach(function (j) {
+      if (isV(j)) {
+        if (t) {
+          var sp = CC_SPLIT[t], moved;
+          if (sp) { t = sp[0]; moved = sp[1]; } else { moved = t; t = ''; }
+          flush(); c = moved; v = j;
+        } else if (v) {
+          if (c && VV[v + j]) v = VV[v + j]; else if (!c && VV[v + j]) v = VV[v + j]; else { flush(); v = j; }
+        } else v = j;
+      } else {
+        if (!c && !v) c = j;
+        else if (c && !v) { flush(); c = j; }
+        else if (!c && v) { flush(); c = j; }
+        else if (!t) { if (JONG.indexOf(j) > 0) t = j; else { flush(); c = j; } }
+        else if (CC[t + j]) t = CC[t + j];
+        else { flush(); c = j; }
+      }
+    });
+    flush();
+    return out;
+  }
+  /* 낱말을 눌러야 할 자모 순서로 푼다 (겹모음·겹받침은 두 번 누른다) */
+  var VV_SPLIT = {}; Object.keys(VV).forEach(function (k) { VV_SPLIT[VV[k]] = [k.charAt(0), k.charAt(1)]; });
+  function keysOf(word) {
+    var seq = [];
+    word.split('').forEach(function (ch) {
+      var code = ch.charCodeAt(0) - 0xAC00;
+      if (code < 0 || code > 11171) { seq.push(ch); return; }
+      var ci = Math.floor(code / 588), vi = Math.floor(code % 588 / 28), ti = code % 28;
+      seq.push(CHO.charAt(ci));
+      var v = JUNG.charAt(vi); if (VV_SPLIT[v]) seq = seq.concat(VV_SPLIT[v]); else seq.push(v);
+      var t = JONG[ti]; if (t) { if (CC_SPLIT[t]) seq = seq.concat(CC_SPLIT[t]); else seq.push(t); }
+    });
+    return seq;
+  }
+
+  /* ---------- 연습 거리 ---------- */
+  var LESSONS = [
+    { id: 'k1', lang: 'ko', icon: '✋', name: '가운뎃줄 왼손', keys: ['KeyA', 'KeyS', 'KeyD', 'KeyF'] },
+    { id: 'k2', lang: 'ko', icon: '🤚', name: '가운뎃줄 오른손', keys: ['KeyJ', 'KeyK', 'KeyL', 'KeyH', 'KeyG'] },
+    { id: 'k3', lang: 'ko', icon: '⬆️', name: '윗줄', keys: ROWS[0] },
+    { id: 'k4', lang: 'ko', icon: '⬇️', name: '아랫줄', keys: ROWS[2] },
+    { id: 'kw', lang: 'ko', icon: '📝', name: '한글 낱말', words: ['나무', '오리', '우유', '바다', '하마', '모자', '사자', '기차', '포도', '두부', '가방', '사랑', '학교', '친구', '구름', '노래', '바지', '우산', '수박', '호박', '기린', '거미', '오이', '고래', '나비', '토마토', '비누', '라면', '과자', '의자'] },
+    { id: 'e1', lang: 'en', icon: '🔤', name: 'ABC 가운뎃줄', keys: ROWS[1] },
+    { id: 'e2', lang: 'en', icon: '🔠', name: 'ABC 윗줄·아랫줄', keys: ROWS[0].concat(ROWS[2]) },
+    { id: 'ew', lang: 'en', icon: '🐱', name: '영어 낱말', words: ['cat', 'dog', 'sun', 'hat', 'pig', 'bed', 'cup', 'red', 'fox', 'bus', 'map', 'egg', 'fish', 'milk', 'book', 'tree', 'star', 'frog', 'duck', 'cake', 'ball', 'moon', 'apple', 'happy'] }
+  ];
+
+  var isPhone = window.matchMedia && matchMedia('(pointer: coarse)').matches && !matchMedia('(hover: hover)').matches;
+  function best() { return K.progress().best || {}; }
+
+  function home() {
+    stop();
+    main.innerHTML = '';
+    var b = best();
+    K.menu(main, LESSONS.map(function (l) {
+      return { icon: l.icon, label: l.name + (b[l.id] ? ' · 분당 ' + b[l.id] + '타' : ''), color: l.lang === 'ko' ? '#e9f3ff' : '#fff3c4', run: function () { play(l); } };
+    }));
+    main.appendChild(el('div', { class: 'kl-hint', text: isPhone ? '컴퓨터 자판으로 하면 더 좋아요. 휴대폰에서는 화면 자판을 눌러요' : 'ㄹ(F)과 ㅓ(J) 자리에 있는 작은 돌기에 두 집게손가락을 올려요' }));
+  }
+
+  var onKey = null;
+  function stop() { if (onKey) { window.removeEventListener('keydown', onKey, true); onKey = null; } }
+
+  function play(L) {
+    stop();
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var box = el('div', { class: 'ty' });
+    var total = L.words ? 8 : 20, idx = 0, errs = 0, strokes = 0, t0 = 0;
+    var topBar = el('div', { class: 'ty-top' }, [el('span', { text: L.icon + ' ' + L.name }), el('span', { class: 'cnt' })]);
+    var target = el('div', { class: 'target' + (L.words ? ' word' : '') });
+    var typed = el('div', { class: 'typed' });
+    var finger = el('div', { class: 'finger' });
+    box.appendChild(topBar);
+    if (isPhone) box.appendChild(el('div', { class: 'phone-note', text: '📱 휴대폰에서는 아래 화면 자판을 눌러요. 컴퓨터 자판이 있으면 그걸로 해요!' }));
+    box.appendChild(target);
+    if (L.words) box.appendChild(typed);
+    box.appendChild(finger);
+    var kb = el('div', { class: 'kb' }), btn = {};
+    ROWS.forEach(function (r, ri) {
+      var row = el('div', { class: 'r r' + (ri + 1) });
+      r.forEach(function (code) {
+        var b = el('button', { class: 'f' + FINGER[code] + (code === 'KeyF' || code === 'KeyJ' ? ' home' : ''), html: '<span class="k">' + (L.lang === 'ko' ? KO[code] : latin(code)) + '</span>' + (L.lang === 'ko' ? '<span class="l">' + latin(code) + '</span>' : '') });
+        b.addEventListener('click', function () { press(code, false); });
+        btn[code] = b; row.appendChild(b);
+      });
+      if (ri === 2 && L.words) { var bs = el('button', { class: 'bs', text: '⌫ 지우기' }); bs.addEventListener('click', function () { press('Backspace', false); }); btn.Backspace = bs; row.appendChild(bs); }
+      kb.appendChild(row);
+    });
+    box.appendChild(kb);
+    box.appendChild(el('div', { class: 'note', text: L.lang === 'ko' ? '한/영 키를 바꾸지 않아도 돼요. 자판 자리만 보고 눌러요' : '대문자 잠금(Caps Lock)은 꺼 두어요' }));
+    main.appendChild(box);
+
+    var seqKeys = [], cur = null, word = '', wseq = [], typedSeq = [];
+    if (L.words) { var ws = K.shuffle(L.words); for (var i = 0; i < total; i++) seqKeys.push(ws[i % ws.length]); }
+    else { var last = ''; for (i = 0; i < total; i++) { var k; do { k = K.pick(L.keys); } while (k === last && L.keys.length > 1); seqKeys.push(k); last = k; } }
+
+    function label(code) { return L.lang === 'ko' ? KO[code] : latin(code); }
+    function light(code) {
+      Object.keys(btn).forEach(function (c) { btn[c].classList.remove('hit'); });
+      if (code && btn[code]) btn[code].classList.add('hit');
+      finger.textContent = code === 'Backspace' ? '⌫ 지우기를 눌러 고쳐요' : code ? '👉 ' + FNAME[FINGER[code]] + '으로 ' + label(code) : '';
+    }
+    function show() {
+      topBar.querySelector('.cnt').textContent = (idx + 1) + ' / ' + total + (errs ? ' · 틀림 ' + errs : '');
+      if (L.words) {
+        word = seqKeys[idx]; wseq = L.lang === 'ko' ? keysOf(word) : word.split(''); typedSeq = [];
+        target.textContent = word; typed.textContent = ''; typed.classList.remove('bad');
+        light(nextCode());
+        if (L.lang === 'ko') K.speak(word); else K.speakEn(word);
+      } else {
+        cur = seqKeys[idx]; target.textContent = label(cur); light(cur);
+      }
+    }
+    function nextCode() {
+      for (var i = 0; i < typedSeq.length; i++) if (typedSeq[i] !== wseq[i]) return 'Backspace';
+      var j = wseq[typedSeq.length]; if (j == null) return null;
+      return L.lang === 'ko' ? BY_KO[j] : 'Key' + j.toUpperCase();
+    }
+    function press(code, real) {
+      if (!t0) t0 = Date.now();
+      if (L.words) {
+        if (code === 'Backspace') { typedSeq.pop(); }
+        else if (KO[code]) { typedSeq.push(L.lang === 'ko' ? KO[code] : latin(code)); strokes++; }
+        else return;
+        var txt = L.lang === 'ko' ? compose(typedSeq) : typedSeq.join('');
+        typed.textContent = txt;
+        var n = nextCode();
+        var bad = n === 'Backspace';
+        if (bad && code !== 'Backspace') { errs++; K.sfx.wrong(); }
+        typed.classList.toggle('bad', bad);
+        if (txt === word) { K.sfx.correct(); K.addStar(1); K.event('correct'); idx++; if (idx >= total) return finish(); setTimeout(show, 350); light(null); return; }
+        light(n);
+      } else {
+        if (!KO[code]) return;
+        strokes++;
+        if (code === cur) {
+          btn[code].classList.remove('miss'); K.sfx.pop(); idx++;
+          if (idx % 5 === 0) { K.addStar(1); K.event('correct'); }
+          if (idx >= total) return finish();
+          show();
+        } else {
+          errs++; K.sfx.wrong(); var b = btn[code]; b.classList.add('miss'); setTimeout(function () { b.classList.remove('miss'); }, 400);
+          topBar.querySelector('.cnt').textContent = (idx + 1) + ' / ' + total + ' · 틀림 ' + errs;
+        }
+      }
+    }
+    function finish() {
+      stop();
+      var min = Math.max(1 / 60, (Date.now() - t0) / 60000), speed = Math.round(strokes / min), acc = Math.round((strokes - errs) / Math.max(1, strokes) * 100);
+      var prev = best()[L.id] || 0;
+      K.mutate(function (d) { var pr = d.progress.typing || (d.progress.typing = {}); var b = pr.best || (pr.best = {}); b[L.id] = Math.max(b[L.id] || 0, speed); });
+      box.innerHTML = '';
+      box.appendChild(el('div', { class: 'kl-result-emoji', text: acc >= 90 ? '🏆' : '👏' }));
+      box.appendChild(el('div', { class: 'res', html: '분당 <b>' + speed + '</b>타 · 정확도 <b>' + acc + '%</b>' + (speed > prev && prev ? '<br>🎊 내 기록을 넘었어요! (전에는 ' + prev + '타)' : '') }));
+      box.appendChild(el('div', { class: 'kl-row', style: 'margin-top:12px' }, [
+        el('button', { class: 'kl-btn primary', text: '🔁 한 번 더', onclick: function () { K.sfx.click(); play(L); } }),
+        el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: function () { K.sfx.click(); home(); } })
+      ]));
+      K.addStar(2); K.event('win'); if (acc >= 90) { K.sfx.win(); K.confetti(); }
+      K.speak('분당 ' + speed + '타, 정확도 ' + acc + '퍼센트예요');
+    }
+    onKey = function (e) {
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
+      if (e.code === 'Backspace' || KO[e.code]) { e.preventDefault(); if (!e.repeat) press(e.code, true); }
+    };
+    window.addEventListener('keydown', onKey, true);
+    window.focus();
+    show();
+  }
+
+  home();
+  window.KidTyping = { compose: compose, keysOf: keysOf };
+})();
+</script>
+</body>
+</html>

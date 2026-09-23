@@ -232,7 +232,18 @@
     { app: 'arcade', key: 'win', n: 1, label: '오락실에서 한 판 이기기', icon: '🕹️' },
     { app: 'passage', key: 'correct', n: 3, label: '읽기 지문 3문제 맞히기', icon: '📰' },
     { app: 'korean', key: 'correct', n: 5, label: '우리말 5문제 맞히기', icon: '💬' },
-    { app: 'classic', key: 'read', n: 1, label: '고전 한 문장 읽기', icon: '📜' }
+    { app: 'classic', key: 'read', n: 1, label: '고전 한 문장 읽기', icon: '📜' },
+    { app: 'phonics', key: 'correct', n: 5, label: '파닉스 5문제 맞히기', icon: '🔡' },
+    { app: 'esent', key: 'correct', n: 5, label: '영어 문장 5개 맞히기', icon: '💬' },
+    { app: 'ebooks', key: 'read', n: 1, label: '영어 그림책 한 권 읽기', icon: '📗' },
+    { app: 'space', key: 'correct', n: 4, label: '쌓기나무 4문제 맞히기', icon: '🧊' },
+    { app: 'wordmath', key: 'correct', n: 4, label: '이야기 수학 4문제 맞히기', icon: '📖' },
+    { app: 'earth', key: 'correct', n: 5, label: '지구 지킴이 5문제 맞히기', icon: '♻️' },
+    { app: 'world', key: 'correct', n: 5, label: '세계 여행 5문제 맞히기', icon: '🌍' },
+    { app: 'money', key: 'correct', n: 5, label: '내 저금통 5문제 맞히기', icon: '🐷' },
+    { app: 'media', key: 'correct', n: 4, label: '진짜일까? 4문제 맞히기', icon: '🔍' },
+    { app: 'aiteach', key: 'win', n: 1, label: '로보 한 번 가르치기', icon: '🧠' },
+    { app: 'typing', key: 'win', n: 1, label: '자판 연습 한 판 하기', icon: '⌨️' }
   ];
   var DAILY_FIXED = { app: 'diary', key: 'save', n: 1, label: '오늘의 일기 쓰기', icon: '📔' };
   function missions(d) {
@@ -543,7 +554,8 @@
             if (tries === 0) score++;
             addStar(1); event(APP_ID, "correct");
             if (q.onCorrect) q.onCorrect();
-            setTimeout(function () { idx++; next(); }, 900);
+            /* 까닭을 보여 주는 문제는 q.hold 만큼 더 머문다 */
+            setTimeout(function () { idx++; next(); }, q.hold || 900);
           } else {
             tries++;
             b.classList.add('wrong', 'wrong-mark');

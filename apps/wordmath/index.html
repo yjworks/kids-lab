@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>이야기 수학</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .story { font-size: 23px; font-weight: 900; line-height: 1.6; word-break: keep-all; max-width: 660px; margin: 0 auto; text-align: left; background: #fffdf7; border-radius: 18px; padding: 14px 18px; box-shadow: inset 0 0 0 2px #efe6d3; }
+  .story .q { color: #c0395f; }
+  .pics { font-size: 30px; letter-spacing: 2px; margin-top: 8px; line-height: 1.3; word-break: break-all; }
+  .pics .plus { color: #6a4c93; font-weight: 900; margin: 0 6px; }
+  .num { font-size: 30px; font-weight: 900; }
+  .expr { font-size: 28px; font-weight: 900; letter-spacing: 1px; }
+  body[data-app="wordmath"] .kl-choice { min-height: 0; padding: 14px 12px; }
+  @media (max-width: 760px) { .story { font-size: 18px; padding: 12px 14px; } .pics { font-size: 24px; } .expr { font-size: 22px; } .num { font-size: 26px; } }
+</style>
+</head>
+<body data-app="wordmath">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '이야기 수학', icon: '➗', say: '이야기 수학' });
+  var main = document.getElementById('main');
+  function jo(w, p) { return K.josa(w, p); }
+
+  /* 받침 없는 이름만 써서 "민지는"처럼 자연스럽게 읽힌다 */
+  var NAMES = ['민지', '지우', '서아', '도하', '유나', '시우', '하리', '채아', '누리', '다오'];
+  /* [물건, 세는 말, 그림] */
+  var OBJ = [['사과', '개', '🍎'], ['연필', '자루', '✏️'], ['사탕', '개', '🍬'], ['공책', '권', '📒'], ['색종이', '장', '📄'], ['꽃', '송이', '🌸'], ['구슬', '개', '🔵'], ['쿠키', '개', '🍪'], ['스티커', '장', '⭐'], ['딸기', '개', '🍓']];
+  var GIVERS = ['엄마', '아빠', '할머니', '선생님', '친구'];
+  var EAT = { '사과': '먹었어요', '사탕': '먹었어요', '쿠키': '먹었어요', '딸기': '먹었어요' };
+
+  function giver() { var g = K.pick(GIVERS); return g + jo(g, '이/가') + ' '; }
+  function two(arr) { var a = K.pick(arr), b; do { b = K.pick(arr); } while (b === a); return [a, b]; }
+  function cnt(n, o) { return n + o[1]; }
+
+  /* 문제 하나: { text, ans, expr(정답 식), wrongExpr[], pics } */
+  function make(lv) {
+    var nm = two(NAMES), o = K.pick(OBJ), other = K.pick(OBJ.filter(function (x) { return x !== o; }));
+    var kinds = lv <= 1 ? ['add', 'sub'] : lv <= 2 ? ['add', 'sub', 'cmp'] : lv <= 3 ? ['add', 'sub', 'cmp', 'extra'] : lv <= 4 ? ['sub', 'cmp', 'extra', 'two'] : ['extra', 'two', 'mul', 'div'];
+    var kind = K.pick(kinds), max = lv <= 1 ? 9 : lv <= 2 ? 15 : 20, a, b, c, t, ans, ex, wr, pics = '';
+    if (kind === 'add') {
+      a = K.randInt(1, max - 1); b = K.randInt(1, Math.min(9, max - a));
+      t = nm[0] + jo(nm[0], '은/는') + ' ' + o[0] + ' ' + cnt(a, o) + jo(o[1], '을/를') + ' 가지고 있어요. ' + giver() + cnt(b, o) + jo(o[1], '을/를') + ' 더 주었어요.';
+      t += '<span class="q"> ' + o[0] + jo(o[0], '은/는') + ' 모두 몇 ' + o[1] + '일까요?</span>';
+      ans = a + b; ex = a + ' + ' + b; wr = [a + ' - ' + b, b + ' - ' + a];
+      if (lv <= 1) pics = o[2].repeat(a) + '<span class="plus">+</span>' + o[2].repeat(b);
+    } else if (kind === 'sub') {
+      a = K.randInt(3, max); b = K.randInt(1, a - 1);
+      var verb = EAT[o[0]] || '친구에게 주었어요';
+      t = nm[0] + jo(nm[0], '은/는') + ' ' + o[0] + ' ' + cnt(a, o) + jo(o[1], '이/가') + ' 있었어요. 그중에서 ' + cnt(b, o) + jo(o[1], '을/를') + ' ' + verb + '.';
+      t += '<span class="q"> 남은 ' + o[0] + jo(o[0], '은/는') + ' 몇 ' + o[1] + '일까요?</span>';
+      ans = a - b; ex = a + ' - ' + b; wr = [a + ' + ' + b, b + ' - ' + a];
+      if (lv <= 1) pics = o[2].repeat(a);
+    } else if (kind === 'cmp') {
+      a = K.randInt(4, max); b = K.randInt(1, a - 1);
+      t = nm[0] + jo(nm[0], '은/는') + ' ' + o[0] + ' ' + cnt(a, o) + ', ' + nm[1] + jo(nm[1], '은/는') + ' ' + cnt(b, o) + jo(o[1], '을/를') + ' 가지고 있어요.';
+      t += '<span class="q"> ' + nm[0] + jo(nm[0], '이/가') + ' ' + nm[1] + '보다 몇 ' + o[1] + ' 더 많을까요?</span>';
+      ans = a - b; ex = a + ' - ' + b; wr = [a + ' + ' + b, b + ' - ' + a];
+    } else if (kind === 'extra') {
+      /* 필요 없는 수가 섞여 있다 */
+      a = K.randInt(5, max); b = K.randInt(1, a - 1); c = K.randInt(2, 9);
+      var add = Math.random() < 0.5;
+      t = nm[0] + jo(nm[0], '은/는') + ' ' + o[0] + ' ' + cnt(a, o) + jo(o[1], '과/와') + ' ' + other[0] + ' ' + cnt(c, other) + jo(other[1], '을/를') + ' 가지고 있어요. ';
+      if (add) { t += giver() + o[0] + ' ' + cnt(b, o) + jo(o[1], '을/를') + ' 더 주었어요.<span class="q"> ' + o[0] + jo(o[0], '은/는') + ' 모두 몇 ' + o[1] + '일까요?</span>'; ans = a + b; ex = a + ' + ' + b; wr = [a + ' + ' + b + ' + ' + c, a + ' + ' + c]; }
+      else { t += o[0] + ' ' + cnt(b, o) + jo(o[1], '을/를') + ' 친구에게 주었어요.<span class="q"> 남은 ' + o[0] + jo(o[0], '은/는') + ' 몇 ' + o[1] + '일까요?</span>'; ans = a - b; ex = a + ' - ' + b; wr = [a + ' - ' + b + ' + ' + c, a + ' + ' + c + ' - ' + b]; }
+    } else if (kind === 'two') {
+      a = K.randInt(6, 15); b = K.randInt(1, a - 2); c = K.randInt(1, 9);
+      t = '버스에 ' + a + '명이 타고 있었어요. 정류장에서 ' + b + '명이 내리고 ' + c + '명이 탔어요.<span class="q"> 지금 버스에는 몇 명이 타고 있을까요?</span>';
+      ans = a - b + c; ex = a + ' - ' + b + ' + ' + c; wr = [a + ' + ' + b + ' - ' + c, a + ' - ' + b + ' - ' + c];
+      o = ['사람', '명', '🧑'];
+    } else if (kind === 'mul') {
+      a = K.randInt(2, 6); b = K.randInt(2, 5);
+      t = '한 봉지에 ' + o[0] + jo(o[0], '이/가') + ' ' + cnt(a, o) + '씩 들어 있어요.<span class="q"> ' + b + '봉지에는 ' + o[0] + jo(o[0], '이/가') + ' 모두 몇 ' + o[1] + '일까요?</span>';
+      ans = a * b; ex = a + ' × ' + b; wr = [a + ' + ' + b, a + ' - ' + b];
+    } else {
+      b = K.randInt(2, 5); a = K.randInt(2, 6); var whole = a * b;
+      t = o[0] + ' ' + cnt(whole, o) + jo(o[1], '을/를') + ' ' + b + '명이 똑같이 나누어 가지려고 해요.<span class="q"> 한 명이 몇 ' + o[1] + '씩 가질 수 있을까요?</span>';
+      ans = a; ex = whole + ' ÷ ' + b; wr = [whole + ' - ' + b, whole + ' × ' + b];
+    }
+    return { kind: kind, text: t, ans: ans, expr: ex, wrong: wr, pics: pics, unit: o[1] };
+  }
+  function numOpts(ans, n) {
+    var w = [ans + 1, ans - 1, ans + 2, ans - 2, ans + 10, ans - 10].filter(function (v, k, a) { return v >= 0 && v !== ans && a.indexOf(v) === k; });
+    return K.shuffle([ans].concat(K.sample(w.slice(0, 4), n)));
+  }
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '🔢', label: '읽고 답 구하기', mode: 'solve', color: '#fff3c4', run: solveQuiz },
+      { icon: '➕', label: '알맞은 식 고르기', mode: 'expr', color: '#e3f7cf', run: exprQuiz }
+    ]);
+    main.appendChild(el('div', { class: 'kl-hint', text: '문제를 끝까지 읽고, 무엇을 묻는지 찾아요. 필요 없는 수가 섞이기도 해요' }));
+  }
+  function quiz(mode, fn) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: 6, make: fn, onFinish: home }); }
+  function plain(html) { return html.replace(/<[^>]+>/g, ''); }
+
+  function solveQuiz() {
+    quiz('solve', function (i, lv) {
+      var p = make(lv);
+      return {
+        key: 's' + plain(p.text), prompt: '<div class="story">' + p.text + (p.pics ? '<div class="pics">' + p.pics + '</div>' : '') + '</div>', say: plain(p.text), cols: 4,
+        choices: numOpts(p.ans, lv <= 1 ? 2 : 3).map(function (v) { return { html: '<span class="num">' + v + '</span>', correct: v === p.ans, say: v + p.unit }; }),
+        onCorrect: function () { K.speak(p.expr.replace('×', '곱하기').replace('÷', '나누기').replace(/-/g, '빼기').replace(/\+/g, '더하기') + ', ' + p.ans + p.unit); }, hold: 2200
+      };
+    });
+  }
+  function exprQuiz() {
+    quiz('expr', function (i, lv) {
+      var p = make(Math.max(lv, 2));
+      var opts = K.shuffle([p.expr].concat(p.wrong.filter(function (w, k, a) { return w !== p.expr && a.indexOf(w) === k; })));
+      return {
+        key: 'e' + plain(p.text), prompt: '<div class="story">' + p.text + '</div>', sub: '어떤 식으로 풀까요?', say: plain(p.text) + ' 어떤 식으로 풀까요?', cols: 1,
+        choices: opts.map(function (e) { return { html: '<span class="expr">' + e + '</span>', correct: e === p.expr }; })
+      };
+    });
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

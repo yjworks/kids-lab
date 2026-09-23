@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>영어 그림책</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+  .cover { border-radius: 20px; padding: 14px 10px; box-shadow: 0 5px 0 rgba(0,0,0,.1); text-align: center; position: relative; }
+  .cover .e { font-size: 54px; } .cover .t { font-size: 21px; font-weight: 900; font-family: "Trebuchet MS", Arial, sans-serif; } .cover .k { font-size: 15px; font-weight: 800; color: #555; }
+  .cover .ok { position: absolute; top: 8px; right: 10px; }
+  .reader { display: flex; flex-direction: column; gap: 10px; flex: 1 1 0; min-height: 0; max-width: 760px; margin: 0 auto; width: 100%; }
+  .rhead { display: flex; align-items: center; gap: 8px; }
+  .rhead .t { flex: 1; font-weight: 900; font-size: 20px; font-family: "Trebuchet MS", Arial, sans-serif; }
+  .page { flex: 1 1 0; min-height: 0; overflow: auto; background: #fffdf7; border-radius: 22px; box-shadow: inset 0 0 0 2px #efe6d3; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; text-align: center; }
+  .page .pic { font-size: 96px; line-height: 1.15; word-break: break-all; }
+  .page .en { font-size: 36px; font-weight: 900; font-family: "Trebuchet MS", Arial, sans-serif; margin-top: 10px; line-height: 1.4; }
+  .page .en .w { display: inline-block; padding: 0 3px; border-radius: 8px; cursor: pointer; }
+  .page .en .w:active, .page .en .w.on { background: #ffe38a; }
+  .page .ko { font-size: 20px; font-weight: 800; color: #6b6b6b; margin-top: 8px; min-height: 28px; }
+  .nav { display: flex; gap: 10px; }
+  .nav button { flex: 1; min-height: 58px; border-radius: 18px; font-size: 19px; font-weight: 900; background: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.1); }
+  .nav .go { background: #ffca3a; }
+  .pg { font-size: 15px; font-weight: 900; color: #6a4c93; }
+  .qen { font-size: 22px; font-weight: 900; font-family: "Trebuchet MS", Arial, sans-serif; }
+  .qko { font-size: 17px; font-weight: 800; color: #6b6b6b; }
+  .ans { font-size: 44px; } .ans .chip { display: inline-block; width: 54px; height: 54px; border-radius: 50%; vertical-align: middle; border: 3px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+  @media (max-width: 760px) { .shelf { grid-template-columns: repeat(2, 1fr); gap: 8px; } .page .pic { font-size: 72px; } .page .en { font-size: 26px; } .page .ko { font-size: 17px; } .nav button { font-size: 16px; min-height: 52px; } .ans { font-size: 36px; } }
+</style>
+</head>
+<body data-app="ebooks">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '영어 그림책', icon: '📗', say: 'English picture books' });
+  var main = document.getElementById('main');
+  function chip(c) { return '<span class="chip" style="background:' + c + '"></span>'; }
+
+  /* 이 앱을 위해 새로 쓴 짧은 영어 그림책. 쪽: [그림, 영어, 우리말]. 질문: [영어, 우리말, 정답, [오답들]] */
+  var BOOKS = [
+    { id: 'cat', title: 'My Cat', ko: '내 고양이', e: '🐱', color: '#ffe9ee', pages: [
+      ['🐱', 'I have a cat.', '나는 고양이가 있어요.'], ['🐱', 'My cat is small.', '내 고양이는 작아요.'], ['🐱🥛', 'My cat likes milk.', '내 고양이는 우유를 좋아해요.'],
+      ['🐱🧶', 'My cat plays with yarn.', '내 고양이는 털실을 가지고 놀아요.'], ['🐱💤', 'My cat sleeps a lot.', '내 고양이는 잠을 많이 자요.'], ['🧒❤️🐱', 'I love my cat.', '나는 내 고양이를 사랑해요.']],
+      q: [['What is my pet?', '내가 키우는 동물은?', '🐱', ['🐶', '🐰']], ['What does my cat like?', '고양이가 좋아하는 것은?', '🥛', ['🍕', '🥕']], ['What does my cat do a lot?', '고양이가 많이 하는 것은?', '💤', ['🏊', '🎤']]] },
+    { id: 'color', title: 'Colors', ko: '색깔', e: '🌈', color: '#fff3c4', pages: [
+      ['🍎', 'The apple is red.', '사과는 빨간색이에요.'], ['🍌', 'The banana is yellow.', '바나나는 노란색이에요.'], ['🍃', 'The leaf is green.', '나뭇잎은 초록색이에요.'],
+      ['🍇', 'The grapes are purple.', '포도는 보라색이에요.'], ['🐳', 'The whale is blue.', '고래는 파란색이에요.'], ['🌈', 'I like colors!', '나는 색깔이 좋아요!']],
+      q: [['What is red?', '빨간 것은?', '🍎', ['🍌', '🍃']], ['What color is the banana?', '바나나는 무슨 색이에요?', chip('#ffca3a'), [chip('#e63946'), chip('#1982c4')]], ['What is green?', '초록색인 것은?', '🍃', ['🍇', '🐳']]] },
+    { id: 'morning', title: 'Good Morning', ko: '좋은 아침', e: '⏰', color: '#e9f3ff', pages: [
+      ['⏰', 'I wake up.', '나는 일어나요.'], ['🧼', 'I wash my face.', '나는 세수를 해요.'], ['🍳', 'I eat breakfast.', '나는 아침을 먹어요.'],
+      ['🪥', 'I brush my teeth.', '나는 이를 닦아요.'], ['🎒', 'I go to school.', '나는 학교에 가요.'], ['👋', 'Bye, Mom!', '엄마, 다녀오겠습니다!']],
+      q: [['What do I eat?', '무엇을 먹어요?', '🍳', ['🍕', '🍦']], ['What do I brush?', '무엇을 닦아요?', '🦷', ['👂', '👟']], ['Where do I go?', '어디에 가요?', '🏫', ['🏥', '🏖️']]] },
+    { id: 'zoo', title: 'At the Zoo', ko: '동물원에서', e: '🦁', color: '#e3f7cf', pages: [
+      ['🦁', 'I see a lion.', '사자가 보여요.'], ['🦁', 'The lion is big.', '사자는 커요.'], ['🐵', 'I see a monkey.', '원숭이가 보여요.'],
+      ['🐵🍌', 'The monkey eats a banana.', '원숭이가 바나나를 먹어요.'], ['🐘', 'I see an elephant.', '코끼리가 보여요.'], ['🐘💦', 'The elephant likes water.', '코끼리는 물을 좋아해요.'], ['😊', 'I like the zoo!', '나는 동물원이 좋아요!']],
+      q: [['What does the monkey eat?', '원숭이가 먹는 것은?', '🍌', ['🥕', '🍪']], ['What does the elephant like?', '코끼리가 좋아하는 것은?', '💦', ['🔥', '❄️']], ['Which animal did I see first?', '처음 본 동물은?', '🦁', ['🐯', '🐻']]] },
+    { id: 'rain', title: 'Rainy Day', ko: '비 오는 날', e: '☔', color: '#ece6f5', pages: [
+      ['🌧️', 'It is raining.', '비가 와요.'], ['☂️', 'I have an umbrella.', '나는 우산이 있어요.'], ['👢', 'I wear my boots.', '나는 장화를 신어요.'],
+      ['💦', 'Splash! Splash!', '첨벙! 첨벙!'], ['🌥️', 'The rain stops.', '비가 그쳐요.'], ['☀️', 'The sun comes out!', '해가 나와요!']],
+      q: [['What do I have?', '나는 무엇이 있어요?', '☂️', ['🎈', '🧸']], ['What do I wear?', '무엇을 신어요?', '👢', ['🧢', '🧤']], ['What comes out at the end?', '마지막에 무엇이 나와요?', '☀️', ['🌙', '⭐']]] },
+    { id: 'count', title: 'Count with Me', ko: '같이 세어요', e: '🔢', color: '#fde2c8', pages: [
+      ['☀️', 'One sun.', '해 하나.'], ['👀', 'Two eyes.', '눈 두 개.'], ['🐱🐱🐱', 'Three cats.', '고양이 세 마리.'],
+      ['🦆🦆🦆🦆', 'Four ducks.', '오리 네 마리.'], ['⭐⭐⭐⭐⭐', 'Five stars.', '별 다섯 개.'], ['🙌', 'I can count!', '나는 셀 수 있어요!']],
+      q: [['How many cats?', '고양이는 몇 마리?', '3', ['2', '5']], ['How many ducks?', '오리는 몇 마리?', '4', ['1', '3']], ['How many stars?', '별은 몇 개?', '5', ['4', '2']]] }
+  ];
+  function read() { return K.progress().read || {}; }
+
+  function home() {
+    document.body.classList.remove('fixed');
+    main.innerHTML = '';
+    var r = read();
+    main.appendChild(el('div', { class: 'kl-prompt', text: '📗 영어 그림책 · 다 읽은 책 ' + BOOKS.filter(function (b) { return r[b.id]; }).length + ' / ' + BOOKS.length, style: 'font-size:22px;margin-bottom:10px' }));
+    var box = el('div', { class: 'shelf' });
+    BOOKS.forEach(function (b) {
+      var c = el('button', { class: 'cover', style: 'background:' + b.color, html: '<div class="e">' + b.e + '</div><div class="t">' + b.title + '</div><div class="k">' + b.ko + ' · ' + b.pages.length + '쪽</div>' + (r[b.id] ? '<span class="ok">✅</span>' : '') });
+      c.addEventListener('click', function () { K.sfx.click(); open(b, 0); });
+      box.appendChild(c);
+    });
+    main.appendChild(box);
+    main.appendChild(el('div', { class: 'kl-hint', text: '낱말을 누르면 그 낱말을 읽어 줘요' }));
+  }
+
+  var showKo = true;
+  function open(b, i) {
+    document.body.classList.add('fixed');
+    var pg = b.pages[i];
+    main.innerHTML = '';
+    var wrap = el('div', { class: 'reader' });
+    wrap.appendChild(el('div', { class: 'rhead' }, [K.backButton(home), el('div', { class: 't', text: b.e + ' ' + b.title }), el('span', { class: 'pg', text: (i + 1) + ' / ' + b.pages.length })]));
+    var page = el('div', { class: 'page' });
+    page.appendChild(el('div', { class: 'pic', text: pg[0] }));
+    var en = el('div', { class: 'en' });
+    pg[1].split(' ').forEach(function (w, k) {
+      if (k) en.appendChild(document.createTextNode(' '));
+      var s = el('span', { class: 'w', text: w });
+      s.addEventListener('click', function (e) { e.stopPropagation(); K.speakEn(w.replace(/[^A-Za-z']/g, '')); s.classList.add('on'); setTimeout(function () { s.classList.remove('on'); }, 600); });
+      en.appendChild(s);
+    });
+    page.appendChild(en);
+    var ko = el('div', { class: 'ko', text: showKo ? pg[2] : '' });
+    page.appendChild(ko);
+    wrap.appendChild(page);
+    var last = i === b.pages.length - 1;
+    wrap.appendChild(el('div', { class: 'nav' }, [
+      el('button', { text: i ? '◀ 앞쪽' : '🔊 다시', onclick: function () { K.sfx.click(); if (i) open(b, i - 1); else K.speakEn(pg[1]); } }),
+      el('button', { text: showKo ? '💬 뜻 숨기기' : '💬 뜻 보기', onclick: function (e) { showKo = !showKo; ko.textContent = showKo ? pg[2] : ''; e.target.textContent = showKo ? '💬 뜻 숨기기' : '💬 뜻 보기'; } }),
+      el('button', { class: 'go', text: last ? '다 읽었어요 ✔' : '다음 ▶', onclick: function () { K.sfx.click(); if (last) finish(b); else open(b, i + 1); } })
+    ]));
+    main.appendChild(wrap);
+    K.speakEn(pg[1]);
+  }
+  function finish(b) {
+    document.body.classList.remove('fixed');
+    K.mutate(function (d) { var pr = d.progress.ebooks || (d.progress.ebooks = {}); var r = pr.read || (pr.read = {}); var x = r[b.id] || { n: 0 }; x.n++; x.last = K.todayKey(); r[b.id] = x; });
+    K.addStar(2); K.event('read');
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var box = el('div');
+    main.appendChild(el('div', { class: 'kl-prompt', text: '🎉 ' + b.title + ' 다 읽었어요! 질문에 답해 볼까요?', style: 'font-size:20px;margin-bottom:6px' }));
+    main.appendChild(box);
+    K.runQuiz({
+      el: box, total: b.q.length, review: false, onFinish: home,
+      make: function (i) {
+        var q = b.q[i], opts = K.shuffle([q[2]].concat(q[3]));
+        return { key: b.id + i, prompt: '<div class="qen">' + q[0] + '</div><div class="qko">' + q[1] + '</div>', say: q[0], sayLang: 'en-US', cols: opts.length,
+          choices: opts.map(function (o) { return { html: '<span class="ans">' + o + '</span>', correct: o === q[2] }; }) };
+      }
+    });
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

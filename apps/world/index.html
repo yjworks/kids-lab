@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>세계 여행</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .flag { display: inline-block; width: 150px; aspect-ratio: 4 / 3; border-radius: 10px; box-shadow: 0 0 0 2px rgba(0,0,0,.12), 0 4px 10px rgba(0,0,0,.12); background: #fff center / cover no-repeat; vertical-align: middle; }
+  .flag.sm { width: 84px; border-radius: 8px; }
+  .flag.xs { width: 44px; border-radius: 5px; }
+  .cname { font-size: 22px; font-weight: 900; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .ccard { background: #fff; border-radius: 20px; padding: 12px; box-shadow: 0 4px 0 rgba(0,0,0,.07); text-align: center; }
+  .ccard .n { font-size: 21px; font-weight: 900; margin-top: 6px; }
+  .ccard .c { font-size: 15px; font-weight: 800; color: #6b6b6b; }
+  .ccard .h { margin-top: 6px; font-size: 16px; font-weight: 800; }
+  .ccard .h b { font-size: 18px; }
+  .hello-big { font-size: 40px; font-weight: 900; line-height: 1.3; }
+  .hello-ko { font-size: 20px; color: #6b6b6b; font-weight: 800; }
+  .native { display: inline-block; margin-top: 8px; background: #e9f3ff; border-radius: 16px; padding: 6px 14px; font-weight: 900; font-size: 16px; }
+  .fact { font-size: 84px; line-height: 1.1; }
+  .fact-l { font-size: 22px; font-weight: 900; }
+  .copt { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 900; }
+  body[data-app="world"] .kl-choice { min-height: 0; padding: 12px 14px; }
+  @media (max-width: 760px) {
+    .flag { width: 120px; } .flag.sm { width: 70px; } .cards { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .ccard .n { font-size: 18px; } .hello-big { font-size: 30px; } .fact { font-size: 64px; } .copt { font-size: 17px; }
+  }
+</style>
+</head>
+<body data-app="world">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script src="flags.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '세계 여행', icon: '🌍', say: '세계 여행' });
+  var main = document.getElementById('main');
+
+  /* [코드, 이름, 대륙, 인사말(원어), 읽기, 말소리 언어] - 인사말이 겹치는 나라(영어권 등)는 인사말 문제에서 뺀다 */
+  var C = [
+    ['kr', '대한민국', '아시아', '안녕하세요', '안녕하세요', 'ko-KR'],
+    ['jp', '일본', '아시아', 'こんにちは', '곤니치와', 'ja-JP'],
+    ['cn', '중국', '아시아', '你好', '니하오', 'zh-CN'],
+    ['vn', '베트남', '아시아', 'Xin chào', '신짜오', 'vi-VN'],
+    ['th', '태국', '아시아', 'สวัสดี', '사와디', 'th-TH'],
+    ['in', '인도', '아시아', 'नमस्ते', '나마스테', 'hi-IN'],
+    ['us', '미국', '북아메리카', 'Hello', '헬로', 'en-US'],
+    ['ca', '캐나다', '북아메리카', '', '', ''],
+    ['br', '브라질', '남아메리카', 'Olá', '올라', 'pt-BR'],
+    ['gb', '영국', '유럽', '', '', ''],
+    ['fr', '프랑스', '유럽', 'Bonjour', '봉주르', 'fr-FR'],
+    ['de', '독일', '유럽', 'Guten Tag', '구텐 탁', 'de-DE'],
+    ['it', '이탈리아', '유럽', 'Ciao', '차오', 'it-IT'],
+    ['ch', '스위스', '유럽', '', '', ''],
+    ['se', '스웨덴', '유럽', 'Hej', '헤이', 'sv-SE'],
+    ['nl', '네덜란드', '유럽', 'Hallo', '할로', 'nl-NL'],
+    ['eg', '이집트', '아프리카', 'مرحبا', '마르하반', 'ar-EG'],
+    ['ke', '케냐', '아프리카', 'Jambo', '잠보', 'sw-KE'],
+    ['au', '호주', '오세아니아', '', '', ''],
+    ['nz', '뉴질랜드', '오세아니아', '', '', '']
+  ].map(function (r) { return { code: r[0], name: r[1], cont: r[2], hello: r[3], read: r[4], lang: r[5] }; });
+  var BY = {}; C.forEach(function (c) { BY[c.code] = c; });
+  var CONTS = ['아시아', '유럽', '아프리카', '북아메리카', '남아메리카', '오세아니아'];
+  /* 그 나라로 널리 알려진 것 [그림, 이름, 나라, 헷갈릴 수 있어 보기에서 뺄 나라들] */
+  var FACTS = [
+    ['🗻', '후지산', 'jp'], ['🍣', '초밥', 'jp'], ['🗼', '도쿄 타워', 'jp'], ['🍕', '피자', 'it'], ['🍝', '스파게티', 'it'],
+    ['🗽', '자유의 여신상', 'us'], ['🦘', '캥거루', 'au'], ['🐨', '코알라', 'au'], ['🥨', '프레첼', 'de'], ['🌷', '튤립', 'nl'],
+    ['🍁', '단풍잎 국기', 'ca'], ['💂', '근위병', 'gb'], ['🐼', '판다', 'cn'], ['🥐', '크루아상', 'fr'], ['🦒', '기린이 사는 초원', 'ke', ['eg']]
+  ];
+
+  function flagUrl(code) { return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(window.FLAGS[code]); }
+  function flag(code, cls) { return '<span class="flag ' + (cls || '') + '" role="img" aria-label="' + K.esc(BY[code].name) + ' 국기" style="background-image:url(\'' + flagUrl(code) + '\')"></span>'; }
+  function others(ans, pool, n, same) { return K.sample(pool.filter(function (x) { return x !== ans && !(same && same(x)); }), n); }
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '🏳️', label: '국기 보고 나라 찾기', mode: 'flag', color: '#e9f3ff', run: flagQuiz },
+      { icon: '👋', label: '나라별 인사말', mode: 'hello', color: '#fff3c4', run: helloQuiz },
+      { icon: '🗻', label: '무엇으로 유명할까?', mode: 'fact', color: '#e3f7cf', run: factQuiz },
+      { icon: '🌏', label: '어느 대륙에 있을까?', mode: 'cont', color: '#ffe9ee', run: contQuiz },
+      { icon: '🗺️', label: '나라 카드 (' + C.length + ')', color: '#ece6f5', run: cards }
+    ]);
+  }
+  function quiz(mode, make) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: 8, make: make, onFinish: home }); }
+
+  function flagQuiz() {
+    quiz('flag', function (i, lv) {
+      var pool = lv <= 1 ? C.slice(0, 12) : C, a = K.pick(pool), n = lv <= 1 ? 2 : 3;
+      var opts = K.shuffle([a].concat(others(a, pool, n)));
+      if (lv >= 3 && i % 2) {
+        return { key: 'n' + a.code, prompt: '<div class="cname">' + a.name + '</div>', sub: '이 나라의 국기는?', say: a.name + '의 국기는 어느 것일까요?', cols: 2,
+          choices: opts.map(function (o) { return { html: flag(o.code, 'sm'), correct: o === a, say: o.name }; }) };
+      }
+      return { key: 'f' + a.code, prompt: flag(a.code), sub: '어느 나라 국기일까요?', say: '어느 나라 국기일까요?', cols: 1,
+        choices: opts.map(function (o) { return { html: '<div class="copt">' + o.name + '</div>', correct: o === a, say: o.name }; }) };
+    });
+  }
+  function helloQuiz() {
+    var pool = C.filter(function (c) { return c.hello; });
+    quiz('hello', function (i, lv) {
+      var a = K.pick(pool), opts = K.shuffle([a].concat(others(a, pool, lv <= 1 ? 2 : 3)));
+      if (lv >= 3 && i % 2) {
+        return { key: 'r' + a.code, prompt: '<div class="hello-big">' + K.esc(a.hello) + '</div><div class="hello-ko">' + a.read + '</div>', sub: '어느 나라 인사말일까요?', say: a.read + '. 어느 나라 인사말일까요?', cols: 2,
+          choices: opts.map(function (o) { return { html: flag(o.code, 'xs') + ' ' + o.name, cls: 'text', correct: o === a, say: o.name }; }),
+          after: nativeBtn(a) };
+      }
+      return { key: 'h' + a.code, prompt: flag(a.code, 'sm') + '<div class="cname">' + a.name + '</div>', sub: '이 나라에서는 뭐라고 인사할까요?', say: a.name + '에서는 뭐라고 인사할까요?', cols: 2,
+        choices: opts.map(function (o) { return { html: '<div class="copt" style="flex-direction:column;gap:2px"><span>' + K.esc(o.hello) + '</span><small style="color:#6b6b6b">' + o.read + '</small></div>', correct: o === a, say: o.read }; }) };
+    });
+  }
+  /* 그 나라 말소리가 있으면 들려준다 (없는 기기도 있어서 읽기 소리를 먼저 낸다) */
+  function nativeBtn(a) {
+    return function (stage) {
+      if (a.lang === 'ko-KR') return;
+      var b = el('button', { class: 'native', text: '🔈 ' + a.name + ' 말로 듣기' });
+      b.addEventListener('click', function (e) { e.stopPropagation(); K.speak(a.hello, { lang: a.lang }); });
+      stage.insertBefore(el('div', { style: 'text-align:center' }, [b]), stage.querySelector('.kl-choices'));
+    };
+  }
+  function factQuiz() {
+    quiz('fact', function (i, lv) {
+      var f = K.pick(FACTS), a = BY[f[2]], ex = f[3] || [];
+      var opts = K.shuffle([a].concat(others(a, C, lv <= 1 ? 2 : 3, function (x) { return ex.indexOf(x.code) >= 0; })));
+      return { key: 'x' + f[1], prompt: '<div class="fact">' + f[0] + '</div><div class="fact-l">' + f[1] + '</div>', sub: '이것으로 유명한 나라는?', say: f[1] + '. 이것으로 유명한 나라는 어디일까요?', cols: 1,
+        choices: opts.map(function (o) { return { html: '<div class="copt">' + flag(o.code, 'xs') + o.name + '</div>', correct: o === a, say: o.name }; }) };
+    });
+  }
+  function contQuiz() {
+    quiz('cont', function (i, lv) {
+      var a = K.pick(C), n = lv <= 1 ? 2 : lv <= 3 ? 3 : 4;
+      var opts = K.shuffle([a.cont].concat(K.sample(CONTS.filter(function (x) { return x !== a.cont; }), n - 1)));
+      return { key: 'c' + a.code, prompt: flag(a.code, 'sm') + '<div class="cname">' + a.name + '</div>', sub: '어느 대륙에 있을까요?', say: a.name + K.josa(a.name, '은/는') + ' 어느 대륙에 있을까요?', cols: 2,
+        choices: opts.map(function (o) { return { html: o, cls: 'text', correct: o === a.cont, say: o }; }) };
+    });
+  }
+  function cards() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    CONTS.forEach(function (ct) {
+      main.appendChild(el('div', { class: 'kl-prompt', text: '🌏 ' + ct, style: 'font-size:22px;margin:14px 0 8px;text-align:left' }));
+      var box = el('div', { class: 'cards' });
+      C.filter(function (c) { return c.cont === ct; }).forEach(function (c) {
+        var b = el('button', { class: 'ccard', html: flag(c.code, 'sm') + '<div class="n">' + c.name + '</div><div class="c">' + c.cont + '</div>' + (c.hello ? '<div class="h"><b>' + K.esc(c.hello) + '</b><br>' + c.read + '</div>' : '') });
+        b.addEventListener('click', function () { K.sfx.pop(); K.speak(c.name + (c.hello ? '. 인사말은 ' + c.read : '')); K.event('learn'); });
+        box.appendChild(b);
+      });
+      main.appendChild(box);
+    });
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

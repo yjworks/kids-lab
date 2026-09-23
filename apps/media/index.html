@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>진짜일까?</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .post { max-width: 560px; margin: 0 auto; background: #fff; border-radius: 18px; box-shadow: 0 3px 12px rgba(0,0,0,.12); text-align: left; overflow: hidden; }
+  .post .who { display: flex; align-items: center; gap: 8px; padding: 10px 14px; font-size: 16px; font-weight: 900; color: #444; border-bottom: 1px solid #eee; }
+  .post .who i { font-style: normal; font-size: 26px; }
+  .post .pic { font-size: 56px; text-align: center; padding: 8px 0 0; }
+  .post .txt { padding: 10px 16px 14px; font-size: 21px; font-weight: 800; line-height: 1.5; word-break: keep-all; color: #222; }
+  .post.ad .who { background: #fff4d6; }
+  .post .head { padding: 12px 16px 4px; font-size: 23px; font-weight: 900; line-height: 1.4; word-break: keep-all; }
+  .post .body { padding: 0 16px 14px; font-size: 18px; font-weight: 700; color: #444; line-height: 1.5; word-break: keep-all; }
+  .popup { max-width: 460px; margin: 0 auto; border-radius: 16px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,.2); text-align: center; background: #fff; }
+  .popup .bar { background: #6a4c93; color: #fff; font-weight: 900; padding: 6px 10px; font-size: 15px; text-align: left; }
+  .popup .m { padding: 16px; font-size: 21px; font-weight: 900; line-height: 1.45; word-break: keep-all; }
+  .popup .fake { display: inline-block; margin: 0 0 14px; background: #ff595e; color: #fff; border-radius: 12px; padding: 8px 18px; font-weight: 900; }
+  .sit { font-size: 22px; font-weight: 900; line-height: 1.5; word-break: keep-all; }
+  .sit .e { font-size: 56px; display: block; }
+  .opt { font-size: 19px; font-weight: 800; text-align: left; line-height: 1.4; word-break: keep-all; }
+  .rules { display: grid; gap: 10px; max-width: 640px; margin: 0 auto; }
+  .rule { background: #fff; border-radius: 18px; padding: 14px 16px; font-size: 20px; font-weight: 900; box-shadow: 0 4px 0 rgba(0,0,0,.07); text-align: left; display: flex; gap: 12px; align-items: center; word-break: keep-all; }
+  .rule i { font-style: normal; font-size: 34px; }
+  .why { margin-top: 8px; font-size: 17px; font-weight: 800; color: #1d4f7a; background: #e9f3ff; border-radius: 12px; padding: 8px 12px; display: inline-block; word-break: keep-all; }
+  body[data-app="media"] .kl-choice { min-height: 0; padding: 14px 16px; }
+  @media (max-width: 760px) {
+    .post .txt { font-size: 18px; } .post .head { font-size: 19px; } .post .body { font-size: 16px; } .post .pic { font-size: 44px; }
+    .popup .m { font-size: 18px; } .sit { font-size: 18px; } .sit .e { font-size: 44px; } .opt { font-size: 16px; } .rule { font-size: 17px; }
+  }
+</style>
+</head>
+<body data-app="media">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '진짜일까?', icon: '🔍', say: '진짜일까?' });
+  var main = document.getElementById('main');
+
+  /* 광고일까 정보일까 [올린 곳, 그림, 글, 광고인가, 까닭] */
+  var ADS = [
+    ['과자 회사', '🍫', '새로 나온 초코 과자! 지금 사면 하나 더 드려요!', true, '사라고 하는 글이에요.'],
+    ['날씨 알림', '🌧️', '내일은 비가 와요. 우산을 챙기세요.', false, '날씨를 알려 주는 글이에요.'],
+    ['장난감 가게', '🤖', '이 로봇만 있으면 친구가 많아져요! 오늘만 반값!', true, '장난감을 팔려고 좋은 말만 해요.'],
+    ['동네 도서관', '📚', '도서관은 월요일마다 쉬어요.', false, '쉬는 날을 알려 주는 글이에요.'],
+    ['게임 속 창', '💎', '보석 100개를 사면 최강 캐릭터가 돼요! 지금 결제!', true, '돈을 쓰게 하려는 글이에요.'],
+    ['학교 알림장', '🏫', '다음 주 금요일은 현장 체험 학습 날이에요.', false, '학교 일정을 알려 줘요.'],
+    ['음료 회사', '🥤', '이것만 마시면 키가 쑥쑥! 모두 마시는 인기 음료!', true, '사게 하려고 부풀려 말해요.'],
+    ['동물원 안내판', '🦒', '기린은 하루에 잠을 조금만 자요.', false, '동물에 대해 알려 줘요.'],
+    ['영상 속 유튜버', '🎁', '제가 쓰는 이 필통, 아래 링크에서 살 수 있어요!', true, '물건을 사게 하려는 글이에요.'],
+    ['보건소', '🧼', '손은 비누로 30초 동안 씻어요.', false, '건강 정보를 알려 줘요.'],
+    ['신발 가게', '👟', '이 운동화를 신으면 달리기 1등! 한정 판매!', true, '신발을 팔려고 해요.'],
+    ['버스 정류장 안내', '🚌', '7번 버스는 10분마다 와요.', false, '버스 시간을 알려 줘요.']
+  ];
+  /* 믿을 만할까 [상황, 좋은 행동, 나쁜 행동들, 까닭] */
+  var TRUST = [
+    ['"고래는 물고기래!" 친구가 말했어요.', '📖 도감이나 선생님께 확인해 봐요', ['👍 친구 말이니까 그냥 믿어요', '📢 다른 친구들에게 바로 알려요'], '고래는 젖을 먹이는 포유류예요. 들은 말은 확인해요.'],
+    ['"이 글을 10명에게 안 보내면 나쁜 일이 생겨요!!!"', '🙅 겁주는 글은 보내지 않아요', ['📤 무서우니까 10명에게 보내요', '😱 걱정하며 밤새 울어요'], '겁을 주며 퍼뜨리라는 글은 거짓말이에요.'],
+    ['누가 쓴 건지 모르는 글에 "무조건 100% 진짜!"라고 쓰여 있어요.', '🔍 누가 썼는지, 다른 곳에도 있는지 살펴요', ['✅ 100%라니까 믿어요', '📤 친구에게 퍼뜨려요'], '쓴 사람과 근거가 없는 글은 조심해요.'],
+    ['영상에서 "비 오는 날 우산을 쓰면 번개를 맞는다"고 해요.', '🙋 어른께 여쭤보고 책에서 찾아봐요', ['☔ 이제 우산을 절대 안 써요', '📢 반 친구들에게 알려요'], '영상 속 말이 모두 맞는 건 아니에요.'],
+    ['제목은 "충격!", 내용은 별일 아닌 기사를 봤어요.', '🧐 제목만 보지 않고 내용을 끝까지 읽어요', ['😲 제목만 보고 모두 믿어요', '📤 제목만 보고 바로 퍼뜨려요'], '눈길을 끌려고 제목을 부풀리기도 해요.'],
+    ['친구가 "우리 선생님이 내일 학교를 그만두신대!"라고 해요.', '🙋 선생님께 직접 여쭤보거나 기다려요', ['📢 반 친구들에게 다 말해요', '😢 그냥 믿고 슬퍼해요'], '소문은 틀릴 때가 많아요.'],
+    ['사진 속 강아지가 하늘을 날고 있어요.', '🤔 고친 사진일 수 있다고 생각해요', ['😮 강아지는 날 수 있어요', '📤 진짜라고 퍼뜨려요'], '사진도 고치거나 만들 수 있어요.'],
+    ['"이 약을 먹으면 하루 만에 키가 10cm 커져요!"', '🙅 믿지 않고 어른께 말씀드려요', ['💊 몰래 사서 먹어요', '📤 친구에게 알려 줘요'], '너무 좋아 보이는 말은 거짓일 수 있어요.']
+  ];
+  /* 내 정보 지키기 / 누를까 말까 [상황(그림), 좋은 행동, 나쁜 행동들, 까닭] */
+  var PRIV = [
+    ['🎮 게임에서 모르는 사람이 우리 집 주소를 물어봐요.', '🙅 알려 주지 않고 어른께 말해요', ['🏠 알려 줘요', '📍 동네 이름만 알려 줘요'], '집 주소는 모르는 사람에게 알려 주지 않아요.'],
+    ['🔑 친구가 내 게임 비밀번호를 알려 달래요.', '🤐 비밀번호는 부모님만 알아요', ['🔓 친한 친구니까 알려 줘요', '📝 종이에 써서 줘요'], '비밀번호는 친구에게도 알려 주지 않아요.'],
+    ['📸 학교 이름표가 보이는 사진을 올리려고 해요.', '✋ 이름표를 가리거나 올리지 않아요', ['📤 그냥 올려요', '🏫 학교 이름도 함께 써요'], '이름표로 내가 어디 사는지 알 수 있어요.'],
+    ['💬 모르는 사람이 "사진 보내 줘"라고 해요.', '🚫 보내지 않고 어른께 말해요', ['🤳 한 장만 보내요', '😊 예쁘게 찍어서 보내요'], '모르는 사람에게 내 사진을 보내지 않아요.'],
+    ['📞 모르는 사람이 엄마 전화번호를 물어봐요.', '🙅 알려 주지 않아요', ['📱 알려 줘요', '🔢 앞자리만 알려 줘요'], '가족의 정보도 소중한 정보예요.'],
+    ['📍 내가 지금 어디 있는지 사진과 함께 올리려고 해요.', '⏳ 올리지 않거나 집에 온 뒤 어른과 상의해요', ['📤 지금 바로 올려요', '🗺️ 지도까지 함께 올려요'], '지금 있는 곳을 알리면 위험할 수 있어요.'],
+    ['🙂 친구 사진을 친구에게 묻지 않고 올리려고 해요.', '🙋 먼저 친구에게 물어봐요', ['📤 재미있으니까 그냥 올려요', '😆 웃긴 사진이라 더 올려요'], '남의 사진은 허락을 받고 올려요.'],
+    ['😠 누가 단체 채팅방에서 친구를 놀려요.', '🙋 같이 놀리지 않고 어른께 알려요', ['😂 나도 따라 놀려요', '👀 가만히 구경만 해요'], '온라인에서도 친구를 아프게 하면 안 돼요.']
+  ];
+  var LINKS = [
+    ['🎉 축하합니다! 선물에 당첨됐어요!', '여기를 누르세요', '🙅 누르지 않고 어른께 보여 드려요', ['👆 선물 받으러 눌러요', '🔁 여러 번 눌러요'], '갑자기 당첨됐다는 창은 속임수일 때가 많아요.'],
+    ['⚠️ 휴대폰에 바이러스가 생겼어요!', '지금 치료하기', '🙅 누르지 않고 어른께 알려요', ['👆 얼른 눌러서 치료해요', '📥 치료 앱을 받아요'], '겁주며 누르게 하는 창은 믿지 않아요.'],
+    ['💳 보석 1000개 사기', '결제하기', '🙋 누르기 전에 어른께 여쭤봐요', ['👆 갖고 싶으니까 눌러요', '🔢 엄마 카드 번호를 넣어요'], '결제는 꼭 어른과 함께해요.'],
+    ['📩 모르는 번호에서 문자가 왔어요: "택배 확인하세요 ▶ 링크"', '링크 열기', '🙅 링크를 누르지 않아요', ['👆 궁금하니까 눌러요', '📤 친구에게 보내요'], '모르는 사람이 보낸 링크는 열지 않아요.'],
+    ['🎮 "무료 아이템을 받으려면 아이디와 비밀번호를 쓰세요"', '로그인', '🙅 쓰지 않고 창을 닫아요', ['⌨️ 아이디와 비밀번호를 써요', '🔁 친구 것도 써 줘요'], '아이템을 준다며 비밀번호를 묻는 건 속임수예요.'],
+    ['📥 "이 앱을 받으면 게임이 더 빨라져요!"', '설치하기', '🙋 어른께 먼저 여쭤봐요', ['👆 바로 설치해요', '🔁 여러 개 받아요'], '앱은 어른과 함께 믿을 만한 곳에서 받아요.']
+  ];
+  /* 제목이 내용과 맞을까 [제목, 내용, 맞는가, 까닭] */
+  var HEAD = [
+    ['충격! 강아지가 말을 했다', '강아지 짖는 소리가 "엄마"처럼 들렸다고 해요.', false, '진짜 말을 한 건 아니에요. 제목이 부풀려졌어요.'],
+    ['우리 동네에 새 놀이터가 생겼어요', '공원 옆에 미끄럼틀과 그네가 있는 놀이터가 생겼어요.', true, '제목과 내용이 같아요.'],
+    ['이것 먹으면 절대 안 돼요!!!', '아이스크림을 너무 많이 먹으면 배가 아플 수 있어요.', false, '조금 먹는 건 괜찮아요. 제목이 겁을 줘요.'],
+    ['내일부터 학교 급식에 딸기가 나와요', '이번 주 급식 안내: 내일 후식은 딸기예요.', true, '제목과 내용이 맞아요.'],
+    ['세상에서 제일 큰 고양이 발견!', '옆집 고양이가 조금 통통하다고 해요.', false, '제일 크다는 근거가 없어요.'],
+    ['도서관에 새 책 50권이 들어왔어요', '이번 달 도서관에 그림책과 동화책 50권이 새로 들어왔어요.', true, '제목과 내용이 같아요.'],
+    ['이 게임만 하면 천재가 된다', '퍼즐 게임이 생각하는 데 조금 도움이 될 수 있대요.', false, '천재가 된다는 말은 부풀린 거예요.'],
+    ['비 때문에 운동회가 다음 주로 미뤄졌어요', '토요일에 비가 와서 운동회를 다음 주 토요일에 해요.', true, '제목과 내용이 맞아요.']
+  ];
+  var RULES = [
+    ['🔍', '들은 말, 본 글은 한 번 더 확인해요'],
+    ['📢', '사라고 하는 글(광고)은 좋은 말만 해요'],
+    ['🤐', '이름·주소·전화번호·비밀번호는 비밀이에요'],
+    ['🙅', '모르는 링크와 창은 누르지 않아요'],
+    ['💳', '결제는 꼭 어른과 함께해요'],
+    ['🙋', '이상하면 바로 어른께 말해요'],
+    ['💗', '온라인에서도 친구에게 친절하게 말해요']
+  ];
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '📢', label: '광고일까 정보일까?', mode: 'ad', color: '#fff3c4', run: adQuiz },
+      { icon: '🔎', label: '믿어도 될까?', mode: 'trust', color: '#e9f3ff', run: trustQuiz },
+      { icon: '📰', label: '제목이 맞을까?', mode: 'head', color: '#e3f7cf', run: headQuiz },
+      { icon: '🔒', label: '내 정보 지키기', mode: 'priv', color: '#ffe9ee', run: privQuiz },
+      { icon: '🔗', label: '누를까 말까?', mode: 'link', color: '#ece6f5', run: linkQuiz },
+      { icon: '💡', label: '기억해요', color: '#d0f4de', run: rules }
+    ]);
+    main.appendChild(el('div', { class: 'kl-hint', text: '인터넷과 영상 속 글을 똑똑하게 보는 연습이에요' }));
+  }
+  function quiz(mode, make, total) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: total || 6, make: make, onFinish: home }); }
+  /* 맞히면 까닭을 한 줄 보여 준다 */
+  function why(text) { return function () { var st = document.querySelector('.kl-stage'); if (st) st.appendChild(el('div', { style: 'text-align:center' }, [el('div', { class: 'why', text: '💡 ' + text })])); K.speak(text); }; }
+  function pickOpts(good, bad, lv) { var b = lv <= 1 ? bad.slice(0, 1) : bad; return K.shuffle([good].concat(b)); }
+
+  function adQuiz() {
+    quiz('ad', function (i, lv) {
+      var a = K.pick(ADS);
+      return {
+        key: 'a' + a[2], prompt: '<div class="post' + (a[3] ? ' ad' : '') + '"><div class="who"><i>' + (a[3] ? '🏪' : '📌') + '</i>' + K.esc(a[0]) + '</div><div class="pic">' + a[1] + '</div><div class="txt">' + K.esc(a[2]) + '</div></div>',
+        sub: '이 글은 무엇일까요?', say: a[2] + '. 이 글은 광고일까요, 정보일까요?', cols: 2,
+        choices: [{ html: '<div class="opt">🛒 광고<br><small>사라고 해요</small></div>', correct: a[3] }, { html: '<div class="opt">ℹ️ 정보<br><small>알려 줘요</small></div>', correct: !a[3] }],
+        onCorrect: why(a[4]), hold: 2800
+      };
+    });
+  }
+  function situation(mode, list, wrap) {
+    quiz(mode, function (i, lv) {
+      var s = K.pick(list), q = wrap(s);
+      q.key = mode + s[0];
+      q.cols = 1;
+      q.choices = pickOpts(q.good, q.bad, lv).map(function (o) { return { html: '<div class="opt">' + K.esc(o) + '</div>', correct: o === q.good }; });
+      q.onCorrect = why(q.why); q.hold = 3000;
+      return q;
+    });
+  }
+  function trustQuiz() {
+    situation('trust', TRUST, function (s) { return { prompt: '<div class="sit">' + K.esc(s[0]) + '</div>', sub: '어떻게 할까요?', say: s[0] + ' 어떻게 할까요?', good: s[1], bad: s[2], why: s[3] }; });
+  }
+  function privQuiz() {
+    situation('priv', PRIV, function (s) { return { prompt: '<div class="sit">' + K.esc(s[0]) + '</div>', sub: '어떻게 할까요?', say: s[0] + ' 어떻게 할까요?', good: s[1], bad: s[2], why: s[3] }; });
+  }
+  function linkQuiz() {
+    situation('link', LINKS, function (s) {
+      return { prompt: '<div class="popup"><div class="bar">🔔 알림</div><div class="m">' + K.esc(s[0]) + '</div><span class="fake">' + K.esc(s[1]) + '</span></div>',
+        sub: '이런 창이 떴어요. 어떻게 할까요?', say: s[0] + ' 이런 창이 떴어요. 어떻게 할까요?', good: s[2], bad: s[3], why: s[4] };
+    });
+  }
+  function headQuiz() {
+    quiz('head', function (i, lv) {
+      var h = K.pick(HEAD);
+      return {
+        key: 'h' + h[0], prompt: '<div class="post"><div class="who"><i>📰</i>어린이 소식</div><div class="head">' + K.esc(h[0]) + '</div><div class="body">' + K.esc(h[1]) + '</div></div>',
+        sub: '제목이 내용과 맞나요?', say: '제목, ' + h[0] + '. 내용, ' + h[1] + ' 제목이 내용과 맞나요?', cols: 2,
+        choices: [{ html: '<div class="opt">⭕ 맞아요</div>', correct: h[2] }, { html: '<div class="opt">❌ 부풀렸어요</div>', correct: !h[2] }],
+        onCorrect: why(h[3]), hold: 3000
+      };
+    });
+  }
+  function rules() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    main.appendChild(el('div', { class: 'kl-prompt', text: '💡 똑똑한 인터넷 약속', style: 'font-size:24px;margin-bottom:10px' }));
+    var box = el('div', { class: 'rules' });
+    RULES.forEach(function (r) {
+      var b = el('button', { class: 'rule', html: '<i>' + r[0] + '</i><span>' + K.esc(r[1]) + '</span>' });
+      b.addEventListener('click', function () { K.sfx.pop(); K.speak(r[1]); K.event('learn'); });
+      box.appendChild(b);
+    });
+    main.appendChild(box);
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

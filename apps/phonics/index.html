@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>파닉스</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .pic { font-size: 84px; line-height: 1.1; }
+  .word { font-size: 46px; font-weight: 900; letter-spacing: 6px; color: #1d4f7a; font-family: "Comic Sans MS", "Trebuchet MS", Arial, sans-serif; }
+  .word .gap { display: inline-block; min-width: 0.9em; border-bottom: 5px dashed #b08fd8; color: #b08fd8; }
+  .letters { display: flex; gap: 8px; justify-content: center; }
+  .letters span { background: #fff; border-radius: 14px; box-shadow: 0 4px 0 rgba(0,0,0,.08); padding: 6px 14px; font-size: 44px; font-weight: 900; color: #1d4f7a; font-family: "Comic Sans MS", "Trebuchet MS", Arial, sans-serif; }
+  .opt { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .opt i { font-style: normal; font-size: 46px; line-height: 1.1; }
+  .opt b { font-size: 22px; font-family: "Comic Sans MS", "Trebuchet MS", Arial, sans-serif; }
+  .vow { font-size: 44px; font-weight: 900; font-family: "Comic Sans MS", "Trebuchet MS", Arial, sans-serif; }
+  .fam { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .fam button { background: #fff; border-radius: 18px; padding: 10px; box-shadow: 0 4px 0 rgba(0,0,0,.07); }
+  .fam .e { font-size: 34px; } .fam .w { font-size: 18px; font-weight: 900; font-family: "Comic Sans MS", "Trebuchet MS", Arial, sans-serif; }
+  .fam .h { font-size: 20px; font-weight: 900; color: #6a4c93; }
+  body[data-app="phonics"] .kl-choice { min-height: 0; padding: 10px; }
+  @media (max-width: 760px) { .pic { font-size: 64px; } .word { font-size: 34px; } .letters span { font-size: 32px; padding: 4px 10px; } .opt i { font-size: 36px; } .opt b { font-size: 18px; } .vow { font-size: 34px; } .fam { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body data-app="phonics">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '파닉스', icon: '🔡', say: 'Phonics' });
+  var main = document.getElementById('main');
+
+  /* 끝소리가 같은 말 묶음 (라임) - 묶음끼리는 소리가 겹치지 않게 골랐다 */
+  var FAM = [
+    ['-at', [['cat', '🐱'], ['hat', '🎩'], ['bat', '🦇']]],
+    ['-og', [['dog', '🐶'], ['frog', '🐸']]],
+    ['-ed', [['bed', '🛏️'], ['red', '🔴']]],
+    ['-ake', [['cake', '🎂'], ['snake', '🐍']]],
+    ['-ee', [['bee', '🐝'], ['tree', '🌳']]],
+    ['-ar', [['car', '🚗'], ['star', '⭐']]],
+    ['-ing', [['ring', '💍'], ['king', '🤴']]],
+    ['-oat', [['boat', '⛵'], ['goat', '🐐'], ['coat', '🧥']]],
+    ['-ox', [['fox', '🦊'], ['box', '📦']]],
+    ['-ouse', [['mouse', '🐭'], ['house', '🏠']]],
+    ['-ail', [['snail', '🐌'], ['mail', '📬']]],
+    ['-ock', [['sock', '🧦'], ['clock', '🕰️']]],
+    ['-ish', [['fish', '🐟'], ['dish', '🍽️']]],
+    ['-all', [['ball', '⚽'], ['wall', '🧱']]]
+  ];
+  /* 세 글자 낱말 (자음-모음-자음) */
+  var CVC = [['cat', '🐱'], ['hat', '🎩'], ['bat', '🦇'], ['map', '🗺️'], ['pan', '🍳'], ['van', '🚐'], ['bag', '👜'], ['cap', '🧢'],
+    ['bed', '🛏️'], ['pen', '🖊️'], ['hen', '🐔'], ['net', '🥅'], ['web', '🕸️'], ['leg', '🦵'], ['ten', '🔟'],
+    ['pig', '🐷'], ['pin', '📌'], ['six', '6️⃣'],
+    ['dog', '🐶'], ['box', '📦'], ['fox', '🦊'], ['pot', '🍲'],
+    ['sun', '☀️'], ['bus', '🚌'], ['bug', '🐛'], ['nut', '🥜'], ['cup', '🥤']];
+  var LONGER = [['fish', '🐟'], ['frog', '🐸'], ['milk', '🥛'], ['duck', '🦆'], ['star', '⭐'], ['ship', '🚢'], ['drum', '🥁'], ['crab', '🦀'], ['sock', '🧦'], ['bell', '🔔'], ['tent', '⛺'], ['hand', '✋']];
+  var VOWELS = ['a', 'e', 'i', 'o', 'u'];
+
+  function en(t) { K.speakEn(t); }
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '📖', label: '읽고 그림 고르기', mode: 'decode', color: '#e9f3ff', run: decodeQuiz },
+      { icon: '🔤', label: '가운데 소리 찾기', mode: 'vowel', color: '#fff3c4', run: vowelQuiz },
+      { icon: '🎵', label: '끝소리가 같은 말', mode: 'rhyme', color: '#e3f7cf', run: rhymeQuiz },
+      { icon: '👂', label: '듣고 낱말 고르기', mode: 'hear', color: '#ffe9ee', run: hearQuiz },
+      { icon: '🏠', label: '낱말 가족 보기', color: '#ece6f5', run: families }
+    ]);
+    main.appendChild(el('div', { class: 'kl-hint', text: '글자 소리를 모아 낱말을 읽는 연습이에요' }));
+  }
+  function quiz(mode, make) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: 8, make: make, onFinish: home }); }
+  function pool(lv) { return lv <= 2 ? CVC : CVC.concat(LONGER); }
+  /* 그림만 보면 헷갈리는 짝 (모자 hat / 모자 cap) 은 함께 내지 않는다 */
+  var CLASH = [['hat', 'cap']];
+  function clash(a, b) { return CLASH.some(function (c) { return (c[0] === a && c[1] === b) || (c[1] === a && c[0] === b); }); }
+  function pickOthers(ans, list, n, sameLen) { return K.sample(list.filter(function (x) { return x[0] !== ans[0] && x[1] !== ans[1] && !clash(x[0], ans[0]) && (!sameLen || x[0].length === ans[0].length); }), n); }
+
+  /* 글자를 읽고 맞는 그림 고르기: 보기 그림은 한 글자만 다른 낱말을 먼저 섞는다 */
+  function decodeQuiz() {
+    quiz('decode', function (i, lv) {
+      var P = pool(lv), a = K.pick(P), n = lv <= 1 ? 2 : 3;
+      var close = P.filter(function (x) { if (x === a || x[0].length !== a[0].length || x[1] === a[1] || clash(x[0], a[0])) return false; var d = 0; for (var k = 0; k < x[0].length; k++) if (x[0][k] !== a[0][k]) d++; return d === 1; });
+      var others = K.sample(close, Math.min(lv >= 3 ? 2 : 1, n));
+      others = others.concat(pickOthers(a, P.filter(function (x) { return others.indexOf(x) < 0; }), n - others.length));
+      var opts = K.shuffle([a].concat(others));
+      return {
+        key: 'd' + a[0], prompt: '<div class="letters">' + a[0].split('').map(function (c) { return '<span>' + c + '</span>'; }).join('') + '</div>', sub: '글자를 읽고 맞는 그림을 골라요', say: lv <= 1 ? a[0] : null, sayLang: 'en-US', cols: opts.length,
+        choices: opts.map(function (o) { return { html: '<div class="opt"><i>' + o[1] + '</i></div>', correct: o === a, say: o[0], sayLang: 'en-US' }; })
+      };
+    });
+  }
+  /* 가운데 모음 채우기: 그림이 답을 정해 준다 (cat/cut/cot 모두 낱말이지만 그림은 하나) */
+  function vowelQuiz() {
+    quiz('vowel', function (i, lv) {
+      var a = K.pick(CVC), v = a[0][1], shown = a[0][0] + '<span class="gap">?</span>' + a[0][2];
+      var opts = K.shuffle([v].concat(K.sample(VOWELS.filter(function (x) { return x !== v; }), lv <= 1 ? 1 : lv <= 3 ? 2 : 3)));
+      return {
+        key: 'v' + a[0], prompt: '<div class="pic">' + a[1] + '</div><div class="word">' + shown + '</div>', sub: '가운데에 들어갈 글자는?', say: a[0], sayLang: 'en-US', cols: opts.length,
+        choices: opts.map(function (o) { return { html: '<span class="vow">' + o + '</span>', correct: o === v, say: o === v ? a[0] : null, sayLang: 'en-US' }; })
+      };
+    });
+  }
+  function rhymeQuiz() {
+    quiz('rhyme', function (i, lv) {
+      var f = K.pick(FAM), pair = K.sample(f[1], 2), a = pair[0], ans = pair[1];
+      var others = K.sample(FAM.filter(function (x) { return x !== f; }), lv <= 1 ? 1 : 2).map(function (x) { return K.pick(x[1]); });
+      var opts = K.shuffle([ans].concat(others));
+      return {
+        key: 'r' + a[0] + ans[0], prompt: '<div class="pic">' + a[1] + '</div><div class="word">' + a[0] + '</div>', sub: '끝소리가 같은 말은?', say: a[0], sayLang: 'en-US', cols: opts.length,
+        choices: opts.map(function (o) { return { html: '<div class="opt"><i>' + o[1] + '</i><b>' + o[0] + '</b></div>', correct: o === ans, say: o[0], sayLang: 'en-US' }; }),
+        onCorrect: function () { en(a[0] + ', ' + ans[0]); }
+      };
+    });
+  }
+  /* 소리만 듣고 글자 고르기: 한 글자만 다른 낱말끼리 */
+  function hearQuiz() {
+    quiz('hear', function (i, lv) {
+      var P = pool(lv), a = K.pick(P);
+      var close = P.filter(function (x) { if (x === a || x[0].length !== a[0].length) return false; var d = 0; for (var k = 0; k < x[0].length; k++) if (x[0][k] !== a[0][k]) d++; return d === 1; });
+      var others = K.sample(close, 2); others = others.concat(pickOthers(a, P.filter(function (x) { return others.indexOf(x) < 0; }), (lv <= 1 ? 2 : 3) - others.length, true));
+      var opts = K.shuffle([a].concat(others));
+      return {
+        key: 'h' + a[0], prompt: '🔊', big: true, sub: '잘 듣고 맞는 낱말을 골라요', say: a[0], sayLang: 'en-US', cols: 2,
+        choices: opts.map(function (o) { return { html: '<b class="vow" style="font-size:34px">' + o[0] + '</b>', correct: o === a, say: o[0], sayLang: 'en-US' }; })
+      };
+    });
+  }
+  function families() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    main.appendChild(el('div', { class: 'kl-prompt', text: '🏠 끝소리가 같은 낱말 가족', style: 'font-size:22px;margin-bottom:10px' }));
+    var box = el('div', { class: 'fam' });
+    FAM.forEach(function (f) {
+      var b = el('button', { html: '<div class="h">' + f[0] + '</div>' + f[1].map(function (w) { return '<div><span class="e">' + w[1] + '</span> <span class="w">' + w[0] + '</span></div>'; }).join('') });
+      b.addEventListener('click', function () { K.sfx.pop(); en(f[1].map(function (w) { return w[0]; }).join(', ')); K.event('learn'); });
+      box.appendChild(b);
+    });
+    main.appendChild(box);
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

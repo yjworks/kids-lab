@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>쌓기나무·칠교</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .iso { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+  .kl-choice .iso { width: 100%; max-width: 150px; }
+  .tan-wrap { max-width: 720px; margin: 0 auto; text-align: center; }
+  .tan-head { display: flex; align-items: center; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
+  .tan-head .t { font-size: 22px; font-weight: 900; }
+  .tan-svg { width: 100%; height: auto; max-height: calc(100vh - 210px); touch-action: none; user-select: none; -webkit-user-select: none; background: #fffdf7; border-radius: 20px; box-shadow: inset 0 0 0 2px #efe6d3; display: block; }
+  .tan-svg .piece { cursor: grab; }
+  .tan-svg .piece.drag { cursor: grabbing; filter: drop-shadow(0 4px 6px rgba(0,0,0,.3)); }
+  .tan-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  .tan-card { background: #fff; border-radius: 18px; padding: 10px; box-shadow: 0 4px 0 rgba(0,0,0,.07); font-weight: 900; font-size: 17px; position: relative; }
+  .tan-card svg { width: 100%; height: 90px; }
+  .tan-card .ok { position: absolute; top: 6px; right: 8px; }
+  .hint-on { background: #ffe4a1 !important; }
+  body[data-app="space"] .kl-choice { min-height: 0; padding: 10px; }
+  @media (max-width: 760px) { .tan-head .t { font-size: 18px; } .tan-list { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body data-app="space">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '쌓기나무·칠교', icon: '🧊', say: '쌓기나무 칠교' });
+  var main = document.getElementById('main');
+  var NS = 'http://www.w3.org/2000/svg';
+
+  /* ---------- 쌓기나무 ----------
+     h[x][y] = 그 칸에 쌓은 개수. 뒤(x, y가 작은 쪽)가 앞보다 낮지 않게 만들어
+     모든 기둥의 윗면이 보이게 한다. 바닥에 닿지 않고 떠 있는 나무는 없다. */
+  var A = 26, B = 15, CZ = 30;
+  function P(x, y, z) { return [(x - y) * A, (x + y) * B - z * CZ]; }
+  function pts(arr) { return arr.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' '); }
+  function makeStack(lv) {
+    var W = lv <= 1 ? K.randInt(2, 3) : lv <= 2 ? 2 : lv <= 3 ? 3 : 3, D = lv <= 1 ? 1 : lv <= 3 ? 2 : 3, H = lv <= 2 ? 2 : lv <= 4 ? 3 : 4;
+    var h, total;
+    do {
+      h = [];
+      for (var x = 0; x < W; x++) { h.push([]); for (var y = 0; y < D; y++) h[x].push(K.randInt(0, H)); }
+      h[0][0] = Math.max(1, h[0][0]);
+      for (x = 0; x < W; x++) for (y = 0; y < D; y++) {
+        var cap = H;
+        if (x > 0) cap = Math.min(cap, h[x - 1][y]);
+        if (y > 0) cap = Math.min(cap, h[x][y - 1]);
+        h[x][y] = Math.min(h[x][y], cap);
+      }
+      total = 0; for (x = 0; x < W; x++) for (y = 0; y < D; y++) total += h[x][y];
+    } while (total < 2 || (lv >= 2 && total < 4) || (lv <= 1 && total > 5));
+    return { h: h, W: W, D: D, total: total };
+  }
+  function stackSvg(s, maxW) {
+    var cubes = [];
+    for (var x = 0; x < s.W; x++) for (var y = 0; y < s.D; y++) for (var z = 0; z < s.h[x][y]; z++) cubes.push([x, y, z]);
+    cubes.sort(function (a, b) { return (a[0] + a[1]) - (b[0] + b[1]) || a[2] - b[2] || a[0] - b[0]; });
+    var minX = P(0, s.D, 0)[0], maxX = P(s.W, 0, 0)[0], maxY = P(s.W, s.D, 0)[1];
+    var g = '';
+    cubes.forEach(function (c) {
+      var x = c[0], y = c[1], z = c[2];
+      g += '<polygon points="' + pts([P(x, y, z + 1), P(x + 1, y, z + 1), P(x + 1, y + 1, z + 1), P(x, y + 1, z + 1)]) + '" fill="#ffd166" stroke="#7a5300" stroke-width="1.5" stroke-linejoin="round"/>';
+      g += '<polygon points="' + pts([P(x + 1, y, z), P(x + 1, y + 1, z), P(x + 1, y + 1, z + 1), P(x + 1, y, z + 1)]) + '" fill="#e0a526" stroke="#7a5300" stroke-width="1.5" stroke-linejoin="round"/>';
+      g += '<polygon points="' + pts([P(x, y + 1, z), P(x + 1, y + 1, z), P(x + 1, y + 1, z + 1), P(x, y + 1, z + 1)]) + '" fill="#f0bb3c" stroke="#7a5300" stroke-width="1.5" stroke-linejoin="round"/>';
+    });
+    /* 가장 높은 점은 맨 뒤 기둥(0,0)의 꼭대기 */
+    var pad = 8, top = P(0, 0, maxH(s))[1];
+    var vb = [minX - pad, top - pad, maxX - minX + pad * 2, maxY - top + pad * 2];
+    return '<svg class="iso" viewBox="' + vb.join(' ') + '" style="width:' + (maxW || 300) + 'px">' + g + '</svg>';
+  }
+  function maxH(s) { var m = 0; s.h.forEach(function (c) { c.forEach(function (v) { m = Math.max(m, v); }); }); return m; }
+  /* 바닥에 닿은 자리: 같은 방향으로 바닥 칸만 그린다 */
+  function footSvg(cells, W, D) {
+    var g = '';
+    for (var x = 0; x < W; x++) for (var y = 0; y < D; y++) {
+      var on = cells[x * D + y];
+      g += '<polygon points="' + pts([P(x, y, 0), P(x + 1, y, 0), P(x + 1, y + 1, 0), P(x, y + 1, 0)]) + '" fill="' + (on ? '#8ac926' : '#f4f4f4') + '" stroke="#555" stroke-width="1.5"/>';
+    }
+    var minX = P(0, D, 0)[0], maxX = P(W, 0, 0)[0], minY = P(0, 0, 0)[1], maxY = P(W, D, 0)[1];
+    return '<svg class="iso" viewBox="' + [minX - 6, minY - 6, maxX - minX + 12, maxY - minY + 12].join(' ') + '">' + g + '</svg>';
+  }
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '🧊', label: '쌓기나무 몇 개?', mode: 'count', color: '#fff3c4', run: countQuiz },
+      { icon: '👀', label: '바닥에 닿은 자리', mode: 'foot', color: '#e3f7cf', run: footQuiz },
+      { icon: '🔷', label: '칠교 맞추기', color: '#e9f3ff', run: tanList }
+    ]);
+    main.appendChild(el('div', { class: 'kl-hint', text: '보이지 않는 뒤쪽·아래쪽 나무도 생각해서 세어요' }));
+  }
+  function quiz(mode, make) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: 6, make: make, onFinish: home }); }
+
+  function countQuiz() {
+    quiz('count', function (i, lv) {
+      var s = makeStack(lv), ans = s.total;
+      var vis = 0; for (var x = 0; x < s.W; x++) for (var y = 0; y < s.D; y++) if (s.h[x][y]) vis++;
+      var wrong = [ans - 1, ans + 1, ans + 2, ans - 2, vis].filter(function (v, k, a) { return v > 0 && v !== ans && a.indexOf(v) === k; });
+      var opts = K.shuffle([ans].concat(K.sample(wrong, 3)));
+      return {
+        key: 'c' + JSON.stringify(s.h), prompt: stackSvg(s, lv <= 1 ? 220 : 280), sub: '쌓기나무는 모두 몇 개일까요?' + (lv >= 2 ? '<br><small>아래에 가려진 나무도 세어요</small>' : ''), say: '쌓기나무는 모두 몇 개일까요?', cols: 4,
+        choices: opts.map(function (v) { return { html: String(v), correct: v === ans, say: v + '개' }; })
+      };
+    });
+  }
+  function footQuiz() {
+    quiz('foot', function (i, lv) {
+      var s; do { s = makeStack(Math.max(2, lv)); } while (s.W * s.D < 4);
+      var cells = []; for (var x = 0; x < s.W; x++) for (var y = 0; y < s.D; y++) cells.push(s.h[x][y] ? 1 : 0);
+      var key = cells.join(''), seen = {}, opts = [cells];
+      seen[key] = 1;
+      for (var t = 0; t < 60 && opts.length < 4; t++) {
+        var c = cells.slice(), k1 = K.randInt(0, c.length - 1); c[k1] = 1 - c[k1];
+        if (Math.random() < 0.4) { var k2 = K.randInt(0, c.length - 1); c[k2] = 1 - c[k2]; }
+        var kk = c.join('');
+        if (seen[kk] || c.indexOf(1) < 0) continue;
+        seen[kk] = 1; opts.push(c);
+      }
+      opts = K.shuffle(opts);
+      return {
+        key: 'f' + JSON.stringify(s.h), prompt: stackSvg(s, 250), sub: '바닥에 닿은 자리는 어느 것일까요?', say: '위에서 내려다보면, 바닥에 닿은 자리는 어느 것일까요?', cols: 2,
+        choices: opts.map(function (c) { return { html: footSvg(c, s.W, s.D), correct: c === cells }; })
+      };
+    });
+  }
+
+  /* ---------- 칠교 ----------
+     작은 세모(S) 빗변 아닌 변 1, 가운데 세모(M) 빗변 2, 큰 세모(B) 빗변 아닌 변 2, 네모(Q) 한 변 1.
+     조각을 끌어서 알맞은 자리에 가까이 놓으면 딱 붙는다. */
+  var COL = { S: '#ff595e', M: '#ffca3a', B: '#1982c4', Q: '#8ac926' };
+  var PUZ = [
+    { n: '네모', e: '🟩', p: [['S', [[0, 0], [1, 0], [0, 1]]], ['S', [[1, 0], [1, 1], [0, 1]]]] },
+    { n: '큰 세모', e: '🔺', p: [['Q', [[0, 0], [1, 0], [1, 1], [0, 1]]], ['S', [[1, 0], [2, 0], [1, 1]]], ['S', [[0, 1], [1, 1], [0, 2]]]] },
+    { n: '집', e: '🏠', p: [['M', [[0, 1], [1, 0], [2, 1]]], ['B', [[0, 1], [2, 1], [0, 3]]], ['B', [[2, 1], [2, 3], [0, 3]]]] },
+    { n: '물고기', e: '🐟', p: [['B', [[0, 0], [2, 0], [0, 2]]], ['B', [[2, 0], [2, 2], [0, 2]]], ['M', [[2, 1], [3, 0], [3, 2]]]] },
+    { n: '화살표', e: '➡️', p: [['S', [[0, 0.5], [1, 0.5], [0, 1.5]]], ['S', [[1, 0.5], [1, 1.5], [0, 1.5]]], ['Q', [[1, 0.5], [2, 0.5], [2, 1.5], [1, 1.5]]], ['M', [[2, 0], [3, 1], [2, 2]]]] },
+    { n: '돛단배', e: '⛵', p: [['B', [[1, 0], [1, 2], [3, 2]]], ['S', [[0, 2], [1, 2], [1, 3]]], ['Q', [[1, 2], [2, 2], [2, 3], [1, 3]]], ['S', [[2, 2], [3, 2], [2, 3]]]] },
+    { n: '나무', e: '🌲', p: [['B', [[0, 2], [2, 0], [2, 2]]], ['B', [[2, 0], [4, 2], [2, 2]]], ['Q', [[1.5, 2], [2.5, 2], [2.5, 3], [1.5, 3]]]] }
+  ];
+  function centroid(poly) { var x = 0, y = 0; poly.forEach(function (p) { x += p[0]; y += p[1]; }); return [x / poly.length, y / poly.length]; }
+  function shapeKey(poly) { var c = centroid(poly); return poly.map(function (p) { return (p[0] - c[0]).toFixed(2) + ',' + (p[1] - c[1]).toFixed(2); }).sort().join(';'); }
+  function bbox(polys) { var b = [Infinity, Infinity, -Infinity, -Infinity]; polys.forEach(function (pl) { pl.forEach(function (p) { b[0] = Math.min(b[0], p[0]); b[1] = Math.min(b[1], p[1]); b[2] = Math.max(b[2], p[0]); b[3] = Math.max(b[3], p[1]); }); }); return b; }
+  function done() { return K.progress().tan || {}; }
+
+  function tanList() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    main.appendChild(el('div', { class: 'kl-prompt', text: '🔷 칠교 맞추기', style: 'font-size:24px;margin-bottom:8px' }));
+    var d = done(), box = el('div', { class: 'tan-list' });
+    PUZ.forEach(function (pz, i) {
+      var bb = bbox(pz.p.map(function (x) { return x[1]; }));
+      var sil = pz.p.map(function (x) { return '<polygon points="' + pts(x[1]) + '" fill="#9aa5b1"/>'; }).join('');
+      var c = el('button', { class: 'tan-card', html: '<svg viewBox="' + [bb[0] - 0.2, bb[1] - 0.2, bb[2] - bb[0] + 0.4, bb[3] - bb[1] + 0.4].join(' ') + '">' + sil + '</svg>' + pz.e + ' ' + pz.n + ' <small>(' + pz.p.length + '조각)</small>' + (d[i] ? '<span class="ok">✅</span>' : '') });
+      c.addEventListener('click', function () { K.sfx.click(); tangram(i); });
+      box.appendChild(c);
+    });
+    main.appendChild(box);
+  }
+
+  function tangram(idx) {
+    var pz = PUZ[idx], showLines = idx < 3;
+    main.innerHTML = ''; main.appendChild(K.backButton(tanList));
+    var wrap = el('div', { class: 'tan-wrap' });
+    var hintBtn = el('button', { class: 'kl-btn' + (showLines ? ' hint-on' : ''), text: '💡 선 보기' });
+    wrap.appendChild(el('div', { class: 'tan-head' }, [el('div', { class: 't', text: pz.e + ' ' + pz.n + ' 만들기' }), hintBtn]));
+    main.appendChild(wrap);
+
+    var slots = pz.p.map(function (x) { return { type: x[0], poly: x[1], key: shapeKey(x[1]), c: centroid(x[1]), filled: false }; });
+    var bb = bbox(slots.map(function (s) { return s.poly; }));
+    var bw = bb[2] - bb[0], bh = bb[3] - bb[1];
+    /* 조각 받침: 판 아래에 한 줄(넘치면 여러 줄)로 늘어놓는다 */
+    var W = Math.max(bw + 1, 5), trayY = bb[3] + 1, rowH = 0, cx = bb[0] - (W - bw) / 2 + 0.3;
+    var pieces = K.shuffle(slots.map(function (s, k) { return k; })).map(function (k) {
+      var s = slots[k], pb = bbox([s.poly]), w = pb[2] - pb[0], h = pb[3] - pb[1];
+      if (cx + w > bb[0] - (W - bw) / 2 + W - 0.2) { cx = bb[0] - (W - bw) / 2 + 0.3; trayY += rowH + 0.4; rowH = 0; }
+      var home = [cx - pb[0], trayY - pb[1]];
+      cx += w + 0.4; rowH = Math.max(rowH, h);
+      return { type: s.type, poly: s.poly, key: s.key, home: home, off: home.slice(), placed: false };
+    });
+    var left = bb[0] - (W - bw) / 2, top = bb[1] - 0.5, H = trayY + rowH + 0.4 - top;
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', [left, top, W, H].join(' '));
+    svg.setAttribute('class', 'tan-svg');
+    wrap.appendChild(svg);
+    var msg = el('div', { class: 'kl-sub', text: '조각을 끌어다 회색 자리에 놓아요' });
+    wrap.appendChild(msg);
+
+    var sil = document.createElementNS(NS, 'g'); svg.appendChild(sil);
+    function drawSil() {
+      sil.innerHTML = slots.map(function (s) {
+        return '<polygon points="' + pts(s.poly) + '" fill="#c9d1d9" stroke="' + (showLines ? '#6b7785' : '#c9d1d9') + '" stroke-width="0.04" stroke-dasharray="' + (showLines ? '0.12 0.08' : '0') + '" stroke-linejoin="round"/>';
+      }).join('');
+    }
+    drawSil();
+    hintBtn.addEventListener('click', function () { showLines = !showLines; hintBtn.classList.toggle('hint-on', showLines); drawSil(); K.sfx.click(); });
+    svg.appendChild(Object.assign(document.createElementNS(NS, 'line'), {}));
+    var sep = svg.lastChild; sep.setAttribute('x1', left); sep.setAttribute('x2', left + W); sep.setAttribute('y1', bb[3] + 0.5); sep.setAttribute('y2', bb[3] + 0.5); sep.setAttribute('stroke', '#e2d6bd'); sep.setAttribute('stroke-width', '0.03');
+
+    var dragging = false;
+    pieces.forEach(function (pc) {
+      var g = document.createElementNS(NS, 'polygon');
+      g.setAttribute('points', pts(pc.poly));
+      g.setAttribute('fill', COL[pc.type]); g.setAttribute('stroke', '#fff'); g.setAttribute('stroke-width', '0.05'); g.setAttribute('stroke-linejoin', 'round');
+      g.setAttribute('class', 'piece');
+      pc.g = g; place(pc); svg.appendChild(g);
+      g.addEventListener('pointerdown', function (e) {
+        if (pc.placed || dragging) return;
+        e.preventDefault(); dragging = true;
+        /* 맨 위로 올린 다음에 붙잡아야 손을 따라온다 (옮기면 포인터 캡처가 풀린다) */
+        svg.appendChild(g); g.classList.add('drag');
+        try { g.setPointerCapture(e.pointerId); } catch (err) { }
+        var st = toSvg(e), o0 = pc.off.slice(), id = e.pointerId;
+        function mv(ev) { if (ev.pointerId !== id) return; var q = toSvg(ev); pc.off = [o0[0] + q[0] - st[0], o0[1] + q[1] - st[1]]; place(pc); }
+        function up(ev) {
+          if (ev.pointerId !== id) return;
+          window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up);
+          g.classList.remove('drag'); dragging = false; drop(pc);
+        }
+        window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
+      });
+    });
+    function toSvg(e) { var m = svg.getScreenCTM().inverse(), p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; p = p.matrixTransform(m); return [p.x, p.y]; }
+    function place(pc) { pc.g.setAttribute('transform', 'translate(' + pc.off[0].toFixed(3) + ' ' + pc.off[1].toFixed(3) + ')'); }
+    function drop(pc) {
+      var c = centroid(pc.poly), cur = [c[0] + pc.off[0], c[1] + pc.off[1]], best = null, bd = 0.75;
+      slots.forEach(function (s) { if (s.filled || s.key !== pc.key) return; var d = Math.hypot(s.c[0] - cur[0], s.c[1] - cur[1]); if (d < bd) { bd = d; best = s; } });
+      if (best) {
+        best.filled = true; pc.placed = true;
+        pc.off = [best.c[0] - c[0], best.c[1] - c[1]]; place(pc); pc.g.style.cursor = 'default';
+        K.sfx.correct();
+        if (slots.every(function (s) { return s.filled; })) win();
+      } else if (cur[1] < bb[3] + 0.5 || cur[0] < left || cur[0] > left + W || cur[1] > top + H) {
+        if (cur[1] < bb[3] + 0.5) { K.sfx.wrong(); msg.textContent = '거기는 아니에요. 모양과 방향이 같은 자리를 찾아요'; }
+        pc.off = pc.home.slice(); place(pc);
+      }
+    }
+    function win() {
+      msg.textContent = '🎉 ' + pz.n + jo(pz.n) + ' 완성했어요!';
+      K.mutate(function (d) { var pr = d.progress.space || (d.progress.space = {}); var t = pr.tan || (pr.tan = {}); t[idx] = K.todayKey(); });
+      K.addStar(2); K.event('win'); K.sfx.win(); K.confetti(); K.speak(pz.n + jo(pz.n) + ' 완성했어요!');
+      var row = el('div', { class: 'kl-row', style: 'margin-top:10px' }, [
+        idx + 1 < PUZ.length ? el('button', { class: 'kl-btn primary', text: '다음 모양 ▶', onclick: function () { K.sfx.click(); tangram(idx + 1); } }) : null,
+        el('button', { class: 'kl-btn', text: '📋 모양 고르기', onclick: function () { K.sfx.click(); tanList(); } })
+      ]);
+      wrap.appendChild(row);
+    }
+    function jo(w) { return K.josa(w, '을/를'); }
+    K.speak(pz.n + ' 만들기. 조각을 끌어다 회색 자리에 놓아요');
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

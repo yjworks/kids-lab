@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 가르치기</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .lab { max-width: 680px; margin: 0 auto; text-align: center; }
+  .step { font-size: 17px; font-weight: 900; color: #6a4c93; margin-bottom: 6px; }
+  .card { display: inline-block; background: #fff; border-radius: 24px; padding: 12px 26px; box-shadow: 0 5px 0 rgba(0,0,0,.08); margin: 4px 0 10px; }
+  .card .e { font-size: 84px; line-height: 1.1; }
+  .card .n { font-size: 22px; font-weight: 900; }
+  .baskets { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .basket { border-radius: 20px; padding: 14px 8px; font-size: 20px; font-weight: 900; box-shadow: 0 5px 0 rgba(0,0,0,.1); min-height: 72px; }
+  .basket.a { background: #d0f4de; } .basket.b { background: #ffe4d6; }
+  .mem { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .mem div { background: rgba(255,255,255,.7); border-radius: 16px; padding: 8px; min-height: 52px; font-size: 28px; line-height: 1.3; word-break: break-all; }
+  .mem small { display: block; font-size: 13px; font-weight: 900; color: #555; }
+  .robot { display: flex; align-items: flex-start; gap: 10px; justify-content: center; margin: 6px 0 10px; }
+  .robot .r { font-size: 58px; line-height: 1; }
+  .bubble { background: #fff; border-radius: 18px; padding: 10px 14px; font-size: 19px; font-weight: 900; text-align: left; box-shadow: 0 3px 10px rgba(0,0,0,.1); max-width: 460px; line-height: 1.45; word-break: keep-all; }
+  .bubble b { color: #c0395f; }
+  .judge { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .judge button { border-radius: 20px; padding: 14px; font-size: 21px; font-weight: 900; background: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.1); min-height: 64px; }
+  .truth { font-size: 18px; font-weight: 900; margin-top: 10px; min-height: 26px; word-break: keep-all; }
+  .note { background: #e9f3ff; color: #1d4f7a; border-radius: 16px; padding: 12px 14px; font-size: 18px; font-weight: 800; text-align: left; line-height: 1.5; margin-top: 12px; word-break: keep-all; }
+  .big-btn { margin-top: 12px; }
+  .intro { max-width: 640px; margin: 0 auto; display: grid; gap: 10px; }
+  .intro div { background: #fff; border-radius: 18px; padding: 14px 16px; font-size: 19px; font-weight: 900; box-shadow: 0 4px 0 rgba(0,0,0,.07); text-align: left; line-height: 1.5; word-break: keep-all; }
+  @media (max-width: 760px) {
+    .card .e { font-size: 64px; } .card .n { font-size: 19px; } .basket { font-size: 17px; } .bubble { font-size: 16px; }
+    .robot .r { font-size: 46px; } .judge button { font-size: 18px; } .mem div { font-size: 22px; } .note, .intro div { font-size: 16px; }
+  }
+</style>
+</head>
+<body data-app="aiteach">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: 'AI 가르치기', icon: '🧠', say: 'AI 가르치기' });
+  var main = document.getElementById('main');
+  function jo(w, p) { return K.josa(w, p); }
+
+  /* 로보는 "가장 닮은 것"을 찾아 따라 하는 방식(최근접 이웃)으로 배운다.
+     특징 값은 사람이 보기에도 분명한 것만 쓴다. y는 실제 정답(0 또는 1). */
+  var TASKS = {
+    fly: {
+      title: '날 수 있을까?', icon: '🕊️', labels: ['🕊️ 날 수 있어요', '🚶 못 날아요'],
+      feat: ['날개', '깃털', '다리 수', '물에서 삶', '털'], w: [2, 1, 1, 1, 1],
+      items: [
+        ['🐦', '참새', [1, 1, .25, 0, 0], 0], ['🦅', '독수리', [1, 1, .25, 0, 0], 0], ['🦆', '오리', [1, 1, .25, 1, 0], 0], ['🦉', '부엉이', [1, 1, .25, 0, 0], 0],
+        ['🐝', '벌', [1, 0, .75, 0, 0], 0], ['🦋', '나비', [1, 0, .75, 0, 0], 0], ['🦇', '박쥐', [1, 0, .25, 0, 1], 0], ['🐞', '무당벌레', [1, 0, .75, 0, 0], 0],
+        ['🐶', '강아지', [0, 0, .5, 0, 1], 1], ['🐱', '고양이', [0, 0, .5, 0, 1], 1], ['🐘', '코끼리', [0, 0, .5, 0, 0], 1], ['🐢', '거북', [0, 0, .5, 1, 0], 1],
+        ['🐟', '물고기', [0, 0, 0, 1, 0], 1], ['🐍', '뱀', [0, 0, 0, 0, 0], 1], ['🐜', '개미', [0, 0, .75, 0, 0], 1], ['🐰', '토끼', [0, 0, .5, 0, 1], 1],
+        ['🐸', '개구리', [0, 0, .5, 1, 0], 1]
+      ],
+      tricky: ['🐧', '펭귄', [1, 1, .25, 1, 0], 1, '펭귄은 날개와 깃털이 있지만 날지 못해요. 오리와 너무 닮아서 로보가 헷갈렸어요. 이렇게 AI도 틀릴 수 있어요. 펭귄을 가르쳐 주면 다음엔 맞힐 수 있어요.']
+    },
+    fruit: {
+      title: '과일일까 채소일까?', icon: '🍎', labels: ['🍎 과일', '🥕 채소'],
+      feat: ['단맛', '나무·덩굴 열매', '땅속에서 자람', '초록색', '잎을 먹음'], w: [1, 1, 1, 1, 1],
+      items: [
+        ['🍎', '사과', [1, 1, 0, 0, 0], 0], ['🍌', '바나나', [1, 1, 0, 0, 0], 0], ['🍇', '포도', [1, 1, 0, 0, 0], 0], ['🍊', '귤', [1, 1, 0, 0, 0], 0],
+        ['🍑', '복숭아', [1, 1, 0, 0, 0], 0], ['🍐', '배', [1, 1, 0, 0, 0], 0], ['🍒', '체리', [1, 1, 0, 0, 0], 0],
+        ['🥕', '당근', [0, 0, 1, 0, 0], 1], ['🥔', '감자', [0, 0, 1, 0, 0], 1], ['🧅', '양파', [0, 0, 1, 0, 0], 1], ['🧄', '마늘', [0, 0, 1, 0, 0], 1],
+        ['🥦', '브로콜리', [0, 0, 0, 1, 1], 1], ['🥬', '배추', [0, 0, 0, 1, 1], 1], ['🥒', '오이', [0, 0, 0, 1, 0], 1], ['🍆', '가지', [0, 0, 0, 0, 0], 1]
+      ]
+    }
+  };
+
+  function dist(a, b, w) { var d = 0; for (var i = 0; i < a.length; i++) d += w[i] * Math.abs(a[i] - b[i]); return d; }
+  /* 가장 닮은 예를 찾는다. 똑같이 닮은 것이 여럿이면 많은 쪽을 따른다 */
+  function guess(mem, x, w) {
+    var best = Infinity, near = [];
+    mem.forEach(function (m) { var d = dist(m.f, x.f, w); if (d < best - 1e-9) { best = d; near = [m]; } else if (Math.abs(d - best) < 1e-9) near.push(m); });
+    var c0 = near.filter(function (m) { return m.label === 0; }).length, c1 = near.length - c0;
+    var label = c0 === c1 ? near[0].label : (c0 > c1 ? 0 : 1);
+    return { label: label, like: near.filter(function (m) { return m.label === label; })[0] };
+  }
+  function item(r) { return { e: r[0], n: r[1], f: r[2], y: r[3], why: r[4] }; }
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '💡', label: 'AI는 어떻게 배울까?', color: '#e9f3ff', run: intro },
+      { icon: '🕊️', label: '날 수 있을까? 가르치기', color: '#e3f7cf', run: function () { lab('fly'); } },
+      { icon: '🍎', label: '과일일까 채소일까? 가르치기', color: '#ffe9ee', run: function () { lab('fruit'); } },
+      { icon: '🔴', label: '로보의 실수 (한쪽만 가르치면?)', color: '#fff3c4', run: bias }
+    ]);
+    main.appendChild(el('div', { class: 'kl-hint', text: '내가 가르친 대로 배우는 로봇 친구 로보예요' }));
+  }
+
+  function intro() {
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var box = el('div', { class: 'intro' });
+    [['🤖', 'AI는 사람이 보여 준 예를 보고 배워요.'], ['🧺', '"이건 날 수 있어", "이건 못 날아" 하고 이름표를 붙여 보여 주면 돼요.'],
+     ['🔎', '처음 보는 것이 오면, 배운 것 중에 가장 닮은 것을 찾아서 따라 대답해요.'], ['❗', '그래서 잘못 가르치면 틀리게 배워요. 한쪽만 보여 줘도 틀려요.'],
+     ['🙋', 'AI가 한 말은 사람이 한 번 더 확인해요.']].forEach(function (t) {
+      var d = el('div', { html: '<span style="font-size:30px;margin-right:8px">' + t[0] + '</span>' + K.esc(t[1]) });
+      d.addEventListener('click', function () { K.speak(t[1]); });
+      box.appendChild(d);
+    });
+    main.appendChild(box);
+    K.speak('AI는 사람이 보여 준 예를 보고 배워요.');
+    K.event('learn');
+  }
+
+  /* ---------- 가르치기 → 시험 ---------- */
+  function lab(id) {
+    var T = TASKS[id], pool = K.shuffle(T.items.map(item));
+    var A = pool.filter(function (x) { return x.y === 0; }), B = pool.filter(function (x) { return x.y === 1; });
+    var train = K.shuffle(A.slice(0, 3).concat(B.slice(0, 3)));
+    var test = K.shuffle(A.slice(3, 6).concat(B.slice(3, 5)));
+    if (T.tricky) test.push(item(T.tricky)); else test.push(A[6] || B[5]);
+    var mem = [], wrongTeach = 0, ti = 0, robotRight = 0, kidRight = 0, trickyHit = null;
+
+    function frame(stepText) {
+      main.innerHTML = ''; main.appendChild(K.backButton(home));
+      var box = el('div', { class: 'lab' });
+      box.appendChild(el('div', { class: 'kl-prompt', text: T.icon + ' ' + T.title, style: 'font-size:22px;margin-bottom:4px' }));
+      box.appendChild(el('div', { class: 'step', text: stepText }));
+      main.appendChild(box);
+      return box;
+    }
+    function memView() {
+      return el('div', { class: 'mem' }, [0, 1].map(function (k) {
+        return el('div', { html: '<small>' + K.esc(T.labels[k]) + '</small>' + mem.filter(function (m) { return m.label === k; }).map(function (m) { return m.e; }).join(' ') });
+      }));
+    }
+    function teach() {
+      if (ti >= train.length) { ti = 0; return testStep(); }
+      var x = train[ti], box = frame('1단계 · 가르치기 ' + (ti + 1) + ' / ' + train.length);
+      box.appendChild(el('div', { class: 'robot' }, [el('div', { class: 'r', text: '🤖' }), el('div', { class: 'bubble', text: '이건 어느 쪽이에요? 알려 주세요!' })]));
+      box.appendChild(el('div', { class: 'card', html: '<div class="e">' + x.e + '</div><div class="n">' + x.n + '</div>' }));
+      box.appendChild(el('div', { class: 'baskets' }, [0, 1].map(function (k) {
+        return el('button', { class: 'basket ' + (k ? 'b' : 'a'), text: T.labels[k], onclick: function () {
+          mem.push({ e: x.e, n: x.n, f: x.f, label: k });
+          if (k !== x.y) wrongTeach++;
+          K.sfx.pop(); ti++; teach();
+        } });
+      })));
+      box.appendChild(memView());
+      K.speak(x.n + '. 어느 쪽인지 로보에게 알려 주세요.');
+    }
+    function testStep() {
+      if (ti >= test.length) return finish();
+      var x = test[ti], g = guess(mem, x, T.w), box = frame('2단계 · 로보 시험 ' + (ti + 1) + ' / ' + test.length);
+      var say = '음… 배운 것 중에 ' + g.like.n + jo(g.like.n, '이/가') + ' 가장 닮았어요. 그러니까 ' + T.labels[g.label].replace(/^\S+\s/, '') + '!';
+      box.appendChild(el('div', { class: 'card', html: '<div class="e">' + x.e + '</div><div class="n">' + x.n + '</div>' }));
+      box.appendChild(el('div', { class: 'robot' }, [el('div', { class: 'r', text: '🤖' }), el('div', { class: 'bubble', html: '음… 배운 것 중에 ' + g.like.e + ' <b>' + g.like.n + '</b>' + jo(g.like.n, '이/가') + ' 가장 닮았어요.<br>그러니까 <b>' + K.esc(T.labels[g.label]) + '</b>' })]));
+      var truth = el('div', { class: 'truth' });
+      var judge = el('div', { class: 'judge' });
+      var ok = g.label === x.y;
+      [['⭕ 로보가 맞았어', true], ['❌ 로보가 틀렸어', false]].forEach(function (o) {
+        judge.appendChild(el('button', { text: o[0], onclick: function () {
+          if (judge.dataset.done) return; judge.dataset.done = '1';
+          if (ok) robotRight++;
+          if (o[1] === ok) { kidRight++; K.sfx.correct(); K.addStar(1); K.event('correct'); }
+          else K.nope('다시 생각해 봐요', '');
+          truth.innerHTML = (o[1] === ok ? '👍 잘 봤어요! ' : '🤔 ') + x.e + ' ' + x.n + jo(x.n, '은/는') + ' <b>' + K.esc(T.labels[x.y]) + '</b>' + (ok ? ' — 로보가 맞았어요.' : ' — 로보가 틀렸어요.');
+          if (x.why && !ok) { trickyHit = x.why; truth.appendChild(el('div', { class: 'note', text: '💡 ' + x.why })); }
+          K.speak(x.n + jo(x.n, '은/는') + ' ' + T.labels[x.y].replace(/^\S+\s/, '') + (x.why && !ok ? '. ' + x.why : ''));
+          box.appendChild(el('button', { class: 'kl-btn primary big-btn', text: ti + 1 < test.length ? '다음 ▶' : '결과 보기 ▶', onclick: function () { K.sfx.click(); ti++; testStep(); } }));
+        } }));
+      });
+      box.appendChild(judge); box.appendChild(truth);
+      K.speak(x.n + '. ' + say + ' 로보가 맞았을까요?');
+    }
+    function finish() {
+      var box = frame('결과');
+      box.appendChild(el('div', { class: 'robot' }, [el('div', { class: 'r', text: '🤖' }), el('div', { class: 'bubble', html: '나는 <b>' + test.length + '개 중 ' + robotRight + '개</b>를 맞혔어요!<br>' + (kidRight === test.length ? '내가 맞았는지 틀렸는지도 모두 잘 봐 줬어요 👏' : '내 대답을 ' + kidRight + '번 바르게 확인해 줬어요.') })]));
+      var lines = [];
+      if (wrongTeach) lines.push('가르칠 때 이름표를 ' + wrongTeach + '번 반대로 붙였어요. AI는 가르친 대로 배워서, 잘못 가르치면 틀리게 배워요.');
+      else lines.push('이름표를 모두 바르게 붙여 가르쳤어요.');
+      if (trickyHit) lines.push('펭귄처럼 겉모습이 닮아도 다른 것이 있어요. 더 많은 예를 가르쳐 주면 AI가 더 똑똑해져요.');
+      lines.push('AI의 대답은 사람이 한 번 더 확인해요.');
+      box.appendChild(el('div', { class: 'note', html: lines.map(function (l) { return '• ' + K.esc(l); }).join('<br>') }));
+      box.appendChild(el('div', { class: 'kl-row', style: 'margin-top:12px' }, [
+        el('button', { class: 'kl-btn primary', text: '🔁 다시 가르치기', onclick: function () { K.sfx.click(); lab(id); } }),
+        el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: function () { K.sfx.click(); home(); } })
+      ]));
+      K.event('win'); K.addStar(2); if (kidRight >= test.length - 1) { K.sfx.win(); K.confetti(); }
+      K.speak('로보는 ' + test.length + '개 중 ' + robotRight + '개를 맞혔어요. ' + lines[0]);
+    }
+    teach();
+  }
+
+  /* ---------- 한쪽만 가르치면? (빨간 사과만 본 로보) ---------- */
+  function bias() {
+    var W = [2, 2, 2, 2, 1, 1];   /* 빨강, 초록, 노랑, 보라, 둥글다, 먹는 열매 */
+    var M = [
+      { e: '🍎', n: '빨간 사과', f: [1, 0, 0, 0, 1, 1], label: 0 },
+      { e: '🥦', n: '브로콜리', f: [0, 1, 0, 0, 0, 0], label: 1 },
+      { e: '🍋', n: '레몬', f: [0, 0, 1, 0, 1, 1], label: 1 },
+      { e: '🍇', n: '포도', f: [0, 0, 0, 1, 1, 1], label: 1 }
+    ];
+    var L = ['🍎 사과예요', '🙅 사과가 아니에요'];
+    var G = { e: '🍏', n: '초록 사과', f: [0, 1, 0, 0, 1, 1], label: 0 }, R = { e: '🔴', n: '빨간 공', f: [1, 0, 0, 0, 1, 0], label: 1 };
+    var steps = [
+      { t: '로보에게 사과는 빨간 사과만 보여 줬어요.', mem: M.slice(), test: null },
+      { t: '초록 사과를 보여 주면?', mem: M.slice(), test: G },
+      { t: '빨간 공을 보여 주면?', mem: M.slice(), test: R },
+      { t: '이번엔 초록 사과와 빨간 공도 가르쳐 줬어요.', mem: M.concat([G, R]), test: null, add: true },
+      { t: '이제 초록 사과를 보여 주면?', mem: M.concat([G, R]), test: { e: '🍏', n: '다른 초록 사과', f: [0, 1, 0, 0, 1, 1], label: 0 } },
+      { t: '빨간 공은?', mem: M.concat([G, R]), test: { e: '🔴', n: '다른 빨간 공', f: [1, 0, 0, 0, 1, 0], label: 1 } }
+    ];
+    var si = 0;
+    function show() {
+      var s = steps[si];
+      main.innerHTML = ''; main.appendChild(K.backButton(home));
+      var box = el('div', { class: 'lab' });
+      box.appendChild(el('div', { class: 'kl-prompt', text: '🔴 로보의 실수', style: 'font-size:22px;margin-bottom:4px' }));
+      box.appendChild(el('div', { class: 'step', text: (si + 1) + ' / ' + steps.length + ' · ' + s.t }));
+      box.appendChild(el('div', { class: 'mem' }, [0, 1].map(function (k) {
+        return el('div', { html: '<small>' + L[k] + '</small>' + s.mem.filter(function (m) { return m.label === k; }).map(function (m) { return m.e; }).join(' ') });
+      })));
+      var say = s.t;
+      if (s.test) {
+        var g = guess(s.mem, s.test, W), ok = g.label === s.test.label;
+        box.appendChild(el('div', { class: 'card', html: '<div class="e">' + s.test.e + '</div><div class="n">' + s.test.n + '</div>' }));
+        box.appendChild(el('div', { class: 'robot' }, [el('div', { class: 'r', text: '🤖' }), el('div', { class: 'bubble', html: g.like.e + ' <b>' + g.like.n + '</b>' + jo(g.like.n, '이/가') + ' 가장 닮았어요. 그러니까 <b>' + L[g.label] + '</b>' })]));
+        var why = ok ? '맞았어요! 여러 가지를 골고루 배웠더니 제대로 알아봤어요.'
+          : (s.test === G ? '틀렸어요! 로보는 초록색이 브로콜리와 같다는 것만 보고 판단했어요. 초록 사과를 한 번도 본 적이 없거든요.' : '틀렸어요! 로보는 빨간색만 보고 사과라고 생각했어요. 빨간 것은 모두 사과인 줄 알아요.');
+        box.appendChild(el('div', { class: 'note', text: (ok ? '⭕ ' : '❌ ') + why }));
+        say += ' 로보는 ' + L[g.label].replace(/^\S+\s/, '') + '라고 했어요. ' + why;
+      }
+      if (si === steps.length - 1) {
+        box.appendChild(el('div', { class: 'note', text: '💡 AI에게는 여러 가지를 골고루 보여 줘야 해요. 한쪽만 보여 주면 한쪽으로 치우친 생각을 배워요.' }));
+        box.appendChild(el('div', { class: 'kl-row', style: 'margin-top:12px' }, [
+          el('button', { class: 'kl-btn primary', text: '🔁 처음부터', onclick: function () { K.sfx.click(); bias(); } }),
+          el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: function () { K.sfx.click(); home(); } })
+        ]));
+        K.event('win'); K.addStar(1);
+      } else {
+        box.appendChild(el('button', { class: 'kl-btn primary big-btn', text: '다음 ▶', onclick: function () { K.sfx.click(); si++; show(); } }));
+      }
+      main.appendChild(box);
+      K.speak(say);
+    }
+    show();
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 /* 키즈랩 서비스워커 - 처음 열 때 전부 받아 두고, 다음부터는 인터넷 없이도 실행된다.
    파일을 고치면 CACHE 값을 올린다. */
-var CACHE = 'kidlab-v11';
+var CACHE = 'kidlab-v12';
 var SHELL = [
   "./",
   "./index.html",
@@ -33,6 +33,18 @@ var SHELL = [
   "./shared/copy.js",
   "./shared/classics.js",
   "./apps/korean/index.html",
+  "./apps/phonics/index.html",
+  "./apps/esent/index.html",
+  "./apps/ebooks/index.html",
+  "./apps/space/index.html",
+  "./apps/wordmath/index.html",
+  "./apps/earth/index.html",
+  "./apps/world/index.html",
+  "./apps/money/index.html",
+  "./apps/media/index.html",
+  "./apps/aiteach/index.html",
+  "./apps/typing/index.html",
+  "./apps/world/flags.js",
   "./apps/classic/index.html",
   "./apps/daily/elevator.js",
   "./apps/batchim/index.html",

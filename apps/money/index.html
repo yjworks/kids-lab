@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>내 저금통</title>
+<link rel="stylesheet" href="../../shared/app.css">
+<style>
+  .item { font-size: 76px; line-height: 1.1; }
+  .item-l { font-size: 24px; font-weight: 900; }
+  .opt { font-size: 20px; font-weight: 900; }
+  .price { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .tag { background: #fff; border-radius: 18px; padding: 10px 16px; box-shadow: 0 4px 0 rgba(0,0,0,.08); text-align: center; min-width: 150px; }
+  .tag .e { font-size: 44px; }
+  .tag .p { font-size: 22px; font-weight: 900; color: #c0395f; }
+  .tag .d { font-size: 15px; font-weight: 800; color: #555; }
+  .story { font-size: 22px; font-weight: 900; line-height: 1.55; word-break: keep-all; max-width: 640px; margin: 0 auto; }
+  .bank { max-width: 640px; margin: 0 auto; text-align: center; }
+  .goal { display: flex; align-items: center; gap: 12px; justify-content: center; background: #fff; border-radius: 20px; padding: 12px; box-shadow: 0 4px 0 rgba(0,0,0,.07); }
+  .goal .e { font-size: 52px; }
+  .goal .t { text-align: left; font-weight: 900; font-size: 19px; }
+  .meter { height: 26px; background: #eee; border-radius: 13px; overflow: hidden; margin: 12px 0 4px; }
+  .meter i { display: block; height: 100%; background: linear-gradient(90deg, #ffca3a, #8ac926); width: 0; transition: width .5s; }
+  .pig { font-size: 76px; line-height: 1; margin-top: 8px; }
+  .pig.bump { animation: bump .4s; }
+  @keyframes bump { 50% { transform: scale(1.2) rotate(-6deg); } }
+  .coins { font-size: 26px; font-weight: 900; color: #7a5300; }
+  .day { font-size: 18px; font-weight: 900; color: #6a4c93; margin: 10px 0 4px; }
+  .tempt { background: #fff4d6; border-radius: 18px; padding: 12px; font-size: 20px; font-weight: 900; margin: 8px 0; word-break: keep-all; }
+  .tempt .e { font-size: 46px; display: block; }
+  .row2 { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .row2 .kl-btn { min-width: 150px; }
+  .log { font-size: 15px; font-weight: 800; color: #555; margin-top: 8px; min-height: 22px; }
+  .shelf { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px; font-size: 34px; }
+  body[data-app="money"] .kl-choice { min-height: 0; padding: 14px 16px; }
+  @media (max-width: 760px) { .item { font-size: 60px; } .story { font-size: 18px; } .tag { min-width: 120px; } .tag .e { font-size: 36px; } .tag .p { font-size: 19px; } .tempt { font-size: 17px; } .pig { font-size: 60px; } }
+</style>
+</head>
+<body data-app="money">
+<main id="main"></main>
+<script src="../../shared/kid.js"></script>
+<script>
+(function () {
+  var K = KidLab, el = K.el;
+  K.header({ title: '내 저금통', icon: '🐷', say: '내 저금통' });
+  var main = document.getElementById('main');
+  function won(n) { return K.comma(n) + '원'; }
+  function jo(w, pair) { return K.josa(w, pair); }
+
+  /* 꼭 필요한 것 / 갖고 싶은 것 - 누구나 고개를 끄덕일 만한 것만 골랐다 */
+  var NEED = [['🪥', '칫솔'], ['🍚', '밥'], ['🥛', '우유'], ['🧥', '겨울 외투'], ['✏️', '학교에서 쓸 연필'], ['💊', '아플 때 먹는 약'], ['🧼', '비누'], ['👟', '발이 커져서 작아진 신발 대신 새 신발'], ['🧻', '화장지'], ['💧', '마실 물']];
+  var WANT = [['🤖', '열 번째 로봇 장난감'], ['🍭', '막대 사탕'], ['💎', '게임 속 보석'], ['🧸', '또 하나의 곰 인형'], ['⭐', '반짝이 스티커'], ['🎈', '풍선'], ['🍦', '아이스크림'], ['🎮', '새 게임'], ['🖍️', '집에 이미 있는 색연필 한 세트 더'], ['🪀', '요요']];
+  var THINGS = [['🍎', '사과'], ['🍞', '빵'], ['✏️', '연필'], ['📒', '공책'], ['🧃', '주스'], ['🍪', '쿠키'], ['🎈', '풍선'], ['🍫', '초콜릿']];
+  var NAMES = ['민지', '지우', '서아', '도하', '유나', '시우', '하리', '채아'];
+
+  function home() {
+    main.innerHTML = '';
+    K.menu(main, [
+      { icon: '🐷', label: '저금통 모으기', color: '#ffe9ee', run: bank },
+      { icon: '🤔', label: '필요한 것? 갖고 싶은 것?', mode: 'need', color: '#e3f7cf', run: needQuiz },
+      { icon: '🏷️', label: '어느 게 더 알뜰할까?', mode: 'cheap', color: '#fff3c4', run: cheapQuiz },
+      { icon: '🗓️', label: '며칠 모아야 할까?', mode: 'plan', color: '#e9f3ff', run: planQuiz }
+    ]);
+    var p = K.progress();
+    if (p.bought && p.bought.length) main.appendChild(el('div', { class: 'kl-hint', text: '모아서 산 것: ' + p.bought.join(' ') }));
+    else main.appendChild(el('div', { class: 'kl-hint', text: '돈을 계획해서 쓰는 연습을 해요' }));
+  }
+  function quiz(mode, make) { main.innerHTML = ''; main.appendChild(K.backButton(home)); var box = el('div'); main.appendChild(box); K.runQuiz({ el: box, mode: mode, total: 8, make: make, onFinish: home }); }
+
+  function needQuiz() {
+    quiz('need', function (i, lv) {
+      var isNeed = Math.random() < 0.5, it = K.pick(isNeed ? NEED : WANT);
+      return {
+        key: 'n' + it[1], prompt: '<div class="item">' + it[0] + '</div><div class="item-l">' + K.esc(it[1]) + '</div>', sub: '꼭 필요한 것일까요, 갖고 싶은 것일까요?', say: it[1] + '. 꼭 필요한 것일까요, 갖고 싶은 것일까요?', cols: 2,
+        choices: [{ html: '<div class="opt">✅ 꼭 필요해요</div>', correct: isNeed }, { html: '<div class="opt">💭 갖고 싶어요</div>', correct: !isNeed }]
+      };
+    });
+  }
+
+  /* 알뜰 비교: 낱개 값으로 따진다. 값이 같게 나오는 문제는 만들지 않는다 */
+  function cheapQuiz() {
+    quiz('cheap', function (i, lv) {
+      var t = K.pick(THINGS), A, B, sayQ;
+      if (lv <= 2) {
+        var a = K.randInt(2, 9) * 100, b; do { b = K.randInt(2, 9) * 100; } while (b === a);
+        A = { e: t[0], d: '한 개', p: a, unit: a }; B = { e: t[0], d: '한 개', p: b, unit: b };
+        sayQ = '어느 쪽이 더 싸요?';
+      } else if (lv === 3) {
+        var one = K.randInt(3, 9) * 100, two; do { two = K.randInt(4, 18) * 100; } while (two === one * 2 || two <= one);
+        A = { e: t[0], d: '1개', p: one, unit: one }; B = { e: t[0] + t[0], d: '2개 묶음', p: two, unit: two / 2 };
+        sayQ = '한 개 값으로 따지면 어느 쪽이 더 알뜰해요?';
+      } else {
+        /* 2개 묶음과 할인 한 개를 견준다. 어느 쪽이 이길지는 그때그때 다르다 */
+        var p = K.randInt(4, 9) * 100, rate = K.pick([10, 20, 30, 40]), q, disc = p * (100 - rate) / 100;
+        do { q = p * K.randInt(12, 19) / 10; } while (q / 2 === disc);
+        A = { e: t[0] + t[0], d: '2개 묶음', p: q, unit: q / 2 };
+        B = { e: t[0], d: '한 개 ' + won(p) + '에서 ' + rate + '% 할인', p: disc, unit: disc };
+        sayQ = '한 개 값으로 따지면 어느 쪽이 더 알뜰해요?';
+      }
+      var opts = K.shuffle([A, B]), best = A.unit < B.unit ? A : B;
+      return {
+        key: 'c' + t[1] + A.d + A.p + B.d + B.p, prompt: '<div style="font-size:22px;font-weight:900">' + t[0] + ' ' + t[1] + '</div>', sub: sayQ, say: t[1] + '. ' + sayQ, cols: 2,
+        choices: opts.map(function (o) { return { html: '<div class="tag"><div class="e">' + o.e + '</div><div class="d">' + o.d + '</div><div class="p">' + won(o.p) + '</div></div>', correct: o === best }; }),
+        onCorrect: function () { K.speak('한 개에 ' + won(best.unit) + '이라서 더 알뜰해요'); }, hold: 2200
+      };
+    });
+  }
+
+  /* 며칠 모아야 할까: 나누어떨어지는 수만 낸다 */
+  function planQuiz() {
+    quiz('plan', function (i, lv) {
+      var nm = K.pick(NAMES), per = lv <= 2 ? K.pick([100, 200, 500, 1000]) : K.pick([200, 300, 400, 500, 1000]);
+      var days = lv <= 1 ? K.randInt(2, 4) : lv <= 3 ? K.randInt(3, 7) : K.randInt(5, 10);
+      var have = lv >= 4 ? K.pick([0, per, per * 2]) : 0;
+      var goal = per * days + have;
+      var thing = K.pick([['⚽', '공'], ['📕', '책'], ['🪁', '연'], ['🧩', '퍼즐'], ['🎨', '물감']]);
+      var text = nm + jo(nm, '은/는') + ' 하루에 ' + won(per) + '씩 모아요. ' + (have ? '저금통에는 벌써 ' + won(have) + '이 있어요. ' : '') + won(goal) + '짜리 ' + thing[1] + jo(thing[1], '을/를') + ' 사려면 며칠을 모아야 할까요?';
+      var wrong = [days - 1, days + 1, days + 2, (have ? goal / per : days * 2)].filter(function (x) { return x > 0 && x !== days; });
+      wrong = K.sample(wrong.filter(function (x, k) { return wrong.indexOf(x) === k; }), lv <= 1 ? 2 : 3);
+      return {
+        key: 'p' + per + '-' + goal + '-' + have, prompt: '<div class="item" style="font-size:54px">' + thing[0] + '</div><div class="story">' + K.esc(text) + '</div>', say: text, cols: 2,
+        choices: K.shuffle([days].concat(wrong)).map(function (d) { return { html: '<div class="opt">' + d + '일</div>', correct: d === days }; })
+      };
+    });
+  }
+
+  /* ---------- 저금통 모으기: 날마다 용돈을 받고, 사고 싶은 것을 참을지 고른다 ---------- */
+  var GOALS = [['⚽', '축구공', 5000], ['📕', '그림책', 6000], ['🧩', '퍼즐', 7000], ['🪁', '연', 4000], ['🎨', '물감 세트', 8000], ['🚲', '자전거 벨', 3000]];
+  var TEMPT = [['🍭', '막대 사탕', 500], ['⭐', '반짝이 스티커', 1000], ['🍦', '아이스크림', 1000], ['🎈', '풍선', 500], ['💎', '게임 보석', 1000], ['🍬', '젤리', 500], ['🪀', '작은 장난감', 1500]];
+  function bank() {
+    var goal = K.pick(GOALS), saved = 0, day = 0, spent = [];
+    function draw() {
+      main.innerHTML = ''; main.appendChild(K.backButton(home));
+      var box = el('div', { class: 'bank' });
+      box.appendChild(el('div', { class: 'goal' }, [el('div', { class: 'e', text: goal[0] }), el('div', { class: 't', html: '목표: ' + goal[1] + '<br><span style="color:#c0395f">' + won(goal[2]) + '</span>' })]));
+      var m = el('div', { class: 'meter' }, [el('i')]); box.appendChild(m);
+      setTimeout(function () { m.firstChild.style.width = Math.min(100, saved / goal[2] * 100) + '%'; }, 30);
+      box.appendChild(el('div', { class: 'pig', text: '🐷' }));
+      box.appendChild(el('div', { class: 'coins', text: '저금통: ' + won(saved) }));
+      return box;
+    }
+    function turn() {
+      var box = draw();
+      if (saved >= goal[2]) return done(box);
+      day++;
+      var pocket = 1000, t = K.pick(TEMPT);
+      box.appendChild(el('div', { class: 'day', text: day + '일째 · 오늘 용돈 ' + won(pocket) + ' 받았어요 💰' }));
+      box.appendChild(el('div', { class: 'tempt', html: '<span class="e">' + t[0] + '</span>가게에 ' + t[1] + jo(t[1], '이/가') + ' 있어요 (' + won(t[2]) + '). 어떻게 할까요?' }));
+      var rest = pocket - t[2];
+      var row = el('div', { class: 'row2' }, [
+        el('button', { class: 'kl-btn green', text: '🐷 참고 ' + won(pocket) + ' 모으기', onclick: function () { saved += pocket; K.sfx.correct(); K.speak('참았어요! ' + won(pocket) + '을 모았어요'); turn(); bumpPig(); } }),
+        el('button', { class: 'kl-btn', text: t[0] + ' 사고 ' + won(rest) + ' 모으기', onclick: function () { saved += rest; spent.push(t[0]); K.sfx.pop(); K.speak(t[1] + jo(t[1], '을/를') + ' 사고 ' + won(rest) + '을 모았어요'); turn(); } })
+      ]);
+      box.appendChild(row);
+      var need = Math.ceil((goal[2] - saved) / pocket);
+      box.appendChild(el('div', { class: 'log', text: '다 참으면 앞으로 ' + need + '일 더 모으면 돼요' + (spent.length ? ' · 산 것: ' + spent.join(' ') : '') }));
+      main.appendChild(box);
+      K.speak(day + '일째. 용돈 천 원을 받았어요. ' + t[1] + jo(t[1], '을/를') + ' 살까요, 참고 모을까요?');
+    }
+    function bumpPig() { var pg = document.querySelector('.pig'); if (pg) { pg.classList.add('bump'); } }
+    function done(box) {
+      box.appendChild(el('div', { class: 'kl-prompt', text: '🎉 ' + day + '일 만에 ' + goal[1] + jo(goal[1], '을/를') + ' 샀어요!', style: 'font-size:24px;margin-top:10px' }));
+      var fast = Math.ceil(goal[2] / 1000);
+      box.appendChild(el('div', { class: 'log', text: day === fast ? '한 번도 안 쓰고 가장 빨리 모았어요! 👏' : '다 참았으면 ' + fast + '일 만에 살 수 있었어요. 조금씩 사 먹은 것도 즐거웠지요?' }));
+      box.appendChild(el('div', { class: 'row2', style: 'margin-top:12px' }, [
+        el('button', { class: 'kl-btn primary', text: '🔁 새 목표', onclick: function () { K.sfx.click(); bank(); } }),
+        el('button', { class: 'kl-btn', text: '🏠 처음으로', onclick: function () { K.sfx.click(); home(); } })
+      ]));
+      main.appendChild(box);
+      K.mutate(function (d) { var pr = d.progress.money || (d.progress.money = {}); var b = pr.bought || (pr.bought = []); b.push(goal[0]); if (b.length > 30) b.shift(); });
+      K.addStar(2); K.event('win'); K.sfx.win(); K.confetti();
+      K.speak(day + '일 만에 ' + goal[1] + jo(goal[1], '을/를') + ' 샀어요!');
+    }
+    turn();
+  }
+
+  home();
+})();
+</script>
+</body>
+</html>
