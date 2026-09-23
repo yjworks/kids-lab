@@ -90,6 +90,16 @@
   .profile-card { background: #fff8ec; border-radius: 22px; padding: 18px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: 0 6px 0 rgba(0,0,0,.08); font-weight: 800; }
   .profile-card:hover { background: #fff3c4; }
   .profile-card .av { font-size: 60px; }
+  .course-head, .course-card { display: flex; gap: 14px; align-items: center; background: #f7f7f7; border-radius: 18px; padding: 12px 16px; margin-bottom: 10px; }
+  .course-head { background: #f4f0ff; }
+  .course-head .ci, .course-card .ci { font-size: 42px; flex: none; }
+  .course-head > div:last-child { flex: 1; min-width: 0; }
+  .course-card .cb { flex: 1; min-width: 0; }
+  .cn { font-size: 20px; font-weight: 900; } .cs { font-size: 15px; font-weight: 800; color: #6a4c93; } .cd { font-size: 15px; font-weight: 600; color: #555; margin-top: 4px; line-height: 1.45; word-break: keep-all; }
+  .course-head .bar { height: 14px; background: #ddd; border-radius: 10px; overflow: hidden; }
+  .course-head .bar i { display: block; height: 100%; background: #8e7cc3; }
+  .course-card .go { background: #ffca3a; border-radius: 14px; padding: 8px 14px; font-weight: 800; flex: none; }
+  .course-card .go:disabled { background: #ddd; color: #777; box-shadow: none; }
   .mission { display: flex; align-items: center; gap: 14px; background: #f7f7f7; border-radius: 18px; padding: 12px 16px; margin-bottom: 10px; }
   .mission.done { background: #e3f7cf; }
   .mission .ic { font-size: 36px; }
@@ -114,7 +124,8 @@
   .gacha-result { font-size: 140px; animation: pop .8s; }
   @media (max-width: 760px) {
     #topbar { padding: 5px 10px; gap: 6px; }
-    .pill { font-size: 16px; padding: 5px 11px; gap: 4px; border-radius: 24px; }
+    .pill { font-size: 16px; padding: 5px 8px; gap: 3px; border-radius: 24px; }
+    #topbar .left, #topbar .right { gap: 5px; }
     .pill.btn { min-height: 44px; }
     #profileBtn .av { font-size: 24px; }
     #desktop { padding: 14px 12px 20px; }
@@ -142,7 +153,8 @@
     .profile-list { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); }
     .profile-card .av { font-size: 44px; }
     .mission .lb { font-size: 17px; }
-    .mission .go { font-size: 15px; padding: 7px 10px; }
+    .mission .go, .course-card .go { font-size: 15px; padding: 7px 10px; }
+    .course-card { flex-wrap: wrap; } .course-card .ci, .course-head .ci { font-size: 32px; } .cn { font-size: 17px; }
     input[type=text] { font-size: 22px; }
   }
   /* 가로로 눕힌 폰처럼 세로가 짧은 화면: 껍데기를 최대한 얇게 */
@@ -165,9 +177,13 @@
   @media (max-width: 900px) { #clock { font-size: 17px; } }
   @media (max-width: 760px) { #clock { display: none; } }
   @media (max-width: 620px) { #streakPill { display: none; } }
+  /* 좁은 폰: 도장은 부모 리포트에서 볼 수 있어 위 막대에서는 뺀다 */
+  @media (max-width: 380px) { #stampPill { display: none; } }
+  @media (max-width: 340px) { .pill { font-size: 14px !important; padding: 4px 5px !important; } #topbar { padding: 4px 6px !important; } }
   @media (max-width: 430px) {
     #profileBtn .nm { display: none; }
-    .pill { font-size: 15px; padding: 5px 9px; gap: 3px; }
+    .pill { font-size: 15px; padding: 5px 6px; gap: 2px; }
+    #topbar { gap: 4px; } #topbar .left, #topbar .right { gap: 4px; }
     #topbar { gap: 5px; padding: 6px 8px; }
     #topbar .left, #topbar .right { gap: 5px; }
   }
@@ -185,6 +201,7 @@
   <div class="right">
     <button class="pill btn" id="muteBtn" title="소리 끄기 / 켜기">🔊</button>
     <button class="pill btn" id="missionBtn" title="오늘의 미션">🎯 <span id="missionCount">0/4</span></button>
+    <button class="pill btn" id="courseBtn" title="학습 코스">📅<span id="courseCount"></span></button>
     <button class="pill btn" id="stickerBtn" title="스티커 도감">🧸</button>
     <button class="pill btn" id="installBtn" title="홈 화면에 설치" style="display:none">⬇️ 설치</button>
     <button class="pill btn" id="parentBtn" title="부모님 설정">👨‍👩‍👧</button>
@@ -214,6 +231,7 @@
 </script>
 <script src="shared/kid.js"></script>
 <script src="shared/apps.js"></script>
+<script src="shared/courses.js"></script>
 <script>
 (function () {
   var K = KidLab, el = K.el, esc = K.esc;
@@ -248,6 +266,9 @@
     document.querySelector('#profileBtn .nm').textContent = p.name;
     document.getElementById('starPill').textContent = '⭐ ' + d.stars;
     document.getElementById('streakPill').textContent = '🔥 ' + K.streak(d) + '일';
+    if (checkCourse()) d = K.data();
+    var cs = courseNow(d);
+    document.getElementById('courseCount').textContent = !cs ? '' : cs.finished ? '수료' : cs.todayDone ? '✔' : cs.doneTasks + '/' + cs.tasks.length;
     var ms = K.missions(d); var done = ms.filter(function (m) { return m.done; }).length;
     document.getElementById('missionCount').textContent = done + '/' + ms.length;
     var h = new Date().getHours();
@@ -269,6 +290,8 @@
     var box = document.getElementById('quick'); box.innerHTML = '';
     var picks = [], seen = {};
     function add(app, tag) { if (!app || seen[app.id] || picks.length >= 4) return; seen[app.id] = 1; picks.push({ a: app, tag: tag }); }
+    var cs = courseNow(d);
+    if (cs && !cs.todayDone && !cs.finished) cs.tasks.filter(function (x) { return !x.done; }).slice(0, 1).forEach(function (x) { add(appById[x.app], '📅 오늘의 코스 · ' + x.where); });
     if (d.lastApp) add(appById[d.lastApp], '이어서 하기');
     ms.filter(function (m) { return !m.done; }).forEach(function (m) { add(appById[m.app], '오늘 미션'); });
     /* 틀린 문제가 남아 있는 앱을 먼저 권한다 */
@@ -456,6 +479,116 @@
     K.speak('오늘의 미션이에요');
   }
 
+
+  /* ---------- 학습 코스 ----------
+     d.course = { id, start, done: [완료한 날짜...] }. done의 길이가 곧 지금 몇째 날인지다.
+     그날 할 일을 모두 하면(앱이 낸 오늘 이벤트로 판단) 하루가 끝나고, 다음 날 할 일은 이튿날 열린다. */
+  var COURSES = (window.KIDLAB_COURSES || { list: [], types: [] });
+  function courseById(id) { return COURSES.list.filter(function (c) { return c.id === id; })[0]; }
+  function courseDays(c) { var out = []; c.weeks.forEach(function (w, wi) { w.days.forEach(function (dd, di) { out.push({ week: wi, title: w.title, day: di, tasks: dd }); }); }); return out; }
+  function courseNow(d) {
+    d = d || K.data();
+    if (!d.course) return null;
+    var c = courseById(d.course.id); if (!c) return null;
+    var days = courseDays(c), done = d.course.done || [], today = K.todayKey();
+    var todayDone = done.length > 0 && done[done.length - 1] === today;
+    var finished = done.length >= days.length;
+    var idx = Math.min(todayDone ? done.length - 1 : done.length, days.length - 1);
+    var ev = (d.days[today] && d.days[today].events) || {};
+    var tasks = days[idx].tasks.map(function (t) {
+      var cur = (ev[t[0]] && ev[t[0]][t[1]]) || 0;
+      return { app: t[0], key: t[1], n: t[2], where: t[3], cur: Math.min(cur, t[2]), done: todayDone || cur >= t[2] };
+    });
+    return { c: c, days: days, idx: idx, info: days[idx], tasks: tasks, doneTasks: tasks.filter(function (x) { return x.done; }).length, todayDone: todayDone, finished: finished, doneCount: done.length };
+  }
+  /* 오늘 할 일을 다 했으면 하루를 끝낸다. 끝낸 것이 있으면 true */
+  function checkCourse() {
+    var cs = courseNow(); if (!cs || cs.todayDone || cs.finished) return false;
+    if (cs.doneTasks < cs.tasks.length) return false;
+    var last = cs.doneCount + 1 >= cs.days.length;
+    K.mutate(function (dd) {
+      var day = K.dayRec(dd); dd.course.done = (dd.course.done || []).concat([K.todayKey()]);
+      var bonus = last ? 20 : 5; dd.stars += bonus; dd.totalStars += bonus; day.stars = (day.stars || 0) + bonus;
+      if (last) { dd.course.finished = K.todayKey(); dd.courseHistory = (dd.courseHistory || []).concat([{ id: cs.c.id, start: dd.course.start, end: K.todayKey() }]); }
+    });
+    if (last) { K.toast('🎓 ' + cs.c.icon + ' ' + esc(cs.c.name) + ' 코스를 모두 마쳤어요! (+20⭐)', 5000); K.speak(cs.c.name + ' 코스를 모두 마쳤어요! 정말 대단해요'); }
+    else { K.toast('📅 오늘 코스 끝! ' + (cs.doneCount + 1) + '일째 완료 (+5⭐)', 4000); K.speak('오늘 코스를 모두 끝냈어요!'); }
+    K.sfx.win(); K.confetti();
+    return true;
+  }
+  function startCourse(c) {
+    K.mutate(function (dd) { dd.course = { id: c.id, start: K.todayKey(), done: [] }; });
+    K.sfx.win(); K.speak(c.name + ' 코스를 시작해요!');
+    renderTop();
+  }
+  function taskRow(t, closeFn) {
+    var a = appById[t.app] || { name: t.app, icon: '❓' };
+    return el('div', { class: 'mission' + (t.done ? ' done' : '') }, [
+      el('div', { class: 'ic', html: t.done ? '✅' : icon(a) }),
+      el('div', { class: 'lb' }, [el('div', { html: esc(a.name) + ' <span style="color:#6a4c93">› ' + esc(t.where) + '</span>' }),
+        el('div', { class: 'bar' }, el('i', { style: 'width:' + Math.round(t.cur / t.n * 100) + '%' })),
+        el('div', { text: t.cur + ' / ' + t.n + ' ' + (EVNAME[t.key] || ''), style: 'font-size:15px;color:#777;font-weight:600' })]),
+      t.done || !closeFn ? el('span', { text: t.done ? '끝!' : '', style: 'font-weight:900;color:#2f7d32' }) : el('button', { class: 'go', html: icon(a) + ' 하러 가기', onclick: function () { closeFn(); openApp(t.app); } })
+    ]);
+  }
+  var EVNAME = { correct: '문제 맞히기', read: '권·편 읽기', heard: '편 듣기', trace: '글자 쓰기', copy: '글자 필사', win: '판 끝내기', save: '번 저장', learn: '번 보기', habit: '개 체크', calm: '번 하기' };
+  function showCourses(listMode) {
+    var d = K.data(), cs = courseNow(d);
+    var wrap = el('div', { class: 'overlay' }); var panel = el('div', { class: 'panel' });
+    function close() { wrap.remove(); renderTop(); }
+    panel.appendChild(el('button', { class: 'close', text: '✕', onclick: close }));
+    panel.appendChild(el('h2', { text: '📅 학습 코스' }));
+    if (cs && !listMode) {
+      var c = cs.c, pct = Math.round(cs.doneCount / cs.days.length * 100);
+      panel.appendChild(el('div', { class: 'course-head' }, [
+        el('div', { class: 'ci', text: c.icon }),
+        el('div', {}, [el('div', { class: 'cn', text: c.name + ' · ' + c.age }),
+          el('div', { class: 'bar', style: 'margin:6px 0' }, el('i', { style: 'width:' + pct + '%' })),
+          el('div', { class: 'cs', text: cs.finished ? '🎓 모두 마쳤어요! (' + cs.days.length + '일)' : cs.doneCount + ' / ' + cs.days.length + '일 · ' + (cs.info.week + 1) + '주차 「' + cs.info.title + '」 · 하루 ' + c.minutes + '분' })])
+      ]));
+      if (cs.finished) {
+        panel.appendChild(el('p', { text: '다른 코스를 골라 이어 가 보세요.', style: 'font-weight:800' }));
+      } else if (cs.todayDone) {
+        panel.appendChild(el('h3', { text: '🎉 오늘 할 일을 모두 끝냈어요! 내일은 이것을 해요' }));
+        var next = cs.days[cs.doneCount];
+        if (next) next.tasks.forEach(function (t) { panel.appendChild(taskRow({ app: t[0], key: t[1], n: t[2], where: t[3], cur: 0, done: false }, null)); });
+      } else {
+        panel.appendChild(el('h3', { text: '오늘 할 일 (' + (cs.idx + 1) + '일째)' }));
+        cs.tasks.forEach(function (t) { panel.appendChild(taskRow(t, function () { wrap.remove(); })); });
+        panel.appendChild(el('p', { text: '세 가지를 모두 하면 별 5개! 문제를 틀려도 괜찮아요. 맞힌 개수만 세요.', style: 'color:#777;font-weight:700' }));
+      }
+      panel.appendChild(el('div', { class: 'kl-row', style: 'margin-top:14px' }, [
+        el('button', { class: 'kl-btn', text: '📚 다른 코스 보기', onclick: function () { wrap.remove(); showCourses(true); } }),
+        el('button', { class: 'kl-btn', text: '⏹ 코스 그만두기', onclick: function () { if (confirm('지금 코스를 그만둘까요? 지금까지 한 날짜 기록은 없어져요.')) { K.mutate(function (dd) { dd.course = null; }); close(); } } })
+      ]));
+    } else {
+      panel.appendChild(el('p', { text: '코스를 고르면 날마다 할 일 세 가지가 나와요. 다 하면 별 5개, 코스를 마치면 별 20개!', style: 'color:#555;font-weight:700;margin-top:-8px' }));
+      COURSES.types.forEach(function (ty) {
+        panel.appendChild(el('h3', { text: ty[0] + ' 코스', style: 'margin-bottom:2px' }));
+        panel.appendChild(el('div', { text: ty[1], style: 'color:#777;font-weight:700;font-size:15px;margin-bottom:8px' }));
+        COURSES.list.filter(function (c) { return c.type === ty[0]; }).forEach(function (c) {
+          var total = courseDays(c).length, on = cs && cs.c.id === c.id;
+          var hist = (d.courseHistory || []).filter(function (h) { return h.id === c.id; }).length;
+          panel.appendChild(el('div', { class: 'course-card' }, [
+            el('div', { class: 'ci', text: c.icon }),
+            el('div', { class: 'cb' }, [
+              el('div', { class: 'cn', text: c.name + (hist ? ' 🎓' : '') }),
+              el('div', { class: 'cs', text: c.age + ' · ' + c.weeks.length + '주 (' + total + '일) · 하루 ' + c.minutes + '분' }),
+              el('div', { class: 'cd', text: c.desc })
+            ]),
+            el('button', { class: 'go', text: on ? '하는 중' : '시작하기', disabled: on ? 'disabled' : null, onclick: function () {
+              if (cs && !cs.finished && !confirm('지금 하는 코스를 그만두고 「' + c.name + '」 코스로 바꿀까요?')) return;
+              startCourse(c); wrap.remove(); showCourses();
+            } })
+          ]));
+        });
+      });
+    }
+    panel.appendChild(el('p', { html: '<a href="guide.html#courses" target="_blank" rel="noopener">📖 코스별 전체 계획표와 사용 가이드 보기</a>', style: 'margin-top:14px;font-weight:800' }));
+    wrap.appendChild(panel); document.getElementById('panels').appendChild(wrap);
+    K.speak(cs && !listMode ? (cs.todayDone ? '오늘 코스를 모두 끝냈어요' : '오늘의 코스예요') : '학습 코스를 골라요');
+  }
+
   /* ---------- 스티커 패널 ---------- */
   function showStickers() {
     var d = K.data();
@@ -537,7 +670,7 @@
     var top = Object.keys(byApp).sort(function (a, b) { return byApp[b] - byApp[a]; })[0];
     var name = top && appById[top] ? appById[top].name : null;
     var line = '지난 7일 중 ' + days + '일 했고, 별 ' + stars + '개를 모았어요 (하루 평균 ' + Math.round(mins / days) + '분).';
-    if (name) line += ' ' + name + '을(를) 가장 많이 맞혔어요.';
+    if (name) line += ' ' + name + K.josa(name, '을/를') + ' 가장 많이 맞혔어요.';
     if (days >= 5) line += ' 꾸준히 잘하고 있어요 👏';
     else if (days <= 2) line += ' 하루 10분씩만 더 해 보면 좋아요.';
     return line;
@@ -564,6 +697,8 @@
       el('div', { class: 'stat', html: '도장<b>' + (d.stamps || 0) + '개</b>' })
     ]));
     panel.appendChild(readingStage(d));
+    var pcs = courseNow(d);
+    panel.appendChild(el('p', { html: '📅 학습 코스: ' + (pcs ? esc(pcs.c.icon + ' ' + pcs.c.name) + ' · ' + pcs.doneCount + ' / ' + pcs.days.length + '일' + (pcs.finished ? ' (수료)' : '') : '고르지 않음') + ' · <a href="guide.html" target="_blank" rel="noopener">📖 사용 가이드</a>', style: 'background:#f4f0ff;border-radius:16px;padding:12px 16px;font-weight:700;color:#3d2a6b' }));
     panel.appendChild(el('p', { class: 'weekline', text: weekSummary(d), style: 'background:#eef7ff;border-radius:16px;padding:12px 16px;font-weight:700;color:#245' }));
     /* 앱별 단계 */
     var lvHtml = '';
@@ -649,6 +784,7 @@
 
   document.getElementById('profileBtn').addEventListener('click', function () { K.sfx.click(); showProfilePicker(); });
   document.getElementById('missionBtn').addEventListener('click', function () { K.sfx.click(); showMissions(); });
+  document.getElementById('courseBtn').addEventListener('click', function () { K.sfx.click(); showCourses(); });
   document.getElementById('stickerBtn').addEventListener('click', function () { K.sfx.click(); showStickers(); });
   document.getElementById('parentBtn').addEventListener('click', function () { K.sfx.click(); showParent(); });
   /* ---------- 사용 시간 · 휴식 알림 ----------

@@ -108,6 +108,29 @@ function staticChecks() {
     });
     rec('S08', !hits.length, hits.length ? hits.slice(0, 15).join(' | ') : '손으로 붙인 조사 0 (확인된 예외 ' + OK.length + '곳)');
   }
+  if (want('S09')) {
+    /* 학습 코스: 앱이 있고, 그 앱이 그 이벤트를 내고, 적힌 메뉴 이름이 앱에 실제로 있는지 */
+    const cctx = { window: {} }; vm.createContext(cctx); vm.runInContext(read('shared/courses.js'), cctx);
+    const C = cctx.window.KIDLAB_COURSES, bad = []; let tasks = 0;
+    const FREE = ['첫 책', '조금 긴 책', '긴 책', '옛이야기', '탈무드 지혜 이야기', '좋아하는 책', '읽기 책 한 권', '초등', '중학교', '내 학년 글 한 편', '가장 어려웠던 글 다시', '영어 그림책', 'My Cat', 'Colors', 'Good Morning', 'At the Zoo', 'Rainy Day', 'Count with Me', '로봇 코딩 한 단계', '오늘 기분 기록', '한 줄 일기', '방학 일기', '영단어 단계', '칠교 두 개', '고전 한 문장 필사', '원문·뜻 따라 쓰기', '천자문 1~4구절 보기', '천자문 5~8구절 보기', '천자문 필사하기', '오늘의 지구 약속 3개', '좋아하는 책 두 권', '한글 낱말', '영어 낱말', '가운뎃줄 왼손', '가운뎃줄 오른손', '윗줄', '아랫줄', 'ABC 가운뎃줄'];
+    const srcOf = {};
+    C.list.forEach(c => {
+      if (!c.weeks.every(w => w.days.length === 5)) bad.push(c.id + ' 5일이 아닌 주');
+      c.weeks.forEach((w, wi) => w.days.forEach((d, di) => d.forEach(t => {
+        tasks++;
+        const [app, key, n, where] = t, tag = c.id + ' ' + (wi + 1) + '주' + (di + 1) + '일 ' + app;
+        if (!APPS.find(a => a.id === app)) { bad.push(tag + ' 앱 없음'); return; }
+        if (!(n > 0)) bad.push(tag + ' 횟수');
+        if (!srcOf[app]) { const dir = path.join(ROOT, 'apps', app), own = fs.readdirSync(dir).map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n'); const sh = [...own.matchAll(/src="\.\.\/\.\.\/shared\/([\w.]+)"/g)].map(m => m[1]).filter(f => f !== 'kid.js').map(f => read('shared/' + f)).join('\n'); srcOf[app] = own + '\n' + sh; }
+        const src = srcOf[app];
+        const evOk = key === 'correct' ? /runQuiz|event\('correct'\)/.test(src) : new RegExp("event\\('" + key + "'").test(src);
+        if (!evOk) bad.push(tag + ' 이벤트 ' + key + ' 없음');
+        const core = where.split(' → ')[0].replace(/ \(.*\)$/, '').trim();
+        if (!src.includes(core) && !FREE.some(f => where.startsWith(f))) bad.push(tag + ' 메뉴 "' + core + '" 없음');
+      })));
+    });
+    rec('S09', !bad.length, bad.length ? bad.slice(0, 15).join(' | ') : '코스 ' + C.list.length + '개, 할 일 ' + tasks + '개 정상');
+  }
   if (want('S07')) {
     const man = JSON.parse(read('manifest.webmanifest')), miss = (man.icons || []).filter(i => !fs.existsSync(path.join(ROOT, i.src.replace(/^\.?\//, ''))));
     rec('S07', !miss.length, miss.length ? '없는 아이콘 ' + miss.map(i => i.src).join(',') : '아이콘 ' + man.icons.length + '개');
@@ -360,6 +383,51 @@ async function flows(b) {
   }
 }
 
+/* ---------------- L07 학습 코스 흐름 ---------------- */
+async function courseFlow(b) {
+  if (!want('L07')) return;
+  const p = await newPage(b, devices['Pixel 7']), log = [], bad = [];
+  await p.goto(BASE + 'index.html'); await p.waitForTimeout(400);
+  const inp = p.locator('.overlay input'); if (await inp.count()) { await inp.fill('코스'); await p.locator('.overlay .kl-btn.primary').click(); await p.waitForTimeout(300); }
+  await p.locator('#courseBtn').click(); await p.waitForTimeout(200);
+  const cards = await p.locator('.course-card').count(); log.push('코스 카드 ' + cards);
+  await p.locator('.course-card', { hasText: '한글·숫자 첫걸음' }).locator('.go').click(); await p.waitForTimeout(300);
+  const rows = await p.locator('.panel .mission').count(); log.push('오늘 할 일 ' + rows);
+  if (rows !== 3) bad.push('할 일 수 ' + rows);
+  await p.locator('.panel .close').click();
+  const quick = await p.locator('.quick-card').first().innerText(); if (!/오늘의 코스/.test(quick)) bad.push('큰 카드에 코스 없음'); log.push('첫 카드: ' + quick.replace(/\s+/g, ' '));
+  const star0 = await p.evaluate(() => KidLab.data().stars);
+  /* 첫날 할 일 = 한글 5문제, 수학 4문제, 기억 카드 1판 → 앱이 내는 것과 같은 이벤트를 넣는다 */
+  await p.evaluate(() => { KidLab.event('hangul', 'correct', 5); KidLab.event('math', 'correct', 4); window.postMessage({ type: 'kidlab', action: 'update' }, '*'); });
+  await p.waitForTimeout(300);
+  const mid = await p.locator('#courseCount').textContent(); log.push('두 가지 한 뒤 ' + mid); if (mid !== '2/3') bad.push('중간 표시 ' + mid);
+  await p.evaluate(() => { KidLab.event('memory', 'win', 1); window.postMessage({ type: 'kidlab', action: 'update' }, '*'); });
+  await p.waitForTimeout(400);
+  const fin = await p.locator('#courseCount').textContent(), st = await p.evaluate(() => ({ done: KidLab.data().course.done.length, stars: KidLab.data().stars }));
+  log.push('다 한 뒤 ' + fin + ', 끝낸 날 ' + st.done + ', 별 +' + (st.stars - star0));
+  if (fin !== '✔' || st.done !== 1 || st.stars - star0 < 5) bad.push('하루 완료 처리 안 됨');
+  /* 이튿날로 넘긴다 */
+  await p.evaluate(() => { KidLab.mutate(d => { d.course.done = ['2000-01-01']; }); window.postMessage({ type: 'kidlab', action: 'update' }, '*'); });
+  await p.waitForTimeout(300);
+  /* 날짜만 넘긴 것이라 오늘 한 기록(수학 4문제)은 그대로 남아 이튿날 할 일 1개가 이미 채워진 것이 맞다 */
+  const day2 = await p.locator('#courseCount').textContent(); log.push('이튿날 ' + day2); if (day2 !== '1/3') bad.push('이튿날 표시 ' + day2);
+  await p.locator('#courseBtn').click(); await p.waitForTimeout(200);
+  const head = await p.locator('.course-head').innerText(); log.push(head.replace(/\s+/g, ' ')); if (!/2일째|1 \/ 20일/.test(head + (await p.locator('.panel h3').first().innerText()))) bad.push('2일째 표시 없음');
+  const ov = await hOver(p); if (ov > 1) bad.push('가로넘침 ' + ov);
+  await p.screenshot({ path: path.join(OUT, 'course-panel.png') });
+  await p.locator('.panel .kl-btn', { hasText: '다른 코스 보기' }).click(); await p.waitForTimeout(200);
+  await p.screenshot({ path: path.join(OUT, 'course-list.png'), fullPage: false });
+  /* 가이드 페이지 */
+  const g = await newPage(b, devices['Pixel 7']); await g.goto(BASE + 'guide.html'); await g.waitForTimeout(300);
+  const gi = await g.evaluate(() => ({ apps: document.querySelectorAll('#appTables tr').length, courses: document.querySelectorAll('.course').length, tasks: document.querySelectorAll('.task').length, ov: document.documentElement.scrollWidth - document.documentElement.clientWidth }));
+  log.push('가이드 앱 줄 ' + gi.apps + ', 코스 ' + gi.courses + ', 할 일 ' + gi.tasks);
+  if (gi.courses !== 10 || gi.ov > 1 || g.errs.length) bad.push('가이드 ' + JSON.stringify(gi) + g.errs.join(','));
+  await g.screenshot({ path: path.join(OUT, 'guide.png') });
+  if (p.errs.length) bad.push('오류 ' + p.errs[0]);
+  rec('L07', !bad.length, (bad.length ? bad.join(' | ') + ' || ' : '') + log.join(' / '));
+  await p.context().close(); await g.context().close();
+}
+
 /* ---------------- 기존 검사 스크립트 (tests/cases) ---------------- */
 const LEGACY = [
   ['I01', 'inter.js', [], o => /칠교 (\d:\d조각 완성 \| ){6}\d:\d조각 완성/.test(o) && /오류 없음/.test(o), o => (o.match(/칠교.*/) || [''])[0]],
@@ -399,7 +467,7 @@ function legacy() {
   const t0 = Date.now(), srv = await ensureServer();
   staticChecks();
   const b = await chromium.launch();
-  await runtime(b); await generators(b); await flows(b);
+  await runtime(b); await generators(b); await flows(b); await courseFlow(b);
   await b.close();
   legacy();
   const order = id => ['S', 'R', 'Q', 'I', 'L'].indexOf(id[0]) * 1000 + parseInt(id.slice(1)) + (/b$/.test(id) ? 0.5 : 0);

@@ -192,6 +192,7 @@
   }
   function cjDetail(i) {
     var c = CJ[i];
+    K.event('learn');
     main.innerHTML = ''; main.appendChild(K.backButton(cheonja));
     var row = el('div', { style: 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:10px 0' });
     c[0].split('').forEach(function (h, k) {

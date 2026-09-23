@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>키즈랩 사용 가이드</title>
+<link rel="icon" href="icons/icon-192.png">
+<style>
+  :root { --ink: #2b2b2b; --sub: #5d5d5d; --line: #e6e0d4; --paper: #fffdf8; --bg: #f6f2ea; --accent: #6a4c93; --soft: #f4f0ff; --yellow: #ffca3a; }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; overscroll-behavior-x: none; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; line-height: 1.65; word-break: keep-all; }
+  header { background: linear-gradient(135deg, #bde0fe, #ffd6e7); padding: 28px 16px 22px; }
+  header .in, main, nav .in { max-width: 920px; margin: 0 auto; }
+  header h1 { margin: 0; font-size: 30px; }
+  header p { margin: 6px 0 0; font-weight: 700; color: #3c3c3c; }
+  header a.back { display: inline-block; margin-top: 12px; background: #fff; border-radius: 14px; padding: 8px 14px; font-weight: 800; color: var(--ink); text-decoration: none; }
+  nav { position: sticky; top: 0; z-index: 5; background: rgba(255,253,248,.96); border-bottom: 1px solid var(--line); backdrop-filter: blur(6px); }
+  nav .in { display: flex; gap: 6px; overflow-x: auto; padding: 8px 16px; }
+  nav a { flex: none; padding: 6px 12px; border-radius: 12px; font-weight: 800; font-size: 15px; color: var(--accent); text-decoration: none; background: var(--soft); }
+  main { padding: 8px 16px 60px; }
+  section { background: var(--paper); border-radius: 22px; padding: 20px 22px; margin: 18px 0; box-shadow: 0 2px 0 rgba(0,0,0,.04); }
+  h2 { margin: 0 0 10px; font-size: 24px; }
+  h3 { margin: 18px 0 6px; font-size: 19px; }
+  p, li { font-size: 16px; }
+  .note { background: #eef7ff; border-radius: 14px; padding: 10px 14px; font-weight: 600; color: #1d4f7a; }
+  .warn { background: #fff4d6; border-radius: 14px; padding: 10px 14px; font-weight: 600; color: #7a5300; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 15px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 8px 6px; text-align: left; vertical-align: top; }
+  th { color: var(--sub); font-size: 14px; }
+  .ico { font-size: 22px; width: 36px; text-align: center; }
+  .ico img { width: 26px; height: 26px; vertical-align: middle; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+  .tile { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; }
+  .tile b { display: block; font-size: 17px; }
+  .tile span { color: var(--sub); font-size: 15px; }
+  .course { border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; margin: 14px 0; background: #fff; }
+  .course .top { display: flex; gap: 12px; align-items: center; }
+  .course .top .ci { font-size: 40px; }
+  .course .top b { font-size: 20px; }
+  .course .meta { color: var(--accent); font-weight: 800; font-size: 15px; }
+  .course ul { margin: 8px 0 0; padding-left: 20px; }
+  .course details { margin-top: 10px; }
+  .course summary { cursor: pointer; font-weight: 800; color: var(--accent); }
+  .wk { margin-top: 10px; }
+  .wk h4 { margin: 10px 0 4px; font-size: 16px; }
+  .day td:first-child { white-space: nowrap; font-weight: 800; color: var(--sub); }
+  .task { display: inline-block; background: #f7f5f0; border-radius: 10px; padding: 2px 8px; margin: 2px 4px 2px 0; font-size: 14px; }
+  .type-h { margin-top: 26px; font-size: 21px; }
+  kbd { background: #fff; border: 1px solid #ccc; border-bottom-width: 3px; border-radius: 6px; padding: 0 6px; font-size: 14px; }
+  .faq dt { font-weight: 800; margin-top: 12px; }
+  .faq dd { margin: 4px 0 0; }
+  @media (max-width: 640px) {
+    header h1 { font-size: 24px; } section { padding: 16px; border-radius: 18px; } h2 { font-size: 21px; }
+    table { font-size: 14px; } .grid { grid-template-columns: 1fr; }
+    .hide-s { display: none; }
+  }
+  @media print {
+    nav, header a.back, .noprint { display: none; } body { background: #fff; } section, .course { box-shadow: none; break-inside: avoid-page; }
+    .course details { display: block; } .course details > * { display: block; }
+  }
+</style>
+</head>
+<body>
+<header><div class="in">
+  <h1>📖 키즈랩 사용 가이드</h1>
+  <p>5세부터 초등 고학년까지, 한글·읽기·수학·영어·생활을 놀이로 익히는 학습 공간입니다.</p>
+  <a class="back" href="./">🏠 키즈랩으로 돌아가기</a>
+</div></header>
+<nav><div class="in">
+  <a href="#start">시작하기</a><a href="#screen">화면</a><a href="#rules">학습 규칙</a><a href="#apps">앱 안내</a><a href="#courses">학습 코스</a><a href="#parent">부모 설정</a><a href="#faq">자주 묻는 질문</a>
+</div></nav>
+<main>
+
+<section id="start">
+  <h2>1. 시작하기</h2>
+  <h3>여는 방법</h3>
+  <ul>
+    <li>휴대폰·태블릿·PC의 인터넷 브라우저(크롬, 엣지, 사파리)로 키즈랩 주소를 엽니다. 설치 파일이 필요 없습니다.</li>
+    <li><b>홈 화면에 추가</b>하면 앱처럼 쓸 수 있습니다. 크롬·엣지는 위쪽의 <b>⬇️ 설치</b> 단추(보일 때) 또는 브라우저 메뉴 › "홈 화면에 추가", 아이폰 사파리는 공유 단추 › "홈 화면에 추가".</li>
+    <li>한 번 열고 나면 <b>인터넷 없이도</b> 모든 앱이 열립니다(필요한 파일을 기기에 받아 둡니다).</li>
+  </ul>
+  <h3>친구(프로필) 만들기</h3>
+  <p>처음 열면 이름과 모습을 고릅니다. 형제가 함께 쓰면 친구를 여러 명 만들 수 있고, 별·스티커·진도·코스가 친구마다 따로 저장됩니다. 위 왼쪽의 이름 단추로 친구를 바꿉니다.</p>
+  <div class="note">💡 기록은 이 기기의 이 브라우저 안에만 저장됩니다. 서버로 보내지 않습니다. 기기를 바꿀 때는 <a href="#parent">부모 설정</a>의 백업·되살리기를 쓰세요.</div>
+</section>
+
+<section id="screen">
+  <h2>2. 화면 구성</h2>
+  <table>
+    <tr><th>자리</th><th>무엇</th></tr>
+    <tr><td>위 왼쪽</td><td>🐣 친구 이름 · ⭐ 모은 별 · 🔥 연속 출석 날수 · 🏅 오늘 받은 도장</td></tr>
+    <tr><td>위 오른쪽</td><td>🔊 소리 끄기/켜기 · 🎯 오늘의 미션 · 📅 학습 코스 · 🧸 스티커 도감 · 👨‍👩‍👧 부모 설정 · 시계</td></tr>
+    <tr><td>큰 카드 줄</td><td>오늘 할 코스, 이어서 하기, 오늘 미션, 다시 풀 문제가 있는 앱을 먼저 보여 줍니다. 아이콘을 다 고르기 어려운 어린아이는 여기서 시작하면 됩니다.</td></tr>
+    <tr><td>묶음 탭</td><td>전체 · 한글 · 읽기 · 우리말 · 한자·고전 · 영어 · 수학 · 과학·사회 · 생활 · 디지털 · 두뇌·놀이 · 창작</td></tr>
+    <tr><td>아래 막대</td><td>🏠 바탕화면 · 열려 있는 앱 · 오늘 미션 아이콘</td></tr>
+  </table>
+  <h3>앱 창 다루기</h3>
+  <ul>
+    <li>아이콘을 누르면 앱 창이 열리고, 앱 이름과 사용법을 읽어 줍니다.</li>
+    <li>창 위 막대의 <b>—</b> 는 잠깐 내려 두기, <b>✕</b> 는 닫기입니다. PC에서는 창을 끌어 옮기고 <b>▢</b> 로 크기를 바꿉니다.</li>
+    <li>앱 안에서는 <b>◀ 뒤로</b>로 앞 화면에 갑니다.</li>
+    <li>휴대폰에서 화면 가장자리를 밀거나 뒤로 가기 단추를 누르면 <b>한 단계씩</b> 돌아갑니다: 앱 안 작은 창 → 앱 메뉴 → 앱 닫기 → 바탕화면. 바탕화면에서는 한 번 더 밀어야 키즈랩을 나갑니다.</li>
+  </ul>
+</section>
+
+<section id="rules">
+  <h2>3. 모든 앱에 공통인 학습 규칙</h2>
+  <div class="grid">
+    <div class="tile"><b>📈 단계가 저절로 올라가요</b><span>메뉴마다 1~5단계가 따로 있습니다. 한 판에서 75% 이상 맞히면 다음 단계로 올라가 문제 범위와 보기 수가 늘어납니다.</span></div>
+    <div class="tile"><b>⭕ ✗ 맞고 틀림이 분명해요</b><span>틀리면 화면 가운데 큰 ✗와 "아니에요" 소리, 고른 칸에 ✗ 표시. 두 번 틀리면 정답 칸이 노랗게 깜빡입니다.</span></div>
+    <div class="tile"><b>🔁 틀린 문제는 다시 나와요</b><span>틀렸던 문제를 모아 두었다가 다음 판 앞쪽에 다시 냅니다. 한 번에 맞히면 목록에서 빠집니다.</span></div>
+    <div class="tile"><b>⭐ 별과 🧸 스티커</b><span>정답 하나에 별 1개. 별 5개로 스티커 한 장을 뽑고, 도감 50칸을 모읍니다.</span></div>
+    <div class="tile"><b>🎯 오늘의 미션</b><span>날마다 새로 나오는 미션 4개(마지막은 늘 일기). 하나 끝낼 때마다 별 3개.</span></div>
+    <div class="tile"><b>🏅 도장과 🔥 출석</b><span>활동 3개를 하면 도장 1개. 며칠 연달아 했는지 위에 보입니다.</span></div>
+    <div class="tile"><b>🔊 글을 읽어 줘요</b><span>문제 글과 🔊 표시가 있는 곳을 누르면 읽어 줍니다. 읽기 연습 앱(문장 읽기 등)은 일부러 먼저 읽어 주지 않습니다.</span></div>
+    <div class="tile"><b>✏️ 따라 쓰기는 넉넉하게</b><span>쓰는 것이 목적이라 조금 삐뚤어도 통과합니다. 낙서나 칸 전체 칠하기만 막습니다.</span></div>
+  </div>
+</section>
+
+<section id="apps">
+  <h2>4. 앱 안내</h2>
+  <p>묶음별로 정리했습니다. <b>권장</b>은 처음 시작하기 좋은 나이이고, 단계가 오르면 더 큰 아이도 쓸 수 있습니다.</p>
+  <div id="appTables"></div>
+</section>
+
+<section id="courses">
+  <h2>5. 학습 코스</h2>
+  <p>무엇부터 시켜야 할지 고민될 때 쓰는 계획표입니다. 런처 위쪽 <b>📅 코스</b>에서 하나를 고르면 날마다 할 일 세 가지가 나오고, 아이가 그 앱에서 정해진 만큼 하면 <b>저절로 체크</b>됩니다.</p>
+  <ul>
+    <li>하루 할 일을 모두 하면 별 5개, 코스를 모두 마치면 별 20개와 🎓 표시.</li>
+    <li>다음 날 할 일은 이튿날 열립니다. 하루 빠져도 괜찮습니다. 날짜가 아니라 <b>끝낸 날 수</b>로 이어집니다.</li>
+    <li>"문제 5개 맞히기"는 틀린 것은 세지 않고 맞힌 것만 셉니다. 한 판(8문제)을 하면 대개 채워집니다.</li>
+    <li>각 할 일에 적힌 "› 메뉴 이름"은 그 앱 안에서 누를 메뉴입니다.</li>
+  </ul>
+  <div class="warn">부모님 팁: 처음 1주는 옆에서 함께 해 주세요. 앱 이름과 메뉴를 찾는 법만 익히면 그다음부터는 아이 혼자 📅 코스 → "하러 가기"로 이어 갑니다.</div>
+  <div id="courseList"></div>
+</section>
+
+<section id="parent">
+  <h2>6. 부모 설정</h2>
+  <p>위 오른쪽 <b>👨‍👩‍👧</b>를 누르고 곱셈 문제의 답을 쓰면 들어갑니다(아이가 설정을 바꾸지 못하게).</p>
+  <table>
+    <tr><th>항목</th><th>내용</th></tr>
+    <tr><td>📊 학습 리포트</td><td>학습한 날, 연속 출석, 맞힌 문제 수, 모은 별, 가장 좋아하는 앱, 스티커, 오늘 사용 시간, 도장</td></tr>
+    <tr><td>📚 읽기 단계</td><td>낱자 → 받침 → 낱말 → 문장 → 책 가운데 지금 어디쯤인지</td></tr>
+    <tr><td>📅 학습 코스</td><td>지금 하는 코스와 끝낸 날 수</td></tr>
+    <tr><td>📈 앱별 단계 · 📅 출석 달력</td><td>메뉴마다 몇 단계인지, 이번 달 학습한 날</td></tr>
+    <tr><td>🔊 음성 · 🎵 효과음 · 📳 진동</td><td>켜고 끄기</td></tr>
+    <tr><td>🗣️ 말하는 속도</td><td>아주 느리게 ~ 빠르게</td></tr>
+    <tr><td>⏰ 하루 사용 시간</td><td>15분 ~ 60분. 다 쓰면 화면이 잠기고, 부모님이 풀어 줄 수 있습니다.</td></tr>
+    <tr><td>👀 눈 쉬기 알림</td><td>10·20·30분마다 먼 곳을 보라고 알려 줍니다.</td></tr>
+    <tr><td>🔁 다시 풀 문제</td><td>모인 오답 개수, 비우기</td></tr>
+    <tr><td>💾 백업 · 📥 되살리기</td><td>이 친구의 기록을 파일로 내려받고, 다른 기기에서 되살립니다.</td></tr>
+  </table>
+</section>
+
+<section id="faq">
+  <h2>7. 자주 묻는 질문</h2>
+  <dl class="faq">
+    <dt>소리가 안 나요.</dt>
+    <dd>위쪽 🔊가 🔇로 되어 있는지, 기기 소리가 켜져 있는지 보세요. 글을 읽어 주는 목소리는 기기에 깔린 한국어 음성을 씁니다. Windows는 설정 › 시간 및 언어 › 음성에서 한국어 음성을 추가하면 좋아집니다. 영어는 영어 음성을 씁니다.</dd>
+    <dt>새 앱이 안 보여요 / 고친 것이 반영되지 않아요.</dt>
+    <dd>인터넷이 연결된 상태에서 한 번 새로 고침(당겨서 새로 고침 또는 <kbd>F5</kbd>)하면 새 버전을 받습니다.</dd>
+    <dt>휴대폰에서 옆으로 밀면 나가져요.</dt>
+    <dd>밀면 한 단계씩 뒤로 갑니다. 바탕화면에서는 "한 번 더 밀면 나가요" 안내가 뜨고, 한 번 더 밀어야 나갑니다.</dd>
+    <dt>기록이 사라졌어요.</dt>
+    <dd>브라우저의 방문 기록·사이트 데이터를 지우면 함께 지워집니다. 정기적으로 부모 설정의 💾 백업을 받아 두세요.</dd>
+    <dt>광고나 결제가 있나요? 아이 정보가 밖으로 나가나요?</dt>
+    <dd>없습니다. 광고·결제·로그인이 없고, 기록은 기기 안에만 있습니다. 앱 안의 "결제"·"당첨" 화면은 미디어 교육용 가짜 화면입니다.</dd>
+    <dt>하루에 얼마나 시키면 좋을까요?</dt>
+    <dd>5~6세는 15분, 7세 이상은 20~25분을 권합니다. 부모 설정의 하루 사용 시간과 눈 쉬기 알림을 함께 쓰세요. 학습 코스의 하루 분량도 이 시간에 맞췄습니다.</dd>
+  </dl>
+</section>
+
+</main>
+<script src="shared/apps.js"></script>
+<script src="shared/courses.js"></script>
+<script>
+(function () {
+  var APPS = window.KIDLAB_APPS || [], C = window.KIDLAB_COURSES || { list: [], types: [] };
+  var CATS = ['한글', '읽기', '우리말', '한자·고전', '영어', '수학', '과학·사회', '생활', '디지털', '두뇌·놀이', '창작'];
+  var CAT_ICON = { '한글': '✏️', '읽기': '📚', '우리말': '💬', '한자·고전': '📜', '영어': '🔤', '수학': '🔢', '과학·사회': '🔬', '생활': '🏠', '디지털': '💻', '두뇌·놀이': '🧩', '창작': '🎨' };
+  /* 처음 시작하기 좋은 나이 (단계가 오르면 더 큰 아이도 쓴다) */
+  var AGE = { hangul: '5세~', batchim: '6세~', wordmake: '5세~', sounds: '5세~', sentence: '6세~', books: '5세~', listen: '5세~', passage: '초1~중1', sequence: '5세~',
+    vocab: '6세~', korean: '초1~6', hanja: '7세~', classic: '초1~', english: '5세~', phonics: '6세~', esent: '6세~', ebooks: '6세~',
+    math: '5세~', shapes: '5세~', clock: '6세~', calc: '6세~', blocks: '5세~', space: '6세~', wordmath: '7세~',
+    science: '5세~', earth: '6세~', world: '6세~', money: '6세~', daily: '5세~', feelings: '5세~', safety: '5세~', shop: '6세~', diary: '5세~',
+    coding: '6세~', aiteach: '7세~', media: '7세~', typing: '7세~', memory: '5세~', maze: '5세~', arcade: '5세~', draw: '5세~', music: '5세~', story: '6세~' };
+  var byId = {}; APPS.forEach(function (a) { byId[a.id] = a; });
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function ic(a) { return a.svg ? '<img src="' + a.svg + '" alt="">' : esc(a.icon); }
+
+  var h = '';
+  CATS.forEach(function (cat) {
+    var list = APPS.filter(function (a) { return a.cat === cat; }); if (!list.length) return;
+    h += '<h3>' + CAT_ICON[cat] + ' ' + cat + ' <small style="color:#888">· ' + list.length + '개</small></h3><table><tr><th></th><th>앱</th><th>담긴 것</th><th class="hide-s">이렇게 해요</th><th>권장</th></tr>';
+    list.forEach(function (a) { h += '<tr><td class="ico">' + ic(a) + '</td><td><b>' + esc(a.name) + '</b></td><td>' + esc(a.desc) + '</td><td class="hide-s">' + esc(a.how || '') + '</td><td>' + (AGE[a.id] || '') + '</td></tr>'; });
+    h += '</table>';
+  });
+  document.getElementById('appTables').innerHTML = h;
+
+  var EV = { correct: '문제 맞히기', read: '권·편 읽기', heard: '편 듣기', trace: '글자 따라 쓰기', copy: '글자 필사', win: '판 끝내기', save: '번 저장', learn: '번 보기', habit: '개 체크', calm: '번 하기' };
+  var c = '';
+  C.types.forEach(function (ty) {
+    c += '<h3 class="type-h">' + ty[0] + ' 코스</h3><p style="margin:0;color:#666;font-weight:700">' + esc(ty[1]) + '</p>';
+    C.list.filter(function (x) { return x.type === ty[0]; }).forEach(function (x) {
+      var days = 0; x.weeks.forEach(function (w) { days += w.days.length; });
+      c += '<div class="course" id="course-' + x.id + '"><div class="top"><div class="ci">' + x.icon + '</div><div><b>' + esc(x.name) + '</b><div class="meta">' + esc(x.age) + ' · ' + x.weeks.length + '주 ' + days + '일 · 하루 약 ' + x.minutes + '분</div></div></div>';
+      c += '<p style="margin:8px 0 0">' + esc(x.desc) + '</p><ul>' + x.goal.map(function (g) { return '<li>' + esc(g) + '</li>'; }).join('') + '</ul>';
+      c += '<details><summary>날마다 할 일 보기 (' + days + '일)</summary>';
+      x.weeks.forEach(function (w, wi) {
+        c += '<div class="wk"><h4>' + (wi + 1) + '주차 · ' + esc(w.title) + '</h4><table class="day">';
+        w.days.forEach(function (d, di) {
+          c += '<tr><td>' + (wi * 5 + di + 1) + '일째</td><td>' + d.map(function (t) { var a = byId[t[0]] || { name: t[0], icon: '' }; return '<span class="task">' + ic(a) + ' ' + esc(a.name) + ' › ' + esc(t[3]) + ' · ' + t[2] + (EV[t[1]] ? ' ' + EV[t[1]] : '') + '</span>'; }).join('') + '</td></tr>';
+        });
+        c += '</table></div>';
+      });
+      c += '</details></div>';
+    });
+  });
+  document.getElementById('courseList').innerHTML = c;
+  if (location.hash && location.hash.indexOf('#course-') === 0) { var el = document.querySelector(location.hash); if (el) { el.querySelector('details').open = true; el.scrollIntoView(); } }
+  /* 인쇄할 때는 날마다 할 일을 모두 펼친다 */
+  window.addEventListener('beforeprint', function () { document.querySelectorAll('details').forEach(function (d) { d.open = true; }); });
+})();
+</script>
+</body>
+</html>

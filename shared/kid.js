@@ -17,6 +17,8 @@
   function el(tag, attrs, children) {
     var e = document.createElement(tag);
     if (attrs) for (var k in attrs) {
+      /* null·undefined·false 값은 속성을 달지 않는다 (disabled="null"도 꺼진 단추가 되기 때문) */
+      if (attrs[k] == null || attrs[k] === false) continue;
       if (k === 'class') e.className = attrs[k];
       else if (k === 'html') e.innerHTML = attrs[k];
       else if (k === 'text') e.textContent = attrs[k];
