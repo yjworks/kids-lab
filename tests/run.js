@@ -172,7 +172,7 @@ async function runtime(b) {
     }
   }
   if (want('R02')) {
-    const bad = [], stat = { menus: 0, rounds: 0, open: 0, wrongShown: 0 };
+    const bad = [], stat = { menus: 0, rounds: 0, open: 0, wrongShown: 0, explain: 0 };
     for (const a of APPS.filter(a => !process.env.R02_APPS || process.env.R02_APPS.split(',').includes(a.id))) {
       /* 앱마다 새 세션: 한 세션에서 오래 돌리면 쉬는 시간 안내(20분)가 떠서 누르기를 막는다 */
       const p = await newPage(b, devices['Pixel 7'], true);
@@ -212,6 +212,19 @@ async function runtime(b) {
           qs++;
           /* 다음 문제로 넘어갔는지: 맞힌 칸이 화면에서 사라지거나 결과 화면이 나오면 */
           await p.evaluate(() => { const r = document.querySelector('.kl-stage .kl-choice.right, .kl-stage .kl-choice.right-once'); if (r) r.dataset.solved = '1'; });
+          /* 풀이 카드가 뜨면 저절로 넘어가지 않아야 하고, "다음" 단추가 화면 안에 보여야 한다 */
+          const exb = p.locator('.kl-explain-next');
+          if (await exb.count()) {
+            await p.waitForTimeout(150);
+            if (!(await p.locator('[data-solved]').count())) bad.push(a.id + '/' + label + ' 풀이 카드인데 저절로 넘어감');
+            await exb.scrollIntoViewIfNeeded();
+            const vis = await exb.evaluate(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.top >= 0 && r.bottom <= innerHeight + 1 && r.right <= innerWidth + 1; });
+            if (!vis) bad.push(a.id + '/' + label + ' 다음 단추 화면 밖');
+            const txt = await p.locator('.kl-explain-body').textContent();
+            if (/undefined|NaN|null/.test(txt) || txt.trim().length < 8) bad.push(a.id + '/' + label + ' 풀이 내용 이상: ' + txt.slice(0, 30));
+            stat.explain++;
+            await exb.click();
+          }
           await p.waitForFunction(() => document.querySelector('.kl-result') || !document.querySelector('[data-solved]'), null, { timeout: 5000 }).catch(() => { stuck = true; });
           if (stuck) break;
         }
@@ -225,7 +238,7 @@ async function runtime(b) {
       }
       await p.context().close();
     }
-    rec('R02', !bad.length, (bad.length ? bad.join(' | ') + ' || ' : '') + '메뉴 ' + stat.menus + ', 퀴즈 완주 ' + stat.rounds + ', 퀴즈 아닌 화면 ' + stat.open + ', 오답 표시 확인 ' + stat.wrongShown);
+    rec('R02', !bad.length, (bad.length ? bad.join(' | ') + ' || ' : '') + '메뉴 ' + stat.menus + ', 퀴즈 완주 ' + stat.rounds + ', 퀴즈 아닌 화면 ' + stat.open + ', 오답 표시 확인 ' + stat.wrongShown + ', 풀이 카드 ' + stat.explain);
   }
 }
 
@@ -249,8 +262,8 @@ async function generators(b) {
         const cfg = window.__cfgs[0]; if (!cfg || !cfg.make) return null;
         const strip = h => String(h == null ? '' : h).replace(/<[^>]+>/g, ' ').replace(/&[a-z]+;/g, ' ');
         const jong = c => { const k = c.charCodeAt(0) - 0xAC00; return k >= 0 && k <= 11171 ? k % 28 : -1; };
-        /* 자음 이름(니은·리을 등)과 가을·마을·노을은 조사가 아니다 */
-        const EXC = ['가을', '마을', '노을', '니은', '리을', '미음', '비읍', '이응', '지읒', '치읓', '키읔', '티읕', '피읖', '히읗', '디귿', '시옷', '기역'];
+        /* 자음 이름(니은·리을 등), 가을·마을·노을, 동사 모으다·짓다의 모은·지을은 조사가 아니다 */
+        const EXC = ['가을', '마을', '노을', '모은', '모을', '지을', '니은', '리을', '미음', '비읍', '이응', '지읒', '치읓', '키읔', '티읕', '피읖', '히읗', '디귿', '시옷', '기역'];
         function josaErr(t) {
           const e = [], B = '(?=[\\s.,!?"\'」)~…·]|$)';
           for (const m of t.matchAll(new RegExp('([가-힣])(를|와|예요|로)' + B, 'g'))) { const j = jong(m[1]); if (j > 0 && !(m[2] === '로' && j === 8)) e.push(m[0]); }
@@ -266,7 +279,9 @@ async function generators(b) {
           const tag = label + ' L' + lv + ' ' + strip(q.prompt).replace(/\s+/g, ' ').slice(0, 40);
           if (right.length !== 1) out.Q01.push(tag + ' 정답' + right.length);
           const hs = ch.map(c => String(c.html)); if (!q.allowDupChoices && new Set(hs).size !== hs.length) out.Q02.push(tag);
-          const txt = [strip(q.prompt), strip(q.sub), q.say || '', ...ch.map(c => strip(c.html) + ' ' + (c.say || ''))].join(' | ');
+          const txt = [strip(q.prompt), strip(q.sub), q.say || '', strip(q.explain), q.explainSay || '', ...ch.map(c => strip(c.html) + ' ' + (c.say || ''))].join(' | ');
+          /* 우리말 탐험·고전 뜻 문제는 맞힌 뒤 풀이 카드를 꼭 보여 준다 */
+          if ((app === 'korean' || (app === 'classic' && /뜻/.test(label))) && !(q.explain && q.explainSay && strip(q.explain).trim().length > 10)) out.Q05.push(tag + ' 풀이 없음');
           if (/undefined|NaN|\bnull\b/.test(txt)) out.Q03.push(tag);
           const je = josaErr(txt); if (je.length) out.Q04.push(tag + ' [' + je.join(',') + ']');
           /* 뜻 검사 */

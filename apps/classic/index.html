@@ -139,7 +139,10 @@
           key: 'm' + s.id,
           prompt: '<div class="qhan hz">' + K.esc(s.han) + '</div>' + (lv <= 2 ? '<div style="font-size:17px;color:#6b6b6b">' + K.esc(s.read) + '</div>' : '') + '<div style="font-size:18px;margin-top:6px">무슨 뜻일까요?</div>',
           say: lv <= 2 ? s.read + '. 무슨 뜻일까요?' : '무슨 뜻일까요?', cols: 1,
-          choices: opts.map(function (o) { return { html: '<div class="qmean">' + K.esc(o.mean) + '</div>', correct: o === s }; })
+          choices: opts.map(function (o) { return { html: '<div class="qmean">' + K.esc(o.mean) + '</div>', correct: o === s }; }),
+          /* 맞히면 읽는 법·뜻·생활 속 풀이를 짚고 넘어간다 */
+          explain: '<span class="ex-t">' + K.esc(s.read) + '</span><br><span class="ex-h" style="margin-left:0">' + K.esc(s.han) + '</span><br>' + K.esc(s.mean) + '<span class="ex-e">💡 ' + K.esc(s.tip) + '</span>',
+          explainSay: s.read + '. ' + s.mean + ' ' + s.tip
         };
       }
     });

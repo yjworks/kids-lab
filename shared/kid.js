@@ -130,7 +130,7 @@
     if (!q || q.after) return null;
     return {
       key: qkey(q), prompt: q.prompt, say: q.say || null, sayLang: q.sayLang || null,
-      sub: q.sub || null, cols: q.cols || null, big: !!q.big,
+      sub: q.sub || null, cols: q.cols || null, big: !!q.big, explain: q.explain || null, explainSay: q.explainSay || null,
       choices: (q.choices || []).map(function (c) { return { html: String(c.html), correct: !!c.correct, say: c.say || null, sayLang: c.sayLang || null, cls: c.cls || null }; })
     };
   }
@@ -558,6 +558,8 @@
             if (tries === 0) score++;
             addStar(1); event(APP_ID, "correct");
             if (q.onCorrect) q.onCorrect();
+            /* 설명이 있는 문제는 짧게 짚어 주고, 아이가 "다음"을 눌러야 넘어간다 */
+            if (q.explain) { showExplain(q); return; }
             /* 까닭을 보여 주는 문제는 q.hold 만큼 더 머문다 */
             setTimeout(function () { idx++; next(); }, q.hold || 900);
           } else {
@@ -583,6 +585,15 @@
       stage.appendChild(grid);
       if (q.say && cfg.autoSay !== false) setTimeout(function () { speak(q.say, { lang: q.sayLang || 'ko-KR' }); }, 250);
       if (q.after) q.after(stage);
+    }
+    function showExplain(q) {
+      var card = el('div', { class: 'kl-explain' }, [el('div', { class: 'kl-explain-body', html: q.explain })]);
+      var go = el('button', { class: 'kl-btn primary kl-explain-next', text: idx + 1 < total ? '다음 ▶' : '결과 보기 ▶' });
+      go.addEventListener('click', function () { if (go.disabled) return; go.disabled = true; sfx.click(); idx++; next(); });
+      card.appendChild(go);
+      stage.appendChild(card);
+      try { card.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { }
+      setTimeout(function () { speak(q.explainSay || card.querySelector('.kl-explain-body').textContent); }, 700);
     }
     function finish() {
       stampToast(addActivity());
