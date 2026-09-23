@@ -134,7 +134,7 @@
       el: box, mode: 'mean', total: 6, onFinish: home,
       make: function (n, lv) {
         var s = K.pick(pool);
-        var opts = K.shuffle([s].concat(K.sample(pool.filter(function (x) { return x !== s; }), 3)));
+        var opts = K.shuffle([s].concat(K.sample(pool.filter(function (x) { return x !== s && !(s.grp && x.grp === s.grp); }), 3)));
         return {
           key: 'm' + s.id,
           prompt: '<div class="qhan hz">' + K.esc(s.han) + '</div>' + (lv <= 2 ? '<div style="font-size:17px;color:#6b6b6b">' + K.esc(s.read) + '</div>' : '') + '<div style="font-size:18px;margin-top:6px">무슨 뜻일까요?</div>',
