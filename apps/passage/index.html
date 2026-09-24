@@ -107,10 +107,10 @@
     var reading = false;
     var readBtn = el('button', { text: '🔊 읽어 주기' });
     readBtn.addEventListener('click', function () {
-      if (reading && window.speechSynthesis) { speechSynthesis.cancel(); reading = false; readBtn.textContent = '🔊 읽어 주기'; return; }
+      if (reading) { K.stopSpeak(); reading = false; readBtn.textContent = '🔊 읽어 주기'; return; }
       reading = K.speak(p.text.replace(/[■·\[\]]/g, ' ')); readBtn.textContent = reading ? '⏹ 그만 읽기' : '🔊 읽어 주기';
     });
-    wrap.appendChild(el('div', { class: 'rd-foot' }, [readBtn, el('button', { class: 'go', text: '❓ 문제 풀기 (' + p.q.length + ')', onclick: function () { K.sfx.click(); if (window.speechSynthesis) speechSynthesis.cancel(); ask(p); } })]));
+    wrap.appendChild(el('div', { class: 'rd-foot' }, [readBtn, el('button', { class: 'go', text: '❓ 문제 풀기 (' + p.q.length + ')', onclick: function () { K.sfx.click(); K.stopSpeak(); ask(p); } })]));
     main.appendChild(wrap);
     K.event('open');
   }

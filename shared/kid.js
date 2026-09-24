@@ -307,23 +307,37 @@
   var voices = [];
   function loadVoices() { try { voices = window.speechSynthesis ? speechSynthesis.getVoices() : []; } catch (e) { voices = []; } }
   if (window.speechSynthesis) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+  /* 안드로이드 Chrome은 cancel() 바로 뒤의 speak()를 자주 버리고(계산기처럼 키마다 말할 때 무음),
+     가끔 음성 엔진이 멈춘(paused) 채로 남는다. 말하는 중일 때만 끊고 잠깐 뒤에 말하며, 늘 resume()을 먼저 부른다.
+     빠르게 여러 번 부르면 마지막 것만 말한다. */
+  var speakSeq = 0, lastUtter = null;
   function speak(text, opts) {
     opts = opts || {};
     var st = meta().settings;
-    if (!window.speechSynthesis || st.tts === false || st.mute) return false;
+    if (!window.speechSynthesis || st.tts === false || st.mute || !text) return false;
     try {
-      speechSynthesis.cancel();
-      var u = new SpeechSynthesisUtterance(text);
+      var u = new SpeechSynthesisUtterance(String(text));
       var lang = opts.lang || 'ko-KR';
       /* 부모가 고른 말 속도를 기준으로 삼는다 (기본 0.9) */
       var base = st.rate || 0.9;
       u.lang = lang; u.rate = (opts.rate ? opts.rate / 0.9 : 1) * base; u.pitch = opts.pitch || 1.1;
+      if (!voices.length) loadVoices();
       var v = voices.filter(function (v) { return v.lang && v.lang.replace('_', '-').toLowerCase().indexOf(lang.toLowerCase().slice(0, 2)) === 0; });
       if (v.length) u.voice = v[0];
-      speechSynthesis.speak(u);
+      var my = ++speakSeq;
+      var go = function () {
+        if (my !== speakSeq) return;
+        try { speechSynthesis.resume(); } catch (e) { }
+        lastUtter = u; /* 말하는 도중 가비지 수거로 끊기지 않게 잡아 둔다 */
+        speechSynthesis.speak(u);
+      };
+      if (speechSynthesis.speaking || speechSynthesis.pending) { speechSynthesis.cancel(); setTimeout(go, 80); }
+      else go();
       return true;
     } catch (e) { return false; }
   }
+  /* 읽기를 멈춘다. 곧 말하려고 기다리던 것도 함께 취소한다 */
+  function stopSpeak() { speakSeq++; try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) { } }
   function speakEn(text) { return speak(text, { lang: 'en-US', rate: 0.85 }); }
 
   /* ---------- 숫자를 한국말로 읽기 ----------
@@ -651,7 +665,7 @@
     addWrong: addWrong, takeWrongs: takeWrongs, clearWrong: clearWrong, wrongCount: wrongCount,
     addActivity: addActivity, stampState: stampState, addUsage: addUsage, usageToday: usageToday,
     STICKERS: STICKERS, STICKER_COST: STICKER_COST,
-    sfx: sfx, speak: speak, speakEn: speakEn,
+    sfx: sfx, speak: speak, speakEn: speakEn, stopSpeak: stopSpeak,
     toast: toast, nope: nope, yep: yep, confetti: confetti, header: header, runQuiz: runQuiz, buildRound: buildRound, qkey: qkey, menu: menu, backButton: backButton,
     numToKo: numToKo, comma: comma, josa: josa,
     el: el, esc: esc, randInt: randInt, pick: pick, shuffle: shuffle, sample: sample, notify: notify, APP_ID: APP_ID
