@@ -7,18 +7,36 @@
 <style>
   .pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
   .pick-grid button { background: #fff; border-radius: 20px; padding: 14px 6px; font-size: 54px; box-shadow: 0 5px 0 rgba(0,0,0,.08); }
-  .pick-grid button small { display: block; font-size: 17px; font-weight: 800; color: #444; }
+  .pick-grid button small { display: block; font-size: 17px; font-weight: 800; color: #444; word-break: keep-all; }
   @media (hover: hover) { .pick-grid button:hover { transform: scale(1.05); } }
+  .ep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .ep-grid button { background: #fff; border-radius: 22px; padding: 16px 10px; box-shadow: 0 5px 0 rgba(0,0,0,.08); font-weight: 900; font-size: 19px; }
+  .ep-grid button .ic { display: block; font-size: 54px; margin-bottom: 6px; }
+  .ep-grid button small { display: block; font-size: 14px; color: #777; font-weight: 700; margin-top: 4px; word-break: keep-all; }
+  .lv-list { display: grid; gap: 12px; max-width: 620px; margin: 0 auto; }
+  .lv-list button { background: #fff; border-radius: 22px; padding: 16px 18px; box-shadow: 0 5px 0 rgba(0,0,0,.08); text-align: left; font-weight: 900; font-size: 21px; display: flex; gap: 14px; align-items: center; }
+  .lv-list button .ic { font-size: 44px; }
+  .lv-list button small { display: block; font-size: 15px; color: #666; font-weight: 700; margin-top: 2px; }
+  .write { max-width: 620px; margin: 0 auto; display: grid; gap: 10px; }
+  .write label { font-weight: 900; font-size: 19px; }
+  .write input { width: 100%; font-size: 22px; padding: 12px 14px; border-radius: 14px; border: 3px solid #e2c99a; font-family: inherit; user-select: text; -webkit-user-select: text; }
+  .write .ex { font-size: 15px; color: #777; margin-top: -4px; }
   .book { background: #fffdf5; border: 6px solid #e2c99a; border-radius: 20px; padding: 26px; font-size: 26px; line-height: 1.7; box-shadow: 0 10px 30px rgba(0,0,0,.1); }
-  .book .scene { font-size: 80px; text-align: center; margin-bottom: 10px; }
-  .book p { margin: 0 0 12px; }
+  .book .scene { font-size: 64px; text-align: center; margin-bottom: 10px; word-break: break-all; }
+  .book .ttl { text-align: center; font-weight: 900; color: #8a5a00; margin-bottom: 8px; }
+  .book p { margin: 0 0 12px; word-break: keep-all; }
   .book p.cur { background: #fff3c4; border-radius: 10px; }
-  .steps { display: flex; gap: 6px; justify-content: center; margin-bottom: 12px; }
-  .steps i { width: 40px; height: 10px; border-radius: 5px; background: #ddd; }
+  .steps { display: flex; gap: 6px; justify-content: center; margin-bottom: 12px; flex-wrap: wrap; }
+  .steps i { width: 36px; height: 10px; border-radius: 5px; background: #ddd; }
   .steps i.on { background: #ffca3a; }
   .shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
   .shelf button { background: #fff; border-radius: 18px; padding: 14px; text-align: left; box-shadow: 0 5px 0 rgba(0,0,0,.08); font-weight: 800; }
-  .shelf .sc { font-size: 40px; }
+  .shelf .sc { font-size: 34px; word-break: break-all; }
+  @media (max-width: 760px) {
+    .book { padding: 16px; font-size: 20px; } .book .scene { font-size: 44px; }
+    .pick-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); } .pick-grid button { font-size: 44px; }
+    .ep-grid { grid-template-columns: repeat(2, 1fr); } .lv-list button { font-size: 18px; }
+  }
 </style>
 </head>
 <body data-app="story">
@@ -29,76 +47,359 @@
   var K = KidLab, el = K.el;
   K.header({ title: '이야기 만들기', icon: '📖', say: '이야기 만들기' });
   var main = document.getElementById('main');
+  function J(w, pair) { return w + K.josa(w, pair); }
+
+  /* ---------- 카드 묶음 ---------- */
   var HEROES = [['🐰', '토끼'], ['🐻', '곰'], ['🦊', '여우'], ['🐸', '개구리'], ['🤖', '로봇'], ['👧', '소녀'], ['👦', '소년'], ['🦄', '유니콘'], ['🐉', '아기 용'], ['🐧', '펭귄'], ['🐱', '고양이'], ['🦖', '공룡']];
-  var PLACES = [['🏰', '성'], ['🌲', '숲'], ['🏖️', '바닷가'], ['🚀', '우주'], ['🏫', '유치원'], ['🏠', '우리 집'], ['🎪', '서커스'], ['🏔️', '산꼭대기'], ['🌋', '화산 옆'], ['🏝️', '무인도']];
-  var FRIENDS = [['🐶', '강아지'], ['🦋', '나비'], ['🐢', '거북이'], ['👵', '할머니'], ['🧚', '요정'], ['🐦', '작은 새'], ['🐙', '문어'], ['👾', '외계인'], ['🐝', '꿀벌'], ['🦁', '사자']];
-  var ITEMS = [['🎈', '풍선'], ['🔑', '황금 열쇠'], ['🧁', '컵케이크'], ['⭐', '떨어진 별'], ['🎁', '선물 상자'], ['🗺️', '보물 지도'], ['✨', '마법 지팡이'], ['🎸', '기타'], ['🧸', '곰 인형'], ['🌂', '무지개 우산']];
-  var PROBLEMS = [['🌧️', '갑자기 비가 쏟아졌어요'], ['😢', '길을 잃어버렸어요'], ['🐺', '무서운 늑대가 나타났어요'], ['🕳️', '커다란 구멍에 빠졌어요'], ['🍎', '배가 너무 고팠어요'], ['🔒', '문이 잠겨 있었어요'], ['💨', '바람에 모자가 날아갔어요'], ['😴', '친구가 잠들어 버렸어요']];
-  var SOLUTIONS = [['🤝', '친구와 힘을 합쳤어요'], ['💡', '좋은 생각이 떠올랐어요'], ['🎵', '노래를 불렀더니 모두 웃었어요'], ['🙏', '"도와줘"라고 용기 내어 말했어요'], ['🏃', '열심히 달렸어요'], ['❤️', '따뜻한 마음으로 안아줬어요'], ['🔍', '차근차근 찾아봤어요'], ['✨', '마법의 물건을 사용했어요']];
-  var ENDINGS = ['그리고 모두 함께 맛있는 저녁을 먹었어요. 🍽️', '그날 밤, 별을 보며 잠이 들었어요. 🌙', '둘은 가장 친한 친구가 되었어요. 💕', '그 뒤로 매일매일 신나게 놀았대요. 🎉', '집에 돌아와 엄마에게 이야기를 들려줬어요. 🏠', '다음 모험을 기다리며 웃었어요. 😊'];
-  var STEPS = [['주인공을 골라요', HEROES], ['어디로 갈까요?', PLACES], ['누구를 만날까요?', FRIENDS], ['무엇을 찾았을까요?', ITEMS], ['어떤 일이 생겼을까요?', PROBLEMS], ['어떻게 해결했을까요?', SOLUTIONS]];
+  var SOLVE = [['🤝', '힘을 모아 해냈어요'], ['💡', '좋은 생각이 떠올랐어요'], ['🎵', '노래를 불렀더니 모두 웃었어요'], ['🙏', '"도와줘"라고 용기 내어 말했어요'], ['🔍', '차근차근 찾아봤어요'], ['❤️', '따뜻한 마음으로 안아 줬어요'], ['✨', '마법의 물건을 사용했어요']];
+
+  /* 이야기 종류. steps의 id로 고른 카드를 부르고, short는 짧은 이야기에 쓰는 단계.
+     lines(p, h)는 줄 목록을 돌려준다. p[id] = [그림, 이름], h = { H: 주인공 부르는 이름, intro: '…가', said: 대사 } */
+  var EPS = [
+    { id: 'adv', ic: '🗺️', t: '신나는 모험', d: '떠나서 친구를 만나요',
+      steps: [
+        { id: 'hero', q: '주인공을 골라요', o: HEROES },
+        { id: 'place', q: '어디로 갈까요?', o: [['🏰', '성'], ['🌲', '숲'], ['🏖️', '바닷가'], ['🚀', '우주'], ['🏫', '유치원'], ['🏠', '우리 집'], ['🎪', '서커스'], ['🏔️', '산꼭대기'], ['🌋', '화산 옆'], ['🏝️', '무인도']] },
+        { id: 'friend', q: '누구를 만날까요?', o: [['🐶', '강아지'], ['🦋', '나비'], ['🐢', '거북이'], ['👵', '할머니'], ['🧚', '요정'], ['🐦', '작은 새'], ['🐙', '문어'], ['👾', '외계인'], ['🐝', '꿀벌'], ['🦁', '사자']] },
+        { id: 'item', q: '무엇을 찾았을까요?', o: [['🎈', '풍선'], ['🔑', '황금 열쇠'], ['🧁', '컵케이크'], ['⭐', '떨어진 별'], ['🎁', '선물 상자'], ['🗺️', '보물 지도'], ['✨', '마법 지팡이'], ['🎸', '기타'], ['🧸', '곰 인형'], ['🌂', '무지개 우산']] },
+        { id: 'prob', q: '어떤 일이 생겼을까요?', o: [['🌧️', '갑자기 비가 쏟아졌어요'], ['😢', '길을 잃어버렸어요'], ['🐺', '무서운 늑대가 나타났어요'], ['🕳️', '커다란 구멍에 빠졌어요'], ['🍎', '배가 너무 고팠어요'], ['🔒', '문이 잠겨 있었어요'], ['💨', '바람에 모자가 날아갔어요'], ['😴', '친구가 잠들어 버렸어요']] },
+        { id: 'sol', q: '어떻게 해결했을까요?', o: SOLVE.concat([['🏃', '열심히 달렸어요']]) }
+      ],
+      short: ['hero', 'place', 'prob', 'sol'],
+      said: '"안녕! 같이 놀자!"',
+      lines: function (p, h) {
+        var L = ['옛날 옛적에 ' + h.intro + ' 살았어요. ' + p.hero[0],
+          '어느 날 ' + J(h.H, '은/는') + ' ' + J(p.place[1], '으로/로') + ' 모험을 떠났어요. ' + p.place[0]];
+        if (p.friend) L.push(p.place[1] + '에서 ' + J(p.friend[1], '을/를') + ' 만났어요. ' + h.said + ' ' + p.friend[0]);
+        if (p.item) L.push((p.friend ? '둘은 함께 ' : '') + J(p.item[1], '을/를') + ' 발견했어요! ' + p.item[0]);
+        L.push('그런데 ' + p.prob[1].replace(/요$/, '요.') + ' ' + p.prob[0]);
+        L.push((p.friend ? J(h.H, '과/와') + ' ' + J(p.friend[1], '은/는') : J(h.H, '은/는')) + ' ' + p.sol[1] + '. ' + p.sol[0]);
+        return L;
+      },
+      ends: ['그리고 모두 함께 맛있는 저녁을 먹었어요. 🍽️', '그날 밤, 별을 보며 잠이 들었어요. 🌙', '둘은 가장 친한 친구가 되었어요. 💕', '그 뒤로 매일매일 신나게 놀았대요. 🎉', '집에 돌아와 엄마에게 이야기를 들려줬어요. 🏠', '다음 모험을 기다리며 웃었어요. 😊'] },
+
+    { id: 'space', ic: '🚀', t: '우주 탐험', d: '별나라에 가요',
+      steps: [
+        { id: 'hero', q: '누가 우주에 갈까요?', o: HEROES },
+        { id: 'ship', q: '무엇을 타고 갈까요?', o: [['🚀', '로켓'], ['🛸', '비행접시'], ['🎈', '우주 풍선'], ['🛰️', '인공위성'], ['🚂', '별빛 기차']] },
+        { id: 'planet', q: '어디에 내릴까요?', o: [['🌙', '달'], ['🔴', '화성'], ['⭐', '별나라'], ['🍭', '사탕 행성'], ['❄️', '얼음 행성'], ['🌈', '무지개 행성']] },
+        { id: 'friend', q: '누구를 만날까요?', o: [['👽', '외계인'], ['🤖', '로봇 강아지'], ['🐙', '우주 문어'], ['🧚', '별 요정'], ['🐰', '달토끼']] },
+        { id: 'prob', q: '어떤 일이 생겼을까요?', o: [['⛽', '연료가 다 떨어졌어요'], ['☄️', '별똥별이 쏟아졌어요'], ['📡', '지구와 연락이 끊겼어요'], ['🌀', '블랙홀이 로켓을 끌어당겼어요'], ['🥶', '너무너무 추웠어요']] },
+        { id: 'sol', q: '어떻게 해결했을까요?', o: [['🔧', '로켓을 뚝딱뚝딱 고쳤어요'], ['🧭', '별자리를 보고 길을 찾았어요']].concat(SOLVE.slice(0, 4)) }
+      ],
+      short: ['hero', 'planet', 'prob', 'sol'],
+      said: '"지구에서 왔니? 반가워!"',
+      lines: function (p, h) {
+        var L = ['옛날 옛적에 우주를 꿈꾸는 ' + h.intro + ' 살았어요. ' + p.hero[0],
+          (p.ship ? J(h.H, '은/는') + ' ' + J(p.ship[1], '을/를') + ' 타고 ' : '어느 날 ' + J(h.H, '은/는') + ' ') + '하늘 높이 날아올랐어요. 슝! ' + (p.ship ? p.ship[0] : '🚀'),
+          '도착한 곳은 ' + J(p.planet[1], '이었어요/였어요') + '. ' + p.planet[0]];
+        if (p.friend) L.push(p.planet[1] + '에서 ' + J(p.friend[1], '을/를') + ' 만났어요. ' + h.said + ' ' + p.friend[0]);
+        L.push('그런데 ' + p.prob[1] + '. ' + p.prob[0]);
+        L.push((p.friend ? J(h.H, '과/와') + ' ' + J(p.friend[1], '은/는') : J(h.H, '은/는')) + ' ' + p.sol[1] + '. ' + p.sol[0]);
+        return L;
+      },
+      ends: ['무사히 지구로 돌아와 창밖의 별을 보며 잠들었어요. 🌙', '우주 친구와 다시 만나기로 약속했어요. 💫', '우주에서 찍은 사진을 친구들에게 보여 줬어요. 📸', '다음에는 더 먼 별에 가 보기로 했어요. 🌟'] },
+
+    { id: 'sea', ic: '🌊', t: '바닷속 여행', d: '깊은 바다를 구경해요',
+      steps: [
+        { id: 'hero', q: '누가 바다에 갈까요?', o: HEROES },
+        { id: 'ride', q: '무엇을 타고 갈까요?', o: [['🐬', '돌고래'], ['🐢', '바다거북'], ['🐳', '커다란 고래'], ['🚤', '작은 보트']] },
+        { id: 'place', q: '어디에 가 볼까요?', o: [['🐚', '조개 마을'], ['🏰', '인어 궁전'], ['🌿', '해초 숲'], ['🐠', '산호초'], ['💰', '가라앉은 보물선']] },
+        { id: 'friend', q: '누구를 만날까요?', o: [['🐙', '문어'], ['🦀', '꽃게'], ['🐡', '복어'], ['🧜', '인어'], ['🦑', '오징어'], ['🐠', '열대어']] },
+        { id: 'prob', q: '어떤 일이 생겼을까요?', o: [['🌀', '커다란 소용돌이가 몰려왔어요'], ['🌑', '바닷속이 갑자기 캄캄해졌어요'], ['🗑️', '쓰레기가 바다를 더럽혔어요'], ['🦈', '배고픈 상어가 다가왔어요'], ['🎣', '친구가 낚싯줄에 걸렸어요']] },
+        { id: 'sol', q: '어떻게 해결했을까요?', o: [['🧹', '쓰레기를 함께 주웠어요'], ['🔦', '반짝이는 해파리가 길을 비춰 줬어요'], ['✂️', '조심조심 줄을 끊어 줬어요']].concat(SOLVE.slice(0, 4)) }
+      ],
+      short: ['hero', 'place', 'prob', 'sol'],
+      said: '"바닷속에 온 걸 환영해!"',
+      lines: function (p, h) {
+        var L = ['옛날 옛적에 바다를 좋아하는 ' + h.intro + ' 살았어요. ' + p.hero[0],
+          J(h.H, '은/는') + ' ' + (p.ride ? J(p.ride[1], '을/를') + ' 타고 ' : '') + '바닷속으로 풍덩 들어갔어요. ' + (p.ride ? p.ride[0] : '🌊'),
+          '반짝반짝 ' + p.place[1] + '에 도착했어요. ' + p.place[0]];
+        if (p.friend) L.push('거기서 ' + J(p.friend[1], '을/를') + ' 만났어요. ' + h.said + ' ' + p.friend[0]);
+        L.push('그런데 ' + p.prob[1] + '. ' + p.prob[0]);
+        L.push((p.friend ? J(h.H, '과/와') + ' ' + J(p.friend[1], '은/는') : J(h.H, '은/는')) + ' ' + p.sol[1] + '. ' + p.sol[0]);
+        return L;
+      },
+      ends: ['바다 친구들이 고맙다며 예쁜 조개를 선물했어요. 🐚', '물 위로 올라오니 노을이 반짝였어요. 🌅', '그 뒤로 바다를 깨끗하게 지키기로 약속했어요. 💙', '다음 여름에 또 놀러 오기로 했어요. 🏖️'] },
+
+    { id: 'party', ic: '🎂', t: '생일 파티', d: '친구의 생일을 축하해요',
+      steps: [
+        { id: 'hero', q: '주인공을 골라요', o: HEROES },
+        { id: 'friend', q: '누구의 생일일까요?', o: [['🐶', '강아지'], ['🐼', '판다'], ['🐥', '병아리'], ['🐨', '코알라'], ['👵', '할머니'], ['🦁', '사자']] },
+        { id: 'gift', q: '어떤 선물을 준비할까요?', o: [['🧸', '곰 인형'], ['📚', '그림책'], ['🎨', '물감'], ['⚽', '축구공'], ['💐', '꽃다발'], ['✉️', '손 편지']] },
+        { id: 'food', q: '무엇을 먹을까요?', o: [['🍰', '딸기 케이크'], ['🍕', '피자'], ['🍩', '도넛'], ['🍪', '쿠키'], ['🍉', '수박']] },
+        { id: 'prob', q: '어떤 일이 생겼을까요?', o: [['🎂', '케이크를 떨어뜨렸어요'], ['🎈', '풍선이 모두 날아가 버렸어요'], ['🔌', '갑자기 불이 꺼졌어요'], ['⏰', '선물을 집에 두고 왔어요'], ['😢', '생일인 친구가 울음을 터뜨렸어요']] },
+        { id: 'sol', q: '어떻게 해결했을까요?', o: [['🍓', '과일로 새 케이크를 만들었어요'], ['🕯️', '촛불을 켜고 노래를 불렀어요'], ['🎨', '그림 선물을 그려 줬어요']].concat(SOLVE.slice(0, 4)) }
+      ],
+      short: ['hero', 'friend', 'prob', 'sol'],
+      said: '"생일 축하해! 너는 나의 소중한 친구야!"',
+      lines: function (p, h) {
+        var L = ['옛날 옛적에 ' + h.intro + ' 살았어요. ' + p.hero[0],
+          '오늘은 ' + p.friend[1] + '의 생일이에요! ' + p.friend[0]];
+        if (p.gift) L.push(J(h.H, '은/는') + ' 선물로 ' + J(p.gift[1], '을/를') + ' 준비했어요. ' + p.gift[0]);
+        L.push(J(h.H, '은/는') + ' ' + p.friend[1] + '에게 말했어요. ' + h.said + ' 🎉');
+        if (p.food) L.push('식탁에는 ' + J(p.food[1], '이/가') + ' 가득했어요. ' + p.food[0]);
+        L.push('그런데 ' + p.prob[1] + '. ' + p.prob[0]);
+        L.push(J(h.H, '은/는') + ' ' + p.sol[1] + '. ' + p.sol[0]);
+        return L;
+      },
+      ends: ['모두 함께 "생일 축하합니다" 노래를 불렀어요. 🎶', '가장 행복한 생일이었다고 친구가 말했어요. 💕', '파티가 끝나고 다 같이 사진을 찍었어요. 📸', '다음 생일에도 꼭 함께하자고 약속했어요. 🤙'] },
+
+    { id: 'detective', ic: '🔍', t: '꼬마 탐정', d: '사라진 물건을 찾아요',
+      steps: [
+        { id: 'hero', q: '꼬마 탐정은 누구일까요?', o: HEROES },
+        { id: 'lost', q: '무엇이 사라졌을까요?', o: [['🧸', '곰 인형'], ['👑', '반짝이 왕관'], ['🍪', '쿠키 통'], ['🔑', '보물 상자 열쇠'], ['🎩', '마술 모자'], ['🧦', '양말 한 짝']] },
+        { id: 'place', q: '어디부터 살펴볼까요?', o: [['🛏️', '침대 밑'], ['🌳', '나무 위'], ['📦', '상자 속'], ['🛁', '욕실'], ['🌷', '꽃밭']] },
+        { id: 'clue', q: '어떤 단서를 찾았을까요?', o: [['👣', '작은 발자국'], ['🍯', '끈적끈적한 꿀 자국'], ['🧶', '털실 한 가닥'], ['🎵', '이상한 노랫소리'], ['🍪', '과자 부스러기']] },
+        { id: 'who', q: '범인은 누구였을까요?', o: [['🐶', '강아지'], ['🐱', '고양이'], ['🐿️', '다람쥐'], ['👶', '아기 동생'], ['🐦', '까치'], ['🐭', '생쥐']] }
+      ],
+      short: ['hero', 'lost', 'clue', 'who'],
+      said: '"찾았다! 범인은 바로 너구나!"',
+      lines: function (p, h) {
+        var L = ['옛날 옛적에 꼬마 탐정 ' + h.intro + ' 살았어요. ' + p.hero[0],
+          '어느 날 소중한 ' + J(p.lost[1], '이/가') + ' 감쪽같이 사라졌어요! ' + p.lost[0]];
+        if (p.place) L.push(J(h.H, '은/는') + ' 돋보기를 들고 ' + p.place[1] + '부터 살펴봤어요. 🔍 ' + p.place[0]);
+        L.push('거기서 ' + J(p.clue[1], '을/를') + ' 찾았어요! ' + p.clue[0]);
+        L.push('단서를 따라가 보니… ' + h.said + ' ' + p.who[0]);
+        L.push('범인은 ' + J(p.who[1], '이었어요/였어요') + '. ' + J(p.who[1], '이/가') + ' ' + J(p.lost[1], '을/를') + ' 가지고 놀고 있었던 거예요.');
+        return L;
+      },
+      ends: ['모두 깔깔 웃으며 다 함께 놀았어요. 😆', '다음부터는 꼭 물어보고 빌려 가기로 약속했어요. 🤝', '꼬마 탐정의 이름은 온 동네에 알려졌어요. 🏅', '오늘의 사건을 탐정 수첩에 꼼꼼히 적었어요. 📒'] },
+
+    { id: 'magic', ic: '🧙', t: '마법 학교', d: '마법 주문을 배워요',
+      steps: [
+        { id: 'hero', q: '누가 마법 학교에 갈까요?', o: HEROES },
+        { id: 'spell', q: '무슨 마법을 배울까요?', o: [['🕊️', '하늘을 나는 마법'], ['🌸', '꽃을 피우는 마법'], ['👻', '투명해지는 마법'], ['🧊', '얼음 마법'], ['🌈', '무지개 마법'], ['🐸', '개구리로 바꾸는 마법']] },
+        { id: 'teacher', q: '선생님은 누구일까요?', o: [['🧙', '마법사 할아버지'], ['🦉', '부엉이 선생님'], ['🐉', '용 선생님'], ['🧚', '요정 선생님']] },
+        { id: 'prob', q: '어떤 일이 생겼을까요?', o: [['🔄', '주문을 거꾸로 외웠어요'], ['🧹', '빗자루가 제멋대로 날아다녔어요'], ['🧼', '교실이 온통 거품투성이가 되었어요'], ['🐰', '선생님이 토끼로 변해 버렸어요']] },
+        { id: 'sol', q: '어떻게 해결했을까요?', o: [['📖', '마법 책을 다시 차근차근 읽었어요'], ['🗣️', '주문을 또박또박 다시 외웠어요'], ['🤝', '친구들과 힘을 모았어요'], ['🙏', '"잘못했어요" 하고 솔직하게 말했어요']] }
+      ],
+      short: ['hero', 'spell', 'prob', 'sol'],
+      said: '"천천히, 또박또박 외워 보렴."',
+      lines: function (p, h) {
+        var L = ['옛날 옛적에 마법을 좋아하는 ' + h.intro + ' 살았어요. ' + p.hero[0],
+          J(h.H, '은/는') + ' 마법 학교에 입학했어요. 🏫',
+          '첫 수업은 ' + p.spell[1] + ' 시간이었어요. ' + p.spell[0]];
+        if (p.teacher) L.push(J(p.teacher[1], '이/가') + ' 말했어요. ' + h.said + ' ' + p.teacher[0]);
+        L.push('그런데 ' + p.prob[1] + '! ' + p.prob[0]);
+        L.push(J(h.H, '은/는') + ' ' + p.sol[1] + '. ' + p.sol[0]);
+        return L;
+      },
+      ends: ['드디어 마법이 성공했어요! 모두 박수를 쳤어요. 👏', '실수해도 괜찮다는 것을 배웠어요. 😊', '그날 밤, 꿈속에서도 마법 연습을 했어요. 🌙', '졸업하면 멋진 마법사가 되기로 다짐했어요. ⭐'] },
+
+    { id: 'dino', ic: '🦕', t: '공룡 시대로', d: '아주 먼 옛날로 가요',
+      steps: [
+        { id: 'hero', q: '누가 시간 여행을 할까요?', o: HEROES },
+        { id: 'machine', q: '무엇을 타고 갈까요?', o: [['⏳', '반짝이는 모래시계'], ['🚪', '신비한 문'], ['📖', '마법 그림책'], ['🚂', '시간 기차']] },
+        { id: 'friend', q: '어떤 공룡을 만날까요?', o: [['🦖', '티라노사우루스'], ['🦕', '브라키오사우루스'], ['🥚', '알에서 막 깬 아기 공룡'], ['🦅', '하늘을 나는 프테라노돈']] },
+        { id: 'prob', q: '어떤 일이 생겼을까요?', o: [['🌋', '화산이 부글부글 끓어올랐어요'], ['🥚', '공룡 알이 데굴데굴 굴러갔어요'], ['😭', '아기 공룡이 엄마를 잃어버렸어요'], ['🌧️', '엄청난 비가 쏟아졌어요']] },
+        { id: 'sol', q: '어떻게 해결했을까요?', o: [['🏃', '높은 언덕으로 함께 달렸어요'], ['👣', '발자국을 따라 엄마를 찾아 줬어요'], ['🍃', '커다란 잎으로 비를 막았어요']].concat(SOLVE.slice(0, 3)) }
+      ],
+      short: ['hero', 'friend', 'prob', 'sol'],
+      said: '"안녕! 나랑 친구 할래?"',
+      lines: function (p, h) {
+        var L = ['옛날 옛적에 공룡을 좋아하는 ' + h.intro + ' 살았어요. ' + p.hero[0],
+          J(h.H, '은/는') + ' ' + (p.machine ? J(p.machine[1], '을/를') + ' 타고 ' : '') + '아주 먼 옛날 공룡 시대로 갔어요. ' + (p.machine ? p.machine[0] : '⏳'),
+          '쿵쿵! ' + J(p.friend[1], '이/가') + ' 다가왔어요. ' + h.said + ' ' + p.friend[0],
+          '그런데 ' + p.prob[1] + '. ' + p.prob[0],
+          J(h.H, '과/와') + ' ' + J(p.friend[1], '은/는') + ' ' + p.sol[1] + '. ' + p.sol[0]];
+        return L;
+      },
+      ends: ['집에 돌아와 공룡 친구를 그림으로 그렸어요. 🎨', '공룡 친구가 준 반짝이는 돌을 소중히 간직했어요. 💎', '박물관에 가서 공룡 뼈를 보며 친구를 떠올렸어요. 🦴', '다시 만나자고 손을 흔들며 돌아왔어요. 👋'] },
+
+    { id: 'sports', ic: '🏅', t: '숲속 운동회', d: '친구들과 겨뤄요',
+      steps: [
+        { id: 'hero', q: '누가 운동회에 나갈까요?', o: HEROES },
+        { id: 'game', q: '무슨 경기를 할까요?', o: [['🏃', '달리기'], ['🥕', '당근 뽑기'], ['🏊', '수영'], ['🎯', '과녁 맞히기'], ['⚽', '공 차기']] },
+        { id: 'friend', q: '누구와 겨룰까요?', o: [['🐢', '거북이'], ['🐰', '토끼'], ['🦊', '여우'], ['🐻', '곰'], ['🐿️', '다람쥐']] },
+        { id: 'prob', q: '어떤 일이 생겼을까요?', o: [['🤕', '넘어져서 무릎이 까졌어요'], ['👟', '신발이 벗겨졌어요'], ['😰', '너무 떨려서 다리가 후들거렸어요'], ['🌧️', '갑자기 비가 내렸어요']] },
+        { id: 'sol', q: '어떻게 했을까요?', o: [['💪', '다시 일어나 끝까지 달렸어요'], ['🤝', '친구 손을 잡고 함께 들어왔어요'], ['😌', '숨을 크게 쉬고 마음을 가라앉혔어요'], ['🙌', '응원 소리에 힘을 냈어요']] }
+      ],
+      short: ['hero', 'game', 'prob', 'sol'],
+      said: '"우리 둘 다 최선을 다하자!"',
+      lines: function (p, h) {
+        var L = ['옛날 옛적에 ' + h.intro + ' 살았어요. ' + p.hero[0],
+          '오늘은 숲속 운동회 날! ' + J(h.H, '은/는') + ' ' + p.game[1] + ' 경기에 나갔어요. ' + p.game[0]];
+        if (p.friend) L.push('옆 줄에는 ' + J(p.friend[1], '이/가') + ' 서 있었어요. ' + h.said + ' ' + p.friend[0]);
+        L.push('땅! 경기가 시작됐어요. 그런데 ' + p.prob[1] + '. ' + p.prob[0]);
+        L.push(J(h.H, '은/는') + ' ' + p.sol[1] + '. ' + p.sol[0]);
+        return L;
+      },
+      ends: ['1등은 못 했지만 끝까지 해낸 자신이 자랑스러웠어요. 🏅', '모두 함께 메달을 목에 걸었어요. 🥇', '경기가 끝나고 서로 꼭 안아 줬어요. 🤗', '내년 운동회에서 다시 겨루자고 약속했어요. 🤙'] }
+  ];
+  var EP = {}; EPS.forEach(function (e) { EP[e.id] = e; });
+  var LVS = [
+    { lv: 1, ic: '🌱', t: '짧은 이야기', d: '카드 4장으로 뚝딱' },
+    { lv: 2, ic: '🌿', t: '긴 이야기', d: '카드를 모두 골라 길게' },
+    { lv: 3, ic: '🌳', t: '작가 되기', d: '이름·대사·마지막 문장을 내가 직접 써요' }
+  ];
+  function stepsOf(ep, lv) { return lv === 1 ? ep.steps.filter(function (s) { return ep.short.indexOf(s.id) >= 0; }) : ep.steps; }
+
+  /* ---------- 화면 ---------- */
   function home() {
     main.innerHTML = '';
     var d = K.data();
     K.menu(main, [
-      { icon: '✨', label: '새 이야기 만들기', color: '#fde2c8', run: function () { build(0, []); } },
-      { icon: '🎲', label: '뚝딱 랜덤 이야기', color: '#fff3c4', run: function () { var picks = STEPS.map(function (s) { return K.pick(s[1]); }); show(picks, true); } },
+      { icon: '✨', label: '새 이야기 만들기', color: '#fde2c8', run: pickEp },
+      { icon: '🎲', label: '뚝딱 랜덤 이야기', color: '#fff3c4', run: randomStory },
       { icon: '📚', label: '내 책장 (' + (d.stories || []).length + ')', color: '#e3f7cf', run: shelf }
     ]);
   }
-  function build(step, picks) {
-    main.innerHTML = ''; main.appendChild(K.backButton(step === 0 ? home : function () { build(step - 1, picks.slice(0, step - 1)); }));
-    var st = el('div', { class: 'steps' }); STEPS.forEach(function (_, i) { st.appendChild(el('i', { class: i <= step ? 'on' : '' })); }); main.appendChild(st);
-    main.appendChild(el('div', { class: 'kl-prompt', text: STEPS[step][0] }));
-    if (picks.length) main.appendChild(el('div', { class: 'kl-hint', text: '지금까지: ' + picks.map(function (p) { return p[0]; }).join(' ') }));
-    var g = el('div', { class: 'pick-grid' });
-    STEPS[step][1].forEach(function (it) { var b = el('button', { html: it[0] + '<small>' + it[1] + '</small>' }); b.addEventListener('click', function () { K.sfx.pop(); K.speak(it[1]); var np = picks.concat([it]); if (step + 1 < STEPS.length) build(step + 1, np); else show(np, false); }); g.appendChild(b); });
-    main.appendChild(g); K.speak(STEPS[step][0]);
-  }
-  function compose(p, ending) {
-    var hero = p[0][1], place = p[1][1], friend = p[2][1], item = p[3][1], prob = p[4][1], sol = p[5][1];
-    var name = K.requireProfile().name;
-    return [
-      '옛날 옛적에 ' + hero + ' 한 마리가 살았어요. ' + p[0][0],
-      '어느 날 ' + hero + K.josa(hero, '은/는') + ' ' + place + K.josa(place, '으로/로') + ' 모험을 떠났어요. ' + p[1][0],
-      place + '에서 ' + friend + K.josa(friend, '을/를') + ' 만났어요. "안녕! 같이 놀자!" ' + p[2][0],
-      '둘은 함께 ' + item + K.josa(item, '을/를') + ' 발견했어요! ' + p[3][0],
-      '그런데 ' + prob + '. ' + p[4][0],
-      hero + K.josa(hero, '과/와') + ' ' + friend + K.josa(friend, '은/는') + ' ' + sol + '. ' + p[5][0],
-      ending || ENDINGS[0],
-      '— ' + name + K.josa(name, '이/가') + ' 만든 이야기 끝 —'
-    ];
-  }
-  function show(picks, random) {
+  function pickEp() {
     main.innerHTML = ''; main.appendChild(K.backButton(home));
-    var ending = K.pick(ENDINGS); var lines = compose(picks, ending);
+    main.appendChild(el('div', { class: 'kl-prompt', text: '어떤 이야기를 만들까요?' }));
+    var g = el('div', { class: 'ep-grid' });
+    EPS.forEach(function (e) {
+      var b = el('button', { html: '<span class="ic">' + e.ic + '</span>' + e.t + '<small>' + e.d + '</small>' });
+      b.addEventListener('click', function () { K.sfx.pop(); K.speak(e.t); pickLv(e); });
+      g.appendChild(b);
+    });
+    main.appendChild(g); K.speak('어떤 이야기를 만들까요?');
+  }
+  function pickLv(ep) {
+    main.innerHTML = ''; main.appendChild(K.backButton(pickEp));
+    main.appendChild(el('div', { class: 'kl-prompt', text: ep.ic + ' ' + ep.t + ' · 몇 단계로 할까요?' }));
+    var box = el('div', { class: 'lv-list' });
+    LVS.forEach(function (L) {
+      var n = stepsOf(ep, L.lv).length;
+      var b = el('button', { html: '<span class="ic">' + L.ic + '</span><span>' + L.t + ' <small>' + L.d + ' · 카드 ' + n + '장' + (L.lv === 3 ? ' + 글쓰기 3칸' : '') + '</small></span>' });
+      b.addEventListener('click', function () { K.sfx.pop(); build(ep, L.lv, 0, {}); });
+      box.appendChild(b);
+    });
+    main.appendChild(box); K.speak('몇 단계로 할까요?');
+  }
+  function build(ep, lv, step, picks) {
+    var steps = stepsOf(ep, lv);
+    main.innerHTML = '';
+    main.appendChild(K.backButton(step === 0 ? function () { pickLv(ep); } : function () { var np = {}; for (var i = 0; i < step - 1; i++) np[steps[i].id] = picks[steps[i].id]; build(ep, lv, step - 1, np); }));
+    var st = el('div', { class: 'steps' }); steps.forEach(function (_, i) { st.appendChild(el('i', { class: i <= step ? 'on' : '' })); }); if (lv === 3) st.appendChild(el('i')); main.appendChild(st);
+    main.appendChild(el('div', { class: 'kl-prompt', text: steps[step].q }));
+    var got = steps.slice(0, step).map(function (s) { return picks[s.id][0]; });
+    if (got.length) main.appendChild(el('div', { class: 'kl-hint', text: '지금까지: ' + got.join(' ') }));
+    var g = el('div', { class: 'pick-grid' });
+    steps[step].o.forEach(function (it) {
+      var b = el('button', { html: it[0] + '<small>' + K.esc(it[1]) + '</small>' });
+      b.addEventListener('click', function () {
+        K.sfx.pop(); K.speak(it[1]);
+        var np = {}; for (var k in picks) np[k] = picks[k]; np[steps[step].id] = it;
+        if (step + 1 < steps.length) build(ep, lv, step + 1, np);
+        else if (lv === 3) write(ep, np);
+        else show({ ep: ep.id, lv: lv, picks: np });
+      });
+      g.appendChild(b);
+    });
+    main.appendChild(g); K.speak(steps[step].q);
+  }
+  /* 작가 되기: 이름·대사·마지막 문장을 직접 쓴다. 비워 두면 알맞은 말을 대신 넣는다 */
+  function write(ep, picks) {
+    main.innerHTML = ''; main.appendChild(K.backButton(function () { var steps = stepsOf(ep, 3), np = {}; for (var i = 0; i < steps.length - 1; i++) np[steps[i].id] = picks[steps[i].id]; build(ep, 3, steps.length - 1, np); }));
+    main.appendChild(el('div', { class: 'kl-prompt', text: '✏️ 작가가 되어 직접 써 봐요' }));
+    var f = el('div', { class: 'write' });
+    function field(label, ex, max) {
+      f.appendChild(el('label', { text: label }));
+      var inp = el('input', { type: 'text', maxlength: String(max), placeholder: ex });
+      f.appendChild(inp); f.appendChild(el('div', { class: 'ex', text: '예) ' + ex + ' · 비워 두면 알아서 넣어 줘요' }));
+      return inp;
+    }
+    var nm = field('1. ' + picks.hero[1] + '의 이름을 지어 줘요', '콩이', 8);
+    var sd = field('2. 이야기 속 대사를 써요', ep.said.replace(/"/g, ''), 40);
+    var ed = field('3. 마지막 문장을 내가 써요', K.pick(ep.ends).replace(/\s*\S+$/, ''), 60);
+    main.appendChild(f);
+    main.appendChild(el('div', { class: 'kl-row' }, [el('button', { class: 'kl-btn primary', text: '📖 이야기 완성!', onclick: function () {
+      var clean = function (v) { return String(v || '').replace(/[<>]/g, '').replace(/\s+/g, ' ').trim(); };
+      var said = clean(sd.value).replace(/^["“”']+|["“”']+$/g, '');
+      var end = clean(ed.value);
+      if (end && !/[.!?。…~]$/.test(end)) end += '.';
+      K.sfx.click();
+      show({ ep: ep.id, lv: 3, picks: picks, name: clean(nm.value), said: said ? '"' + said + '"' : '', ending: end || '' });
+    } })]));
+    K.speak('작가가 되어 직접 써 봐요. 이름, 대사, 마지막 문장을 써요');
+  }
+  function randomStory() {
+    var ep = K.pick(EPS), picks = {};
+    ep.steps.forEach(function (s) { picks[s.id] = K.pick(s.o); });
+    show({ ep: ep.id, lv: 2, picks: picks });
+  }
+
+  /* 예전(한 종류만 있던 때) 책장 기록을 새 모양으로 바꾼다 */
+  function normalize(s) {
+    if (s.ep) return s;
+    var ids = ['hero', 'place', 'friend', 'item', 'prob', 'sol'], picks = {};
+    (s.picks || []).forEach(function (p, i) { if (ids[i]) picks[ids[i]] = p; });
+    return { ep: 'adv', lv: 2, picks: picks, ending: s.ending, t: s.t };
+  }
+  function compose(st) {
+    var ep = EP[st.ep] || EP.adv, p = st.picks, heroLabel = p.hero[1];
+    var H = st.name || heroLabel;
+    var intro = st.name ? J(st.name, '이라는/라는') + ' ' + J(heroLabel, '이/가') : J(heroLabel, '이/가');
+    var lines = ep.lines(p, { H: H, intro: intro, said: st.said || ep.said });
+    var who = K.requireProfile().name;
+    lines.push(st.ending || ep.ends[0]);
+    lines.push('— ' + J(who, '이/가') + ' 만든 이야기 끝 —');
+    return lines;
+  }
+  function show(story) {
+    story = normalize(story);
+    var ep = EP[story.ep] || EP.adv;
+    if (!story.ending) story.ending = K.pick(ep.ends);
+    main.innerHTML = ''; main.appendChild(K.backButton(home));
+    var lines = compose(story);
     var book = el('div', { class: 'book' });
-    book.appendChild(el('div', { class: 'scene', text: picks.map(function (p) { return p[0]; }).join(' ') }));
+    book.appendChild(el('div', { class: 'ttl', text: ep.ic + ' ' + ep.t + (story.name ? ' · ' + story.name : '') }));
+    book.appendChild(el('div', { class: 'scene', text: ep.steps.filter(function (s) { return story.picks[s.id]; }).map(function (s) { return story.picks[s.id][0]; }).join(' ') }));
     var ps = lines.map(function (l) { var pe = el('p', { text: l }); book.appendChild(pe); return pe; });
     main.appendChild(book);
-    var reading = false;
+    /* 한 줄씩 짚으며 읽어 준다 */
+    var reading = false, seq = 0;
     function read() {
-      if (reading || !window.speechSynthesis) { ps.forEach(function (x) { x.classList.remove('cur'); }); return; } reading = true; var i = 0;
-      function nextLine() { ps.forEach(function (x) { x.classList.remove('cur'); }); if (i >= lines.length) { reading = false; return; } ps[i].classList.add('cur'); try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(lines[i].replace(/[^가-힣\w\s.,!?"—-]/g, '')); u.lang = 'ko-KR'; u.rate = 0.9; u.onend = function () { i++; setTimeout(nextLine, 200); }; u.onerror = function () { reading = false; }; speechSynthesis.speak(u); } catch (e) { reading = false; } }
+      if (reading) { reading = false; seq++; K.stopSpeak(); ps.forEach(function (x) { x.classList.remove('cur'); }); return; }
+      if (!window.speechSynthesis) return;
+      reading = true; var i = 0, my = ++seq;
+      function nextLine() {
+        if (my !== seq) return;
+        ps.forEach(function (x) { x.classList.remove('cur'); });
+        if (i >= lines.length) { reading = false; return; }
+        ps[i].classList.add('cur');
+        try {
+          K.stopSpeak();
+          var u = new SpeechSynthesisUtterance(lines[i].replace(/[^가-힣\w\s.,!?"—-]/g, ''));
+          u.lang = 'ko-KR'; u.rate = 0.9;
+          u.onend = function () { i++; setTimeout(nextLine, 200); };
+          u.onerror = function () { reading = false; };
+          speechSynthesis.speak(u);
+        } catch (e) { reading = false; }
+      }
       nextLine();
     }
     main.appendChild(el('div', { class: 'kl-row' }, [
-      el('button', { class: 'speak-btn', text: '🔊 읽어주기', onclick: read }),
-      el('button', { class: 'kl-btn green', text: '💾 책장에 넣기', onclick: function () { K.mutate(function (d) { d.stories = d.stories || []; d.stories.push({ t: Date.now(), picks: picks, ending: ending }); if (d.stories.length > 30) d.stories.shift(); }); K.addStar(2); K.event('save'); K.sfx.win(); K.confetti(); K.speak('이야기를 책장에 넣었어요'); } }),
-      el('button', { class: 'kl-btn', text: '🔀 결말 바꾸기', onclick: function () { show(picks, random); } }),
-      el('button', { class: 'kl-btn primary', text: '✨ 새 이야기', onclick: function () { build(0, []); } })
+      el('button', { class: 'speak-btn', text: '🔊 읽어 주기', onclick: read }),
+      el('button', { class: 'kl-btn green', text: '💾 책장에 넣기', onclick: function (e) {
+        var b = e.currentTarget; if (b.disabled) return; b.disabled = true;
+        K.mutate(function (d) { d.stories = d.stories || []; d.stories.push({ t: Date.now(), ep: story.ep, lv: story.lv, picks: story.picks, name: story.name || '', said: story.said || '', ending: story.ending }); if (d.stories.length > 30) d.stories.shift(); });
+        K.addStar(story.lv === 3 ? 3 : 2); K.event('save'); K.sfx.win(); K.confetti(); K.speak('이야기를 책장에 넣었어요'); b.textContent = '✔ 책장에 넣었어요';
+      } }),
+      el('button', { class: 'kl-btn', text: '🔀 끝 바꾸기', onclick: function () { var ns = {}; for (var k in story) ns[k] = story[k]; ns.ending = K.pick(ep.ends.filter(function (x) { return x !== story.ending; })); show(ns); } }),
+      el('button', { class: 'kl-btn primary', text: '✨ 새 이야기', onclick: pickEp })
     ]));
     setTimeout(read, 400);
   }
   function shelf() {
     main.innerHTML = ''; main.appendChild(K.backButton(home));
-    var d = K.data(); var list = d.stories || [];
+    var d = K.data(); var list = (d.stories || []).map(normalize);
     main.appendChild(el('div', { class: 'kl-prompt', text: '📚 내 책장' }));
     if (!list.length) { main.appendChild(el('div', { class: 'kl-hint', text: '아직 책이 없어요. 이야기를 만들고 책장에 넣어요!' })); return; }
     var g = el('div', { class: 'shelf' });
-    list.slice().reverse().forEach(function (s) { var b = el('button', { html: '<div class="sc">' + s.picks.map(function (p) { return p[0]; }).join('') + '</div><div>' + s.picks[0][1] + '의 ' + s.picks[1][1] + ' 모험</div><small style="color:#888">' + new Date(s.t).toLocaleDateString('ko-KR') + '</small>' }); b.addEventListener('click', function () { K.sfx.click(); show(s.picks, false); }); g.appendChild(b); });
+    list.slice().reverse().forEach(function (s) {
+      var ep = EP[s.ep] || EP.adv;
+      var em = ep.steps.filter(function (x) { return s.picks[x.id]; }).map(function (x) { return s.picks[x.id][0]; }).join('');
+      var b = el('button', { html: '<div class="sc">' + em + '</div><div>' + ep.ic + ' ' + K.esc(ep.t) + ' · ' + K.esc(s.name || (s.picks.hero ? s.picks.hero[1] : '')) + '</div><small style="color:#888">' + new Date(s.t).toLocaleDateString('ko-KR') + '</small>' });
+      b.addEventListener('click', function () { K.sfx.click(); show(s); });
+      g.appendChild(b);
+    });
     main.appendChild(g);
   }
+  /* 검사용: 모든 종류·단계의 문장을 만들어 볼 수 있게 */
+  window.KidStory = { EPS: EPS, stepsOf: stepsOf, compose: compose };
   home();
 })();
 </script>

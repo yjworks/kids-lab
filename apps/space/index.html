@@ -17,6 +17,7 @@
   .tan-card { background: #fff; border-radius: 18px; padding: 10px; box-shadow: 0 4px 0 rgba(0,0,0,.07); font-weight: 900; font-size: 17px; position: relative; }
   .tan-card svg { width: 100%; height: 90px; }
   .tan-card .ok { position: absolute; top: 6px; right: 8px; }
+  .tan-lv { font-size: 19px; font-weight: 900; color: #5a3d00; margin: 16px 2px 8px; }
   .hint-on { background: #ffe4a1 !important; }
   body[data-app="space"] .kl-choice { min-height: 0; padding: 10px; }
   @media (max-width: 760px) { .tan-head .t { font-size: 18px; } .tan-list { grid-template-columns: repeat(2, 1fr); } }
@@ -89,6 +90,7 @@
     K.menu(main, [
       { icon: '🧊', label: '쌓기나무 몇 개?', mode: 'count', color: '#fff3c4', run: countQuiz },
       { icon: '👀', label: '바닥에 닿은 자리', mode: 'foot', color: '#e3f7cf', run: footQuiz },
+      { icon: '🔭', label: '앞·옆에서 본 모양', mode: 'view', color: '#e0f3f6', run: viewQuiz },
       { icon: '🔷', label: '칠교 맞추기', color: '#e9f3ff', run: tanList }
     ]);
     main.appendChild(el('div', { class: 'kl-hint', text: '보이지 않는 뒤쪽·아래쪽 나무도 생각해서 세어요' }));
@@ -128,10 +130,73 @@
     });
   }
 
+  /* ---------- 앞·옆에서 본 모양 ----------
+     그림에서 x는 오른쪽 아래, y는 왼쪽 아래로 뻗는다.
+     앞(왼쪽 아래, y가 큰 쪽)에서 보면 x가 커질수록 오른쪽 → 칸 x의 높이는 그 줄에서 가장 높은 것.
+     옆(오른쪽 아래, x가 큰 쪽)에서 보면 y가 작을수록 오른쪽 → 왼쪽부터 y = D-1 … 0. */
+  function viewOf(s, dir) {
+    var cols = [];
+    if (dir === 'front') for (var x = 0; x < s.W; x++) { var m = 0; for (var y = 0; y < s.D; y++) m = Math.max(m, s.h[x][y]); cols.push(m); }
+    else for (var y2 = s.D - 1; y2 >= 0; y2--) { var m2 = 0; for (var x2 = 0; x2 < s.W; x2++) m2 = Math.max(m2, s.h[x2][y2]); cols.push(m2); }
+    /* 나무가 하나도 없는 줄은 보이지 않으므로 뺀다 */
+    return cols.filter(function (v) { return v > 0; });
+  }
+  function viewSvg(cols) {
+    var u = 22, H = Math.max.apply(null, cols), g = '';
+    cols.forEach(function (hh, i) { for (var z = 0; z < hh; z++) g += '<rect x="' + (i * u) + '" y="' + ((H - 1 - z) * u) + '" width="' + u + '" height="' + u + '" fill="#ffd166" stroke="#7a5300" stroke-width="2"/>'; });
+    return '<svg class="iso" viewBox="-2 -2 ' + (cols.length * u + 4) + ' ' + (H * u + 4) + '" style="width:' + Math.min(140, cols.length * 34) + 'px">' + g + '</svg>';
+  }
+  /* 쌓기나무 그림에 보는 쪽 화살표를 붙인다 */
+  /* 화살촉: 끝(to)을 꼭짓점으로 하는 세모 */
+  function head(from, to) {
+    var dx = to[0] - from[0], dy = to[1] - from[1], L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
+    var bx = to[0] - dx * 16, by = to[1] - dy * 16;
+    return [to, [bx - dy * 10, by + dx * 10], [bx + dy * 10, by - dx * 10]].map(function (q) { return q[0].toFixed(1) + ',' + q[1].toFixed(1); }).join(' ');
+  }
+  function stackWithEye(s, dir) {
+    var svg = stackSvg(s, 260);
+    var from, to, lab;
+    if (dir === 'front') { from = P(s.W / 2, s.D + 1.6, 0); to = P(s.W / 2, s.D + 0.35, 0); lab = P(s.W / 2 - 0.2, s.D + 2.3, 0); }
+    else { from = P(s.W + 1.6, s.D / 2, 0); to = P(s.W + 0.35, s.D / 2, 0); lab = P(s.W + 2.3, s.D / 2 - 0.2, 0); }
+    var arrow = '<g stroke="#e63946" stroke-width="4" fill="#e63946" stroke-linecap="round"><line x1="' + from[0] + '" y1="' + from[1] + '" x2="' + to[0] + '" y2="' + to[1] + '"/>' +
+      '<polygon stroke-width="1" points="' + head(from, to) + '"/></g><text x="' + lab[0] + '" y="' + (lab[1] + 6) + '" font-size="20" font-weight="900" fill="#e63946" text-anchor="middle">' + (dir === 'front' ? '앞' : '옆') + '</text>';
+    /* 화살표가 들어가도록 보이는 범위를 넓힌다 */
+    var vb = svg.match(/viewBox="([^"]+)"/)[1].split(' ').map(Number);
+    var xs = [vb[0], vb[0] + vb[2], from[0] - 16, lab[0] - 16, lab[0] + 16], ys = [vb[1], vb[1] + vb[3], from[1] + 8, lab[1] + 12];
+    var nx = Math.min.apply(null, xs), ny = Math.min.apply(null, ys), nw = Math.max.apply(null, xs) - nx, nh = Math.max.apply(null, ys) - ny;
+    return svg.replace(/viewBox="[^"]+"/, 'viewBox="' + [nx, ny, nw, nh].join(' ') + '"').replace('</svg>', arrow + '</svg>');
+  }
+  function viewQuiz() {
+    quiz('view', function (i, lv) {
+      var s, dir, ans, tries = 0;
+      do {
+        s = makeStack(Math.max(2, lv));
+        dir = lv <= 2 ? 'front' : (Math.random() < 0.5 ? 'front' : 'side');
+        ans = viewOf(s, dir);
+      } while ((s.W < 2 && s.D < 2 || ans.length < 2) && ++tries < 50);
+      var key = ans.join(','), seen = {}, opts = [ans]; seen[key] = 1;
+      function add(c) { if (!c.length || c.some(function (v) { return v < 1; })) return; var k = c.join(','); if (seen[k]) return; seen[k] = 1; opts.push(c); }
+      add(viewOf(s, dir === 'front' ? 'side' : 'front'));   /* 다른 쪽에서 본 모양 - 가장 흔한 실수 */
+      add(ans.slice().reverse());                            /* 좌우를 바꾼 모양 */
+      for (var t = 0; t < 40 && opts.length < 4; t++) {
+        var c = ans.slice(), k1 = K.randInt(0, c.length - 1);
+        c[k1] += Math.random() < 0.5 ? 1 : -1;
+        if (Math.random() < 0.3) c.push(1);
+        add(c);
+      }
+      opts = K.shuffle(opts.slice(0, 4));
+      var name = dir === 'front' ? '앞' : '옆';
+      return {
+        key: 'v' + dir + JSON.stringify(s.h), prompt: stackWithEye(s, dir), sub: '빨간 화살표(' + name + ')에서 보면 어떤 모양일까요?', say: name + '에서 보면 어떤 모양일까요? 뒤에 가려진 나무가 더 높으면 그 높이가 보여요', cols: 2,
+        choices: opts.map(function (c) { return { html: viewSvg(c), correct: c === ans }; })
+      };
+    });
+  }
+
   /* ---------- 칠교 ----------
      작은 세모(S) 빗변 아닌 변 1, 가운데 세모(M) 빗변 2, 큰 세모(B) 빗변 아닌 변 2, 네모(Q) 한 변 1.
      조각을 끌어서 알맞은 자리에 가까이 놓으면 딱 붙는다. */
-  var COL = { S: '#ff595e', M: '#ffca3a', B: '#1982c4', Q: '#8ac926' };
+  var COL = { S: '#ff595e', M: '#ffca3a', B: '#1982c4', Q: '#8ac926', P: '#6a4c93' };
   var PUZ = [
     { n: '네모', e: '🟩', p: [['S', [[0, 0], [1, 0], [0, 1]]], ['S', [[1, 0], [1, 1], [0, 1]]]] },
     { n: '큰 세모', e: '🔺', p: [['Q', [[0, 0], [1, 0], [1, 1], [0, 1]]], ['S', [[1, 0], [2, 0], [1, 1]]], ['S', [[0, 1], [1, 1], [0, 2]]]] },
@@ -139,8 +204,28 @@
     { n: '물고기', e: '🐟', p: [['B', [[0, 0], [2, 0], [0, 2]]], ['B', [[2, 0], [2, 2], [0, 2]]], ['M', [[2, 1], [3, 0], [3, 2]]]] },
     { n: '화살표', e: '➡️', p: [['S', [[0, 0.5], [1, 0.5], [0, 1.5]]], ['S', [[1, 0.5], [1, 1.5], [0, 1.5]]], ['Q', [[1, 0.5], [2, 0.5], [2, 1.5], [1, 1.5]]], ['M', [[2, 0], [3, 1], [2, 2]]]] },
     { n: '돛단배', e: '⛵', p: [['B', [[1, 0], [1, 2], [3, 2]]], ['S', [[0, 2], [1, 2], [1, 3]]], ['Q', [[1, 2], [2, 2], [2, 3], [1, 3]]], ['S', [[2, 2], [3, 2], [2, 3]]]] },
-    { n: '나무', e: '🌲', p: [['B', [[0, 2], [2, 0], [2, 2]]], ['B', [[2, 0], [4, 2], [2, 2]]], ['Q', [[1.5, 2], [2.5, 2], [2.5, 3], [1.5, 3]]]] }
+    { n: '나무', e: '🌲', p: [['B', [[0, 2], [2, 0], [2, 2]]], ['B', [[2, 0], [4, 2], [2, 2]]], ['Q', [[1.5, 2], [2.5, 2], [2.5, 3], [1.5, 3]]]] },
+    /* 아래부터는 진짜 칠교 조각 크기(작은 세모 빗변 2, 평행사변형 P 포함).
+       좌표는 풀이 프로그램으로 조각이 겹치지 않고 변끼리 이어지는지 확인했다. 저장된 기록 번호가 바뀌지 않게 뒤에 붙인다. */
+    { n: '보석', e: '💎', p: [['Q', [[1, 0], [2, 1], [1, 2], [0, 1]]], ['P', [[1, 0], [3, 0], [4, 1], [2, 1]]], ['S', [[2, 1], [2, 3], [1, 2]]], ['M', [[2, 1], [4, 1], [2, 3]]]] },
+    { n: '작은 하트', e: '💗', p: [['Q', [[1, 1], [2, 2], [1, 3], [0, 2]]], ['M', [[3, 3], [1, 3], [3, 1]]], ['S', [[1, 3], [3, 3], [2, 4]]], ['S', [[3, 3], [3, 1], [4, 2]]]] },
+    { n: '오리', e: '🦆', p: [['M', [[0, 2], [0, 0], [2, 2]]], ['B', [[0, 2], [4, 2], [2, 4]]], ['P', [[5, 3], [3, 3], [2, 4], [4, 4]]], ['S', [[5, 3], [3, 3], [4, 2]]], ['Q', [[5, 1], [6, 2], [5, 3], [4, 2]]]] },
+    { n: '촛불', e: '🕯️', p: [['Q', [[1, 1], [2, 2], [1, 3], [0, 2]]], ['B', [[0, 6], [0, 2], [2, 4]]], ['M', [[2, 6], [0, 6], [2, 4]]], ['S', [[1, 1], [3, 1], [2, 2]]], ['S', [[2, 2], [2, 4], [1, 3]]]] },
+    { n: '거북', e: '🐢', p: [['P', [[1, 1], [-1, 1], [-2, 2], [0, 2]]], ['B', [[4, 2], [0, 2], [2, 0]]], ['S', [[0, 2], [2, 2], [1, 3]]], ['S', [[2, 2], [4, 2], [3, 3]]], ['Q', [[4, 0], [5, 1], [4, 2], [3, 1]]]] },
+    { n: '왕관', e: '👑', p: [['Q', [[1, 1], [2, 2], [1, 3], [0, 2]]], ['S', [[0, 4], [0, 2], [1, 3]]], ['B', [[4, 4], [0, 4], [2, 2]]], ['S', [[4, 2], [2, 2], [3, 1]]], ['M', [[4, 2], [4, 4], [2, 2]]]] },
+    { n: '지붕 있는 집', e: '🏡', p: [['B', [[0, 2], [4, 2], [2, 0]]], ['B', [[0, 2], [4, 2], [2, 4]]], ['M', [[0, 2], [2, 4], [0, 4]]], ['S', [[4, 2], [4, 4], [3, 3]]], ['S', [[2, 4], [4, 4], [3, 3]]], ['P', [[3, -1], [4, 0], [4, 2], [3, 1]]]] },
+    { n: '열대어', e: '🐠', p: [['B', [[4, 2], [0, 2], [2, 0]]], ['S', [[0, 2], [2, 2], [1, 3]]], ['Q', [[2, 2], [3, 3], [2, 4], [1, 3]]], ['P', [[2, 2], [4, 2], [5, 3], [3, 3]]], ['B', [[5, -1], [5, 3], [3, 1]]], ['M', [[5, 3], [5, 5], [3, 3]]]] },
+    { n: '로켓', e: '🚀', p: [['B', [[2, 5], [-2, 5], [0, 3]]], ['P', [[1, 0], [1, 2], [0, 3], [0, 1]]], ['B', [[2, 1], [2, 5], [0, 3]]], ['S', [[0, 5], [2, 5], [1, 6]]], ['S', [[1, 2], [1, 0], [2, 1]]], ['M', [[2, 5], [2, 3], [4, 5]]]] },
+    { n: '산', e: '⛰️', p: [['B', [[4, 4], [0, 4], [2, 2]]], ['Q', [[3, 1], [4, 2], [3, 3], [2, 2]]], ['B', [[7, 3], [3, 3], [5, 1]]], ['P', [[3, 3], [5, 3], [6, 4], [4, 4]]], ['S', [[5, 3], [7, 3], [6, 4]]], ['S', [[8, 4], [6, 4], [7, 3]]]] },
+    { n: '큰 네모', e: '🔳', p: [['B', [[0, 0], [4, 0], [2, 2]]], ['B', [[0, 0], [2, 2], [0, 4]]], ['M', [[4, 2], [4, 4], [2, 4]]], ['S', [[4, 0], [4, 2], [3, 1]]], ['Q', [[3, 1], [4, 2], [3, 3], [2, 2]]], ['S', [[1, 3], [3, 3], [2, 2]]], ['P', [[1, 3], [3, 3], [2, 4], [0, 4]]]] },
+    { n: '커다란 세모', e: '🔺', p: [['B', [[4, 4], [0, 4], [2, 2]]], ['B', [[4, 0], [4, 4], [2, 2]]], ['P', [[4, 0], [4, 2], [5, 3], [5, 1]]], ['M', [[4, 4], [4, 2], [6, 4]]], ['S', [[5, 3], [5, 1], [6, 2]]], ['Q', [[6, 2], [7, 3], [6, 4], [5, 3]]], ['S', [[8, 4], [6, 4], [7, 3]]]] },
+    { n: '요트', e: '⛵', p: [['B', [[0, 4], [4, 4], [2, 6]]], ['B', [[2, 4], [2, 0], [4, 2]]], ['M', [[4, 4], [2, 4], [4, 2]]], ['P', [[5, 5], [3, 5], [2, 6], [4, 6]]], ['S', [[5, 5], [3, 5], [4, 4]]], ['S', [[4, 4], [4, 2], [5, 3]]], ['Q', [[5, 3], [6, 4], [5, 5], [4, 4]]]] },
+    { n: '고양이', e: '🐱', p: [['S', [[1, 0], [1, 2], [2, 1]]], ['S', [[3, 0], [3, 2], [2, 1]]], ['Q', [[1, 2], [2, 1], [3, 2], [2, 3]]], ['B', [[1, 2], [1, 6], [3, 4]]], ['B', [[1, 6], [5, 6], [3, 4]]], ['P', [[4, 3], [5, 4], [5, 6], [4, 5]]], ['M', [[1, 4], [1, 6], [-1, 6]]]] },
+    { n: '큰 하트', e: '❤️', p: [['B', [[2, 0], [2, 4], [0, 2]]], ['B', [[2, 4], [2, 0], [4, 2]]], ['P', [[5, 3], [3, 3], [2, 4], [4, 4]]], ['S', [[2, 4], [4, 4], [3, 5]]], ['Q', [[4, 0], [5, 1], [4, 2], [3, 1]]], ['M', [[5, 3], [3, 3], [5, 1]]], ['S', [[5, 3], [5, 1], [6, 2]]]] }
   ];
+  /* 목록·다음 순서: 조각 수가 적은 것부터 */
+  var ORDER = PUZ.map(function (_, i) { return i; }).sort(function (a, b) { return PUZ[a].p.length - PUZ[b].p.length || a - b; });
+  var LEVELS = [[2, 3, '🌱 쉬움 (2~3조각)'], [4, 5, '🌿 보통 (4~5조각)'], [6, 6, '🌳 어려움 (6조각)'], [7, 7, '🏆 칠교 7조각 모두']];
   function centroid(poly) { var x = 0, y = 0; poly.forEach(function (p) { x += p[0]; y += p[1]; }); return [x / poly.length, y / poly.length]; }
   function shapeKey(poly) { var c = centroid(poly); return poly.map(function (p) { return (p[0] - c[0]).toFixed(2) + ',' + (p[1] - c[1]).toFixed(2); }).sort().join(';'); }
   function bbox(polys) { var b = [Infinity, Infinity, -Infinity, -Infinity]; polys.forEach(function (pl) { pl.forEach(function (p) { b[0] = Math.min(b[0], p[0]); b[1] = Math.min(b[1], p[1]); b[2] = Math.max(b[2], p[0]); b[3] = Math.max(b[3], p[1]); }); }); return b; }
@@ -149,15 +234,22 @@
   function tanList() {
     main.innerHTML = ''; main.appendChild(K.backButton(home));
     main.appendChild(el('div', { class: 'kl-prompt', text: '🔷 칠교 맞추기', style: 'font-size:24px;margin-bottom:8px' }));
-    var d = done(), box = el('div', { class: 'tan-list' });
-    PUZ.forEach(function (pz, i) {
+    var d = done(), box = null;
+    main.appendChild(el('div', { class: 'kl-hint', text: '다 맞춘 모양 ' + ORDER.filter(function (i) { return d[i]; }).length + ' / ' + PUZ.length }));
+    LEVELS.forEach(function (lvl) {
+      var ids = ORDER.filter(function (i) { var n = PUZ[i].p.length; return n >= lvl[0] && n <= lvl[1]; });
+      if (!ids.length) return;
+      main.appendChild(el('div', { class: 'tan-lv', text: lvl[2] }));
+      box = el('div', { class: 'tan-list' }); main.appendChild(box);
+      ids.forEach(function (i) {
+      var pz = PUZ[i];
       var bb = bbox(pz.p.map(function (x) { return x[1]; }));
       var sil = pz.p.map(function (x) { return '<polygon points="' + pts(x[1]) + '" fill="#9aa5b1"/>'; }).join('');
-      var c = el('button', { class: 'tan-card', html: '<svg viewBox="' + [bb[0] - 0.2, bb[1] - 0.2, bb[2] - bb[0] + 0.4, bb[3] - bb[1] + 0.4].join(' ') + '">' + sil + '</svg>' + pz.e + ' ' + pz.n + ' <small>(' + pz.p.length + '조각)</small>' + (d[i] ? '<span class="ok">✅</span>' : '') });
+      var c = el('button', { class: 'tan-card', html: '<svg viewBox="' + [bb[0] - 0.2, bb[1] - 0.2, bb[2] - bb[0] + 0.4, bb[3] - bb[1] + 0.4].join(' ') + '">' + sil + '</svg>' + pz.e + ' ' + pz.n + ' <small>(' + pz.p.length + '조각)</small>' + (d[i] ? '<span class="ok">⭐</span>' : '') });
       c.addEventListener('click', function () { K.sfx.click(); tangram(i); });
       box.appendChild(c);
+      });
     });
-    main.appendChild(box);
   }
 
   function tangram(idx) {
@@ -237,12 +329,13 @@
         pc.off = pc.home.slice(); place(pc);
       }
     }
+    var nextIdx = ORDER[ORDER.indexOf(idx) + 1]; if (nextIdx === undefined) nextIdx = -1;
     function win() {
       msg.textContent = '🎉 ' + pz.n + jo(pz.n) + ' 완성했어요!';
       K.mutate(function (d) { var pr = d.progress.space || (d.progress.space = {}); var t = pr.tan || (pr.tan = {}); t[idx] = K.todayKey(); });
       K.addStar(2); K.event('win'); K.sfx.win(); K.confetti(); K.speak(pz.n + jo(pz.n) + ' 완성했어요!');
       var row = el('div', { class: 'kl-row', style: 'margin-top:10px' }, [
-        idx + 1 < PUZ.length ? el('button', { class: 'kl-btn primary', text: '다음 모양 ▶', onclick: function () { K.sfx.click(); tangram(idx + 1); } }) : null,
+        nextIdx >= 0 ? el('button', { class: 'kl-btn primary', text: '다음 모양 ▶', onclick: function () { K.sfx.click(); tangram(nextIdx); } }) : null,
         el('button', { class: 'kl-btn', text: '📋 모양 고르기', onclick: function () { K.sfx.click(); tanList(); } })
       ]);
       wrap.appendChild(row);

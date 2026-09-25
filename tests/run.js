@@ -449,7 +449,7 @@ async function courseFlow(b) {
 
 /* ---------------- 기존 검사 스크립트 (tests/cases) ---------------- */
 const LEGACY = [
-  ['I01', 'inter.js', [], o => /칠교 (\d:\d조각 완성 \| ){6}\d:\d조각 완성/.test(o) && /오류 없음/.test(o), o => (o.match(/칠교.*/) || [''])[0]],
+  ['I01', 'inter.js', [], o => { const m = (o.match(/칠교 .*/) || [''])[0]; const n = (m.match(/\d+:\d조각 완성/g) || []).length; return n === 22 && !/미완성|no slot|grab-fail/.test(m) && /오류 없음/.test(o); }, o => { const m = (o.match(/칠교 .*/) || [''])[0]; return '완성 ' + (m.match(/\d+:\d조각 완성/g) || []).length + '/22 ' + (m.match(/\d+:[^|]*(미완성|no slot|grab-fail)[^|]*/g) || []).join(' '); }],
   ['I02', 'tantouch.js', [], o => (o.match(/완성했어요! scroll=0/g) || []).length === 2, o => o.trim()],
   ['I03', 'inter.js', [], o => /조합 (\S+=ok ){11}\S+=ok/.test(o) && /한글 낱말 8개 → 분당/.test(o) && /자리 연습 → 분당/.test(o) && /영어 낱말 → 분당/.test(o), o => (o.match(/조합.*\n.*\n.*\n.*/) || [''])[0]],
   ['I04', 'inter.js', [], o => /AI 날 수 있을까 시험 6문제/.test(o) && /AI 과일일까 시험 6문제/.test(o) && /편향 실험 {2}\| ❌ 틀 \| ❌ 틀 \| {2}\| ⭕ 맞 \| ⭕ 맞/.test(o), o => (o.match(/AI.*\n.*\n편향.*/) || [''])[0]],
@@ -463,6 +463,7 @@ const LEGACY = [
   ['I15', 'elev2.js', [], o => /돌려 본 건물 20/.test(o) && /문제 없음/.test(o), o => (o.match(/돌려 본 건물.*/) || [''])[0]],
   ['I16', 'arcade.js', [OUT], o => !/오류 (?!없음)/.test(o), o => o.replace(/\s+/g, ' ').slice(0, 200)],
   ['I17', 'calc.js', [OUT], o => /오류: 없음/.test(o), o => (o.match(/오류:.*/) || [''])[0]],
+  ['I18', 'story.js', [], o => /만든 이야기 7200 · 빈 값\/예외 0 · 조사 틀림 0/.test(o) && /입력칸 3 · 이름 들어감 true · 대사 true · 끝 문장 true · 책장 .*\(1\) · 넘침 0/.test(o) && /오류: 없음/.test(o), o => o.replace(/\s+/g, ' ').slice(0, 220)],
   ['L01', 'cats.js', [], o => (o.match(/icons 43 전체:43h/g) || []).length === 2 && (o.match(/errs \[\]/g) || []).length === 2 && /한자·고전:2/.test(o), o => o.split('\n')[0].slice(0, 200)],
   ['L02', 'test.js', [], o => /launcher errors: none/.test(o) && /missions: 4/.test(o) && !/ (fail|error)/i.test(o.replace(/launcher errors: none/, '')), o => (o.match(/missions.*|parent.*|launcher errors.*/g) || []).join(' ')],
   ['L03', 'backnav.js', [], o => /뒤로1: \/index\.html 창1\(앱메뉴\)/.test(o) && /뒤로2: \/index\.html 창0/.test(o) && /뒤로3: \/index\.html 창0/.test(o) && /뒤로4: \/apps\/hangul/.test(o) && /미션창: .*겹창1\n뒤로: .*겹창0/.test(o), o => o.replace(/\n/g, ' / ').slice(0, 300)],

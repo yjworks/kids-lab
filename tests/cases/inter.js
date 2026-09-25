@@ -9,7 +9,8 @@ const U = 'http://127.0.0.1:8765/apps/';
 
   // 1. 칠교: 모든 퍼즐을 실제 드래그로 완성
   const tan = [];
-  for (let i = 0; i < 7; i++) {
+  await menu('space', '칠교'); const TAN_N = await p.locator('.tan-card').count();
+  for (let i = 0; i < TAN_N; i++) {
     await menu('space', '칠교'); await p.locator('.tan-card').nth(i).click(); await p.waitForTimeout(300);
     const n = await p.locator('.piece').count();
     for (let k = 0; k < 20; k++) {

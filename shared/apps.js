@@ -27,7 +27,7 @@ window.KIDLAB_APPS = [
   { id: 'phonics',  name: '파닉스',     icon: '🔡', color: '#bde0fe', desc: '글자 읽고 그림 고르기, 가운데 소리, 끝소리가 같은 말(라임), 듣고 낱말', cat: '영어', how: '영어 글자 소리를 모아 낱말을 읽어요.' },
   { id: 'esent',    name: '영어 문장',   icon: '🗣️', color: '#caf0f8', desc: 'It is a cat. / I like apples. 그림 보고 문장, 듣고 그림, 문장 만들기', cat: '영어', how: '그림을 보고 알맞은 영어 문장을 골라요.' },
   { id: 'ebooks',   name: '영어 그림책', icon: '📗', color: '#d8f3dc', desc: '6~7쪽 영어 그림책 6권, 낱말 누르면 읽어 주기, 다 읽으면 질문', cat: '영어', how: '영어 문장을 듣고 한 쪽씩 넘겨요. 낱말을 누르면 읽어 줘요.' },
-  { id: 'space',    name: '쌓기나무·칠교', icon: '🧊', color: '#ffe5a0', desc: '쌓기나무 개수 세기, 바닥에 닿은 자리, 칠교 조각 맞추기 7개', cat: '수학', how: '보이지 않는 나무도 생각해서 세어요. 칠교는 조각을 끌어다 놓아요.' },
+  { id: 'space',    name: '쌓기나무·칠교', icon: '🧊', color: '#ffe5a0', desc: '쌓기나무 개수·바닥 자리·앞과 옆에서 본 모양, 칠교 22가지(7조각 포함)', cat: '수학', how: '보이지 않는 나무도 생각해서 세어요. 칠교는 조각을 끌어다 놓아요.' },
   { id: 'wordmath', name: '이야기 수학', icon: '➗', color: '#fde4cf', desc: '글을 읽고 푸는 수학 문제, 알맞은 식 고르기, 필요 없는 수 가려내기', cat: '수학', how: '문제를 끝까지 읽고 무엇을 묻는지 찾아요.' },
   { id: 'earth',    name: '지구 지킴이', icon: '♻️', color: '#b7e4c7', desc: '분리배출, 아껴 쓰기, 먹이와 먹이 사슬, 오늘의 지구 약속', cat: '과학·사회', how: '어디에 버릴지, 어떻게 아낄지 골라요.' },
   { id: 'world',    name: '세계 여행',   icon: '🌍', color: '#a9def9', desc: '20개 나라 국기, 인사말, 유명한 것, 대륙', cat: '과학·사회', how: '국기를 보고 어느 나라인지 찾아요.' },
@@ -40,7 +40,7 @@ window.KIDLAB_APPS = [
   { id: 'coding',   name: '로봇 코딩',   icon: '🤖', color: '#cfd8ff', desc: '명령 블록으로 로봇 움직이기', cat: '디지털', how: '명령을 차례로 놓고 시작을 눌러요.' },
   { id: 'draw',     name: '그림 그리기', icon: '🎨', color: '#ffd9e8', desc: '자유 그림, 색칠하기, 내 갤러리', cat: '창작', how: '색을 고르고 손가락으로 그려요.' },
   { id: 'music',    name: '음악 놀이',   icon: '🎹', color: '#d0f4de', desc: '피아노, 리듬 따라하기, 동요', cat: '창작', how: '아래 건반을 눌러 노래를 쳐요.' },
-  { id: 'story',    name: '이야기 만들기', icon: '📖', color: '#fde2c8', desc: '카드를 골라 나만의 동화', cat: '창작', how: '카드를 골라 나만의 이야기를 만들어요.' },
+  { id: 'story',    name: '이야기 만들기', icon: '📖', color: '#fde2c8', desc: '이야기 8가지(모험·우주·바다·생일·탐정·마법·공룡·운동회) × 3단계, 작가 되기', cat: '창작', how: '이야기 종류와 단계를 고르고, 카드를 골라 나만의 이야기를 만들어요.' },
   { id: 'diary',    name: '나의 하루',   icon: '📔', color: '#e2ece9', desc: '오늘 기분·날씨 기록, 달력', cat: '생활', how: '오늘 기분과 날씨를 골라 기록해요.' },
   { id: 'arcade',   name: '오락실',     icon: '🕹️', color: '#ff99c8', desc: '인형뽑기, 글자 낚시, 두더지 잡기', cat: '두뇌·놀이', how: '낚시와 두더지로 별을 모아 인형을 뽑아요.' }
 ];
