@@ -133,7 +133,11 @@ function staticChecks() {
   }
   if (want('S07')) {
     const man = JSON.parse(read('manifest.webmanifest')), miss = (man.icons || []).filter(i => !fs.existsSync(path.join(ROOT, i.src.replace(/^\.?\//, ''))));
-    rec('S07', !miss.length, miss.length ? '없는 아이콘 ' + miss.map(i => i.src).join(',') : '아이콘 ' + man.icons.length + '개');
+    /* id 는 시작 주소의 "도메인 루트" 기준으로 풀린다. "./" 이면 https://dibrain.dev/ 가 되어
+       같은 도메인의 블로그 앱(id "/")과 겹치고, 휴대폰이 이미 설치된 앱으로 보고 설치를 막는다. */
+    const idOk = man.id === '/kids-lab/';
+    if (!idOk) miss.push({ src: 'id가 "/kids-lab/" 이 아님: ' + JSON.stringify(man.id) });
+    rec('S07', !miss.length, miss.length ? '문제 ' + miss.map(i => i.src).join(',') : '아이콘 ' + man.icons.length + '개, id ' + man.id);
   }
 }
 
