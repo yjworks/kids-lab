@@ -339,6 +339,11 @@
         el('button', { class: 'kl-btn', text: '📋 모양 고르기', onclick: function () { K.sfx.click(); tanList(); } })
       ]);
       wrap.appendChild(row);
+      /* 다 맞추면 아래 조각 칸이 비는데 판 높이가 그대로라 버튼이 화면 밖으로 밀렸다.
+         완성한 모양 부분만 남기고 판을 줄인 뒤 버튼이 보이게 한다 */
+      svg.setAttribute('viewBox', [left, top, W, bb[3] + 0.5 - top].join(' '));
+      sep.style.display = 'none';
+      requestAnimationFrame(function () { try { row.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { row.scrollIntoView(false); } });
     }
     function jo(w) { return K.josa(w, '을/를'); }
     K.speak(pz.n + ' 만들기. 조각을 끌어다 회색 자리에 놓아요');
