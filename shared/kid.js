@@ -306,9 +306,31 @@
   /* ---------- 음성 (Web Speech API) ---------- */
   var voices = [];
   function loadVoices() { try { voices = window.speechSynthesis ? speechSynthesis.getVoices() : []; } catch (e) { voices = []; } }
-  if (window.speechSynthesis) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+  if (window.speechSynthesis) { loadVoices(); try { speechSynthesis.addEventListener('voiceschanged', loadVoices); } catch (e) { speechSynthesis.onvoiceschanged = loadVoices; } }
+  var IOS = /iP(ad|hone|od)/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+  /* iPad·iPhone에는 장난감 목소리(Grandma, Rocko 등)와 아직 내려받지 않은 목소리가 섞여 있다.
+     그 나라 말의 기본 목소리 → 기기 안 목소리 순으로 고르고, 장난감 목소리는 뺀다. 못 고르면 lang만 정해 기기에 맡긴다. */
+  var NOVELTY = /^(Eddy|Flo|Grandma|Grandpa|Reed|Rocko|Sandy|Shelley|Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Junior|Kathy|Fred|Ralph)\b/i;
+  function pickVoice(lang) {
+    var pre = lang.toLowerCase().slice(0, 2);
+    var v = voices.filter(function (x) { return x.lang && x.lang.replace('_', '-').toLowerCase().indexOf(pre) === 0 && !NOVELTY.test(x.name || ''); });
+    if (!v.length) return null;
+    var exact = v.filter(function (x) { return x.lang.replace('_', '-').toLowerCase() === lang.toLowerCase(); });
+    if (exact.length) v = exact;
+    return v.filter(function (x) { return x.default; })[0] || v.filter(function (x) { return x.localService; })[0] || v[0];
+  }
+  /* iPad·iPhone은 터치 안에서 한 번 말해야 그 뒤의 음성(문제 읽기처럼 잠깐 뒤에 나오는 것)을 허락한다.
+     첫 터치 때 소리 없는 짧은 음성을 한 번 내서 풀어 둔다. 앱 창(iframe)마다 따로 풀어야 한다. */
+  var ttsUnlocked = false;
+  function unlockTTS() {
+    if (ttsUnlocked || !window.speechSynthesis) return;
+    ttsUnlocked = true;
+    try { var z = new SpeechSynthesisUtterance(' '); z.volume = 0; z.lang = 'ko-KR'; speechSynthesis.speak(z); } catch (e) { }
+  }
+  if (IOS) ['touchend', 'click'].forEach(function (t) { document.addEventListener(t, unlockTTS, { capture: true, passive: true }); });
   /* 안드로이드 Chrome은 cancel() 바로 뒤의 speak()를 자주 버리고(계산기처럼 키마다 말할 때 무음),
      가끔 음성 엔진이 멈춘(paused) 채로 남는다. 말하는 중일 때만 끊고 잠깐 뒤에 말하며, 늘 resume()을 먼저 부른다.
+     iPad·iPhone은 지연하면 터치 밖이 되어 막힐 수 있으므로 끊고 바로 말한다.
      빠르게 여러 번 부르면 마지막 것만 말한다. */
   var speakSeq = 0, lastUtter = null;
   function speak(text, opts) {
@@ -322,17 +344,20 @@
       var base = st.rate || 0.9;
       u.lang = lang; u.rate = (opts.rate ? opts.rate / 0.9 : 1) * base; u.pitch = opts.pitch || 1.1;
       if (!voices.length) loadVoices();
-      var v = voices.filter(function (v) { return v.lang && v.lang.replace('_', '-').toLowerCase().indexOf(lang.toLowerCase().slice(0, 2)) === 0; });
-      if (v.length) u.voice = v[0];
+      var v = pickVoice(lang);
+      if (v) u.voice = v;
       var my = ++speakSeq;
       var go = function () {
         if (my !== speakSeq) return;
         try { speechSynthesis.resume(); } catch (e) { }
         lastUtter = u; /* 말하는 도중 가비지 수거로 끊기지 않게 잡아 둔다 */
         speechSynthesis.speak(u);
+        ttsUnlocked = true;
       };
-      if (speechSynthesis.speaking || speechSynthesis.pending) { speechSynthesis.cancel(); setTimeout(go, 80); }
-      else go();
+      if (speechSynthesis.speaking || speechSynthesis.pending) {
+        speechSynthesis.cancel();
+        if (IOS) go(); else setTimeout(go, 80);
+      } else go();
       return true;
     } catch (e) { return false; }
   }
