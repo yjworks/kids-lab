@@ -7,7 +7,7 @@
 <style>
   .letter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
   .letter { background: #fff; border-radius: 20px; padding: 14px 4px; text-align: center; box-shadow: 0 5px 0 rgba(0,0,0,.08); }
-  .letter:hover { background: #ffe9ee; transform: scale(1.05); }
+  @media (hover: hover) { .letter:hover { background: #ffe9ee; transform: scale(1.05); } }
   .letter .ch { font-size: 56px; font-weight: 900; color: #d6336c; line-height: 1.1; }
   .letter .ex { font-size: 18px; color: #666; }
   .letter .em { font-size: 34px; }

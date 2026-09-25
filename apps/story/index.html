@@ -8,7 +8,7 @@
   .pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
   .pick-grid button { background: #fff; border-radius: 20px; padding: 14px 6px; font-size: 54px; box-shadow: 0 5px 0 rgba(0,0,0,.08); }
   .pick-grid button small { display: block; font-size: 17px; font-weight: 800; color: #444; }
-  .pick-grid button:hover { transform: scale(1.05); }
+  @media (hover: hover) { .pick-grid button:hover { transform: scale(1.05); } }
   .book { background: #fffdf5; border: 6px solid #e2c99a; border-radius: 20px; padding: 26px; font-size: 26px; line-height: 1.7; box-shadow: 0 10px 30px rgba(0,0,0,.1); }
   .book .scene { font-size: 80px; text-align: center; margin-bottom: 10px; }
   .book p { margin: 0 0 12px; }
