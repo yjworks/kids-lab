@@ -2,7 +2,7 @@
    파일을 고치면 CACHE 값을 올린다.
    글꼴(Pretendard) 조각 파일 92개는 미리 받지 않는다. 화면에 필요한 조각만 처음 쓸 때 받아
    FONT_CACHE에 두고, 다음부터는 저장해 둔 것을 쓴다. 글꼴은 바뀌지 않으므로 CACHE를 올려도 지우지 않는다. */
-var CACHE = 'kidlab-v27';
+var CACHE = 'kidlab-v28';
 var FONT_CACHE = 'kidlab-fonts-v1';
 var SHELL = [
   "./",
