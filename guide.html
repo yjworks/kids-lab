@@ -1,19 +1,22 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-db-app="kids-lab" data-db-theme="light">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>키즈랩 사용 가이드</title>
-<link rel="icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/favicon.ico" sizes="any">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="shared/db-tokens.css">
+<link rel="stylesheet" href="fonts/pretendard.css">
 <style>
   :root { --ink: #2b2b2b; --sub: #5d5d5d; --line: #e6e0d4; --paper: #fffdf8; --bg: #f6f2ea; --accent: #6a4c93; --soft: #f4f0ff; --yellow: #ffca3a; }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; overscroll-behavior-x: none; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; line-height: 1.65; word-break: keep-all; }
-  header { background: linear-gradient(135deg, #bde0fe, #ffd6e7); padding: 28px 16px 22px; }
+  body { margin: 0; background: var(--db-bg); color: var(--db-text); font-family: var(--db-font); line-height: 1.65; word-break: keep-all; }
+  header { background: var(--db-card); border-bottom: 1px solid var(--db-line); padding: 28px 16px 22px; }
   header .in, main, nav .in { max-width: 920px; margin: 0 auto; }
   header h1 { margin: 0; font-size: 30px; }
   header p { margin: 6px 0 0; font-weight: 700; color: #3c3c3c; }
-  header a.back { display: inline-block; margin-top: 12px; background: #fff; border-radius: 14px; padding: 8px 14px; font-weight: 800; color: var(--ink); text-decoration: none; }
+  header a.back { display: inline-block; margin-top: 12px; background: var(--db-accent-bg); border-radius: 14px; padding: 8px 14px; font-weight: 800; color: var(--db-on-accent); text-decoration: none; }
   nav { position: sticky; top: 0; z-index: 5; background: rgba(255,253,248,.96); border-bottom: 1px solid var(--line); backdrop-filter: blur(6px); }
   nav .in { display: flex; gap: 6px; overflow-x: auto; padding: 8px 16px; }
   nav a { flex: none; padding: 6px 12px; border-radius: 12px; font-weight: 800; font-size: 15px; color: var(--accent); text-decoration: none; background: var(--soft); }

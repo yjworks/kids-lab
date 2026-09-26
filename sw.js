@@ -1,6 +1,9 @@
 /* 키즈랩 서비스워커 - 처음 열 때 전부 받아 두고, 다음부터는 인터넷 없이도 실행된다.
-   파일을 고치면 CACHE 값을 올린다. */
-var CACHE = 'kidlab-v26';
+   파일을 고치면 CACHE 값을 올린다.
+   글꼴(Pretendard) 조각 파일 92개는 미리 받지 않는다. 화면에 필요한 조각만 처음 쓸 때 받아
+   FONT_CACHE에 두고, 다음부터는 저장해 둔 것을 쓴다. 글꼴은 바뀌지 않으므로 CACHE를 올려도 지우지 않는다. */
+var CACHE = 'kidlab-v27';
+var FONT_CACHE = 'kidlab-fonts-v1';
 var SHELL = [
   "./",
   "./index.html",
@@ -8,6 +11,8 @@ var SHELL = [
   "./manifest.webmanifest",
   "./shared/kid.js",
   "./shared/app.css",
+  "./shared/db-tokens.css",
+  "./fonts/pretendard.css",
   "./shared/apps.js",
   "./shared/courses.js",
   "./shared/glyphs.js",
@@ -16,6 +21,10 @@ var SHELL = [
   "./icons/icon-512.png",
   "./icons/maskable-512.png",
   "./icons/apple-touch-icon.png",
+  "./icons/maskable-192.png",
+  "./icons/icon.svg",
+  "./icons/icon-32.png",
+  "./icons/favicon.ico",
   "./icons/app-hangul.svg",
   "./icons/app-batchim.svg",
   "./icons/app-hanja.svg",
@@ -81,8 +90,9 @@ self.addEventListener('install', function (e) {
 });
 
 self.addEventListener('activate', function (e) {
+  /* 같은 도메인(dibrain.dev)의 다른 앱 캐시는 건드리지 않고, 키즈랩의 옛 캐시만 지운다 */
   e.waitUntil(caches.keys().then(function (keys) {
-    return Promise.all(keys.map(function (k) { return k === CACHE ? null : caches.delete(k); }));
+    return Promise.all(keys.map(function (k) { return k.indexOf('kidlab-') !== 0 || k === CACHE || k === FONT_CACHE ? null : caches.delete(k); }));
   }).then(function () { return self.clients.claim(); }));
 });
 
@@ -91,6 +101,19 @@ self.addEventListener('fetch', function (e) {
   if (req.method !== 'GET') return;
   var url = new URL(req.url);
   if (url.origin !== location.origin) return;
+
+  /* 글꼴 파일: 저장해 둔 것이 있으면 네트워크를 보지 않고 바로 쓴다 */
+  if (/\/fonts\/.+\.woff2$/.test(url.pathname)) {
+    e.respondWith(caches.open(FONT_CACHE).then(function (c) {
+      return c.match(req).then(function (hit) {
+        return hit || fetch(req).then(function (res) {
+          if (res && res.status === 200) c.put(req, res.clone());
+          return res;
+        });
+      });
+    }));
+    return;
+  }
 
   /* 화면 이동은 네트워크를 먼저 보고, 안 되면 저장해 둔 것을 쓴다 */
   if (req.mode === 'navigate') {

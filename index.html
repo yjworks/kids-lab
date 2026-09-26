@@ -1,86 +1,90 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-db-app="kids-lab" data-db-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>키즈랩 - 우리 아이 학습 놀이터</title>
 <meta name="description" content="다섯 살부터 혼자 켜서 쓰는 한글·영어·수학·과학·생활 학습 놀이터">
-<meta name="theme-color" content="#8fd3f4">
+<meta name="theme-color" content="#fdf7e8">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="키즈랩">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.ico" sizes="any">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
-<link rel="icon" href="icons/icon-512.png" sizes="512x512" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="shared/db-tokens.css">
+<link rel="stylesheet" href="fonts/pretendard.css">
 <link rel="stylesheet" href="shared/app.css">
 <style>
   html { height: 100%; }
-  body { height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; background: linear-gradient(160deg, #a8e0ff 0%, #d7f3ff 45%, #fff3c9 100%); font-size: 20px; }
-  #topbar { flex: none; background: rgba(255,255,255,.85); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; box-shadow: 0 2px 12px rgba(0,0,0,.08); position: relative; z-index: 50; }
+  body { height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; background: var(--db-bg); color: var(--db-text); font-size: 20px; }
+  #topbar { flex: none; background: var(--db-card); border-bottom: 1px solid var(--db-line); display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; position: relative; z-index: 50; }
   #topbar .left, #topbar .right { display: flex; align-items: center; gap: 8px; min-width: 0; }
   #topbar .right { flex: 0 1 auto; overflow-x: auto; scrollbar-width: none; }
   #topbar .right::-webkit-scrollbar { display: none; }
   #topbar .left { flex: 0 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
   #topbar .left::-webkit-scrollbar { display: none; }
-  .pill { background: #fff; border-radius: 30px; padding: 6px 14px; font-weight: 800; box-shadow: 0 2px 6px rgba(0,0,0,.08); display: flex; align-items: center; gap: 6px; font-size: 19px; white-space: nowrap; flex: none; line-height: 1.25; }
-  @media (hover: hover) { .pill.btn:hover { background: #fff3c4; } }
-  #profileBtn { min-width: 0; max-width: 46vw; overflow: hidden; }
+  .pill { background: var(--db-card); color: var(--db-text); border: 1px solid var(--db-line); border-radius: var(--db-pill); padding: 6px 14px; font-weight: 800; display: flex; align-items: center; gap: 6px; font-size: 19px; white-space: nowrap; flex: none; line-height: 1.25; }
+  .pill.btn { min-height: var(--db-hit); min-width: var(--db-hit); justify-content: center; }
+  @media (hover: hover) { .pill.btn:hover { background: #fff3c4; border-color: var(--db-accent); } }
+  #profileBtn { min-width: var(--db-hit); max-width: 46vw; overflow: hidden; }
   #profileBtn .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #profileBtn .av { font-size: 28px; }
   #clock { font-variant-numeric: tabular-nums; }
   #desktop { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 16px 24px; }
-  #greet { font-size: 28px; font-weight: 900; color: #245; margin: 4px 0 14px 8px; text-shadow: 0 1px 0 #fff; }
+  #greet { font-size: 28px; font-weight: 900; color: var(--db-text); margin: 4px 0 14px 8px; }
   #greet { cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* 묶음 탭은 아래로 내려도 위에 붙어 있다. 붙었을 때만 바탕을 깐다 */
   /* top은 #desktop 위 여백만큼 음수로 둬야 화면 맨 위에 딱 붙는다. 여백은 붙기 전후 같게 둬서 아이콘이 튀지 않게 한다 */
   #cats { position: sticky; top: -20px; z-index: 5; margin: -6px -16px 0; padding: 6px 18px 10px; transition: background .15s, box-shadow .15s; }
-  #cats.stuck { background: rgba(222,244,255,.94); backdrop-filter: blur(6px); box-shadow: 0 4px 10px rgba(0,0,0,.08); }
+  #cats.stuck { background: var(--db-bg); box-shadow: 0 1px 0 var(--db-line); }
   #icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px; }
   /* 오늘 뭐 할지 바로 보이게 */
   #quick { display: flex; gap: 12px; overflow-x: auto; padding: 2px 2px 10px; }
-  .quick-card { flex: 0 0 auto; min-width: 190px; background: #fff; border-radius: 22px; padding: 12px 16px;
+  .quick-card { flex: 0 0 auto; min-width: 190px; background: var(--db-card); border: 1px solid var(--db-line); border-radius: 22px; padding: 12px 16px;
     display: flex; align-items: center; gap: 12px; box-shadow: 0 6px 0 rgba(0,0,0,.08); text-align: left; }
   @media (hover: hover) { .quick-card:hover { transform: translateY(-3px); } }
   .quick-card .ic { font-size: 40px; width: 62px; height: 62px; border-radius: 18px; display: flex; align-items: center; justify-content: center; flex: none; }
-  .quick-card .tag { font-size: 14px; font-weight: 800; color: #6a4c93; }
-  .quick-card .nm { font-size: 20px; font-weight: 900; color: #333; }
+  .quick-card .tag { font-size: 14px; font-weight: 800; color: var(--db-sub); }
+  .quick-card .nm { font-size: 20px; font-weight: 900; color: var(--db-text); }
   #cats { display: flex; gap: 8px; overflow-x: auto; padding: 0 2px 12px; }
-  #cats button { flex: 0 0 auto; background: rgba(255,255,255,.8); border-radius: 20px; padding: 10px 18px;
-    font-size: 18px; font-weight: 800; color: #444; min-height: 48px; }
-  #cats button.on { background: #ffca3a; color: #5a3d00; }
+  #cats button { flex: 0 0 auto; background: var(--db-card); border: 1px solid var(--db-line); border-radius: var(--db-pill); padding: 10px 18px;
+    font-size: 18px; font-weight: 800; color: var(--db-text); min-height: 48px; }
+  #cats button.on { background: var(--db-accent-bg); border-color: var(--db-accent-bg); color: var(--db-on-accent); }
   .svgic { width: 1.15em; height: 1.15em; vertical-align: -0.2em; display: inline-block; }
   .app-icon .ic .svgic, .quick-card .ic .svgic { width: 78%; height: 78%; }
-  .cat-head { grid-column: 1 / -1; font-size: 20px; font-weight: 900; color: #5a3d00; background: rgba(255,255,255,.7); border-radius: 16px; padding: 6px 14px; justify-self: start; margin-top: 6px; }
+  .cat-head { grid-column: 1 / -1; font-size: 20px; font-weight: 900; color: var(--db-text); background: transparent; border-radius: 16px; padding: 6px 14px; justify-self: start; margin-top: 6px; }
   .cat-head:first-child { margin-top: 0; }
-  .app-icon { background: rgba(255,255,255,.75); border-radius: 26px; padding: 16px 8px 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: 0 6px 0 rgba(0,0,0,.08); transition: transform .15s; position: relative; }
-  @media (hover: hover) { .app-icon:hover { transform: translateY(-5px) scale(1.04); background: #fff; } }
+  .app-icon { background: var(--db-card); border: 1px solid var(--db-line); border-radius: 26px; padding: 16px 8px 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: 0 6px 0 rgba(0,0,0,.08); transition: transform .15s; position: relative; }
+  @media (hover: hover) { .app-icon:hover { transform: translateY(-5px) scale(1.04); border-color: var(--db-accent); } }
   .app-icon:active { transform: translateY(2px); }
   .app-icon .ic { font-size: 62px; line-height: 1; width: 96px; height: 96px; border-radius: 28px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 -6px 0 rgba(0,0,0,.08); }
-  .app-icon .nm { font-weight: 800; font-size: 19px; color: #333; }
+  .app-icon .nm { font-weight: 800; font-size: 19px; color: var(--db-text); }
   .app-icon .badge { position: absolute; top: 8px; right: 10px; background: #ff595e; color: #fff; border-radius: 20px; font-size: 14px; padding: 2px 8px; font-weight: 800; }
   .app-icon .today { position: absolute; top: 8px; left: 10px; font-size: 16px; }
-  #taskbar { flex: none; min-height: 64px; background: rgba(255,255,255,.92); border-top: 1px solid rgba(0,0,0,.08); display: flex; align-items: center; padding: 6px 10px; gap: 8px; z-index: 60; padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)); }
-  #homeBtn { width: 54px; height: 54px; border-radius: 16px; background: #ffca3a; font-size: 30px; box-shadow: 0 4px 0 rgba(0,0,0,.12); }
+  #taskbar { flex: none; min-height: 64px; background: var(--db-card); border-top: 1px solid var(--db-line); display: flex; align-items: center; padding: 6px 10px; gap: 8px; z-index: 60; padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)); }
+  #homeBtn { width: 54px; height: 54px; border-radius: 16px; background: var(--db-accent-bg); font-size: 30px; box-shadow: 0 4px 0 rgba(0,0,0,.12); }
   #tasks { display: flex; gap: 8px; flex: 1; overflow-x: auto; }
-  .task { background: #f0f0f0; border-radius: 14px; padding: 8px 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; border-bottom: 4px solid transparent; white-space: nowrap; }
-  .task.active { background: #fff3c4; border-bottom-color: #ffca3a; }
+  .task { background: var(--db-bg); color: var(--db-text); border-radius: 14px; padding: 8px 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; border-bottom: 4px solid transparent; white-space: nowrap; }
+  .task.active { background: #fff3c4; border-bottom-color: var(--db-accent); }
   .task .x { background: none; font-size: 16px; opacity: .5; }
   @media (hover: hover) { .task .x:hover { opacity: 1; } }
   #missionsBar { display: flex; gap: 6px; align-items: center; font-size: 18px; }
   /* 창 */
-  .win { position: fixed; background: #fff; border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.25); display: flex; flex-direction: column; overflow: hidden; min-width: 420px; min-height: 320px; z-index: 100; border: 3px solid #fff; }
+  .win { position: fixed; background: var(--db-card); border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.25); display: flex; flex-direction: column; overflow: hidden; min-width: 420px; min-height: 320px; z-index: 100; border: 3px solid #fff; }
   .win.max { left: 8px !important; top: calc(var(--topbar-h, 64px) + 8px) !important; width: calc(100% - 16px) !important; height: calc(100% - var(--topbar-h, 64px) - var(--taskbar-h, 70px) - 16px) !important; border-radius: 14px; }
   .win.min { display: none; }
-  .win.focus { z-index: 200; border-color: #ffca3a; }
+  .win.focus { z-index: 200; border-color: var(--db-accent); }
   .win .bar { height: 54px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px 0 16px; font-weight: 900; font-size: 20px; cursor: move; color: #fff; }
   .win .bar .ctl { display: flex; gap: 6px; }
   .win .bar button { width: 44px; height: 40px; border-radius: 12px; background: rgba(255,255,255,.3); font-size: 20px; font-weight: 900; color: #fff; }
   @media (hover: hover) { .win .bar button:hover { background: rgba(255,255,255,.5); } }
   .win .bar button.close { background: #ff595e; width: 60px; font-size: 24px; }
   @media (hover: hover) { .win .bar button.close:hover { background: #e03e44; } }
-  .win iframe { flex: 1; border: none; width: 100%; background: #fff8ec; }
+  .win iframe { flex: 1; border: none; width: 100%; background: var(--db-bg); }
   /* 손가락으로 쓰는 기기(iPad 등): 창은 늘 화면 가득, 끌기·크기 단추 없음, 닫기 단추는 크게 */
   html.touch .win, html.touch .win.max { left: 0 !important; right: 0 !important; top: var(--topbar-h, 64px) !important; width: 100% !important; height: calc(100% - var(--topbar-h, 64px) - var(--taskbar-h, 70px)) !important; min-width: 0; min-height: 0; border-radius: 0; border-width: 0; }
   html.touch .win .bar { cursor: default; }
@@ -91,15 +95,15 @@
   /* 패널 */
   html, body { overscroll-behavior-x: none; }
   .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 500; padding: 16px; }
-  .panel { background: #fff; border-radius: 30px; padding: 28px; width: min(760px, 96vw); max-height: 92vh; overflow: auto; box-shadow: 0 30px 80px rgba(0,0,0,.35); }
+  .panel { background: var(--db-card); color: var(--db-text); border-radius: 30px; padding: 28px; width: min(760px, 96vw); max-height: 92vh; overflow: auto; box-shadow: 0 30px 80px rgba(0,0,0,.35); }
   .panel h2 { margin: 0 0 16px; font-size: 32px; }
   .panel .close { float: right; background: #ff595e; color: #fff; border-radius: 14px; width: 60px; height: 48px; font-size: 26px; font-weight: 900; }
   .avatars { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 10px; }
-  .avatars button { font-size: 40px; background: #f3f3f3; border-radius: 18px; padding: 10px 0; }
-  .avatars button.sel { background: #ffca3a; outline: 4px solid #ffb703; }
-  input[type=text] { font-size: 26px; padding: 12px 16px; border: 3px solid #ddd; border-radius: 16px; width: 100%; font-family: inherit; }
+  .avatars button { font-size: 40px; background: var(--db-bg); border: 1px solid var(--db-line); border-radius: 18px; padding: 10px 0; }
+  .avatars button.sel { background: var(--db-accent-bg); border-color: var(--db-accent-bg); outline: 4px solid var(--db-text); outline-offset: -1px; }
+  input[type=text] { font-size: 26px; padding: 12px 16px; color: var(--db-text); background: var(--db-card); border: 3px solid var(--db-line); border-radius: 16px; width: 100%; font-family: inherit; }
   .profile-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; margin-bottom: 20px; }
-  .profile-card { background: #fff8ec; border-radius: 22px; padding: 18px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: 0 6px 0 rgba(0,0,0,.08); font-weight: 800; }
+  .profile-card { background: var(--db-bg); border: 1px solid var(--db-line); border-radius: 22px; padding: 18px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: 0 6px 0 rgba(0,0,0,.08); font-weight: 800; }
   @media (hover: hover) { .profile-card:hover { background: #fff3c4; } }
   .profile-card .av { font-size: 60px; }
   .course-head, .course-card { display: flex; gap: 14px; align-items: center; background: #f7f7f7; border-radius: 18px; padding: 12px 16px; margin-bottom: 10px; }
@@ -110,7 +114,7 @@
   .cn { font-size: 20px; font-weight: 900; } .cs { font-size: 15px; font-weight: 800; color: #6a4c93; } .cd { font-size: 15px; font-weight: 600; color: #555; margin-top: 4px; line-height: 1.45; word-break: keep-all; }
   .course-head .bar { height: 14px; background: #ddd; border-radius: 10px; overflow: hidden; }
   .course-head .bar i { display: block; height: 100%; background: #8e7cc3; }
-  .course-card .go { background: #ffca3a; border-radius: 14px; padding: 8px 14px; font-weight: 800; flex: none; }
+  .course-card .go { background: var(--db-accent-bg); color: var(--db-on-accent); border-radius: 14px; padding: 8px 14px; font-weight: 800; flex: none; }
   .course-card .go:disabled { background: #ddd; color: #777; box-shadow: none; }
   .mission { display: flex; align-items: center; gap: 14px; background: #f7f7f7; border-radius: 18px; padding: 12px 16px; margin-bottom: 10px; }
   .mission.done { background: #e3f7cf; }
@@ -118,7 +122,7 @@
   .mission .lb { flex: 1; font-weight: 800; }
   .mission .bar { height: 14px; background: #ddd; border-radius: 10px; overflow: hidden; margin-top: 6px; }
   .mission .bar i { display: block; height: 100%; background: #8ac926; }
-  .mission .go { background: #ffca3a; border-radius: 14px; padding: 8px 14px; font-weight: 800; }
+  .mission .go { background: var(--db-accent-bg); color: var(--db-on-accent); border-radius: 14px; padding: 8px 14px; font-weight: 800; }
   .sticker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; }
   .sticker { font-size: 40px; background: #f3f3f3; border-radius: 14px; text-align: center; padding: 8px 0; }
   .sticker.locked { filter: grayscale(1); opacity: .25; }
@@ -209,6 +213,16 @@
     #topbar .left, #topbar .right { gap: 5px; }
   }
   @media (max-width: 340px) { #stampPill { display: none; } }
+  /* 위 막대 단추는 누르는 칸을 44px 이상으로 두고, 폰에서도 한 줄에 들어가게 틈과 안쪽 여백을 줄인다 */
+  @media (max-width: 430px) {
+    #topbar { gap: 2px; padding: 6px 4px; }
+    #topbar .left, #topbar .right { gap: 2px; }
+    .pill { padding: 5px 4px; }
+  }
+  /* 태블릿 세로(761~900px): 시계까지 한 줄에 들어가게 좌우 여백만 줄인다 */
+  @media (min-width: 761px) and (max-width: 900px) { .pill { padding-left: 9px; padding-right: 9px; } }
+  /* 아주 좁은 폰(340px 이하)은 단추 폭을 조금 줄여야 한 줄에 들어간다. 높이 44px은 그대로 */
+  @media (max-width: 340px) { .pill.btn, #profileBtn { min-width: 38px; } #topbar .left, #topbar .right { gap: 1px; } }
 </style>
 </head>
 <body>
@@ -807,6 +821,8 @@
       el('button', { text: '파일 고르기', onclick: function () { fileIn.click(); } })]));
     panel.appendChild(el('div', { class: 'toggle' }, [el('span', { text: '🗑️ 이 친구 데이터 모두 지우기' }), el('button', { text: '지우기', style: 'background:#ff595e;color:#fff', onclick: function () { if (confirm(p.name + '의 모든 기록을 지울까요? 되돌릴 수 없어요.')) { localStorage.removeItem('kidlab.p.' + p.id); m.profiles = m.profiles.filter(function (x) { return x.id !== p.id; }); m.current = m.profiles.length ? m.profiles[0].id : null; K.saveMeta(m); wrap.remove(); location.reload(); } } })]));
     panel.appendChild(el('p', { style: 'color:#5e5e5e;font-size:16px;margin-top:16px', html: '💡 모든 기록은 이 컴퓨터의 브라우저(localStorage)에만 저장돼요. 서버로 보내지 않아요.<br>키보드: <b>Esc</b> = 앱 닫기, 미로/코딩은 <b>방향키</b> 사용 가능.' }));
+    /* 운영자 사이트 첫 화면 링크는 보호자만 보는 이 화면에만 둔다 (첫 화면에는 광고·어른용 도구가 있다) */
+    panel.appendChild(el('p', { style: 'font-size:16px;margin:8px 0 0;color:var(--db-sub)', html: '<a href="https://dibrain.dev/" rel="noopener" style="display:inline-block;padding:10px 0;font-weight:800;color:var(--db-text)">DigitalBrain 첫 화면</a> · 키즈랩 밖으로 나가요' }));
     wrap.appendChild(panel); document.getElementById('panels').appendChild(wrap);
   }
 

@@ -194,7 +194,15 @@ async function runtime(b) {
         for (let guard = 0; guard < 30; guard++) {
           if (await p.locator('.kl-result').count()) break;
           const ch = p.locator('.kl-stage .kl-choice');
-          const cnt = await ch.count(); if (!cnt) break;
+          let cnt = await ch.count();
+          /* 그림을 잠깐 보여 준 뒤에 보기를 내는 문제(기억력 "뭐가 사라졌지?")는 보기가 늦게 뜬다.
+             고정 250ms 안에 뜨느냐에 따라 결과가 갈리지 않게, 문제 칸이 있으면 조금 더 기다린다 */
+          if (!cnt && await p.locator('.kl-stage').count()) {
+            await p.waitForSelector('.kl-stage .kl-choice, .kl-result', { timeout: 800 }).catch(() => { });
+            if (await p.locator('.kl-result').count()) break;
+            cnt = await ch.count();
+          }
+          if (!cnt) break;
           const nope0 = await p.evaluate(() => window.__nope || 0);
           let solved = false;
           for (let j = 0; j < cnt && !solved; j++) {

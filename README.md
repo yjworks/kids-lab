@@ -277,12 +277,14 @@ manifest.webmanifest  설치 정보 (이름, 아이콘, 시작 주소)
 sw.js                 서비스워커 (오프라인 실행)
 icons/                앱 아이콘
 shared/kid.js         프로필, 별, 미션, 음성, 효과음, 퀴즈 엔진
-shared/app.css        공통 스타일
+shared/app.css        공통 스타일 (db-tokens.css·Pretendard를 불러온다)
+shared/db-tokens.css  DigitalBrain 공통 색·글꼴 토큰 (원본: leeyunjai.github.io/brand/tokens.css, 고치지 말고 복사)
+fonts/                Pretendard 글꼴 (SIL OFL 1.1). 조각 파일은 미리 받지 않고 처음 쓸 때 서비스워커가 저장한다
 shared/apps.js        앱 목록
 apps/<앱이름>/index.html
 ```
 
-앱을 하나 더 붙이려면 `apps/새앱/index.html`을 만들고 `<body data-app="새앱">`로 두고, `shared/apps.js`에 한 줄 추가하면 바탕화면에 아이콘이 생긴다. 퀴즈형이면 `KidLab.runQuiz()`에 문제 생성 함수만 넘기면 채점·별·단계 조절이 알아서 돌아간다.
+앱을 하나 더 붙이려면 `apps/새앱/index.html`을 만들고 `<html lang="ko" data-db-app="kids-lab" data-db-theme="light">`, `<body data-app="새앱">`로 두고, `shared/apps.js`에 한 줄 추가하면 바탕화면에 아이콘이 생긴다. 퀴즈형이면 `KidLab.runQuiz()`에 문제 생성 함수만 넘기면 채점·별·단계 조절이 알아서 돌아간다.
 
 ## 전수조사 테스트
 
