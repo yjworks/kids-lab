@@ -26,7 +26,10 @@
 <link rel="stylesheet" href="shared/app.css">
 <style>
   html { height: 100%; }
-  body { height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; background: var(--db-bg); color: var(--db-text); font-size: 20px; }
+  /* 높이는 100dvh가 아니라 실제 보이는 높이(innerHeight)로 맞춘다.
+     일부 안드로이드 태블릿(아래 시스템 작업 표시줄)에서 100dvh가 보이는 높이보다 커서 작업줄이 화면 밖으로 밀리고,
+     화면 기준으로 자리 잡는 앱 창과 어긋나 아래로 바탕화면이 비쳤다. */
+  body { height: 100%; height: var(--app-h, 100%); overflow: hidden; display: flex; flex-direction: column; background: var(--db-bg); color: var(--db-text); font-size: 20px; }
   #topbar { flex: none; background: var(--db-card); border-bottom: 1px solid var(--db-line); display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; position: relative; z-index: 50; }
   #topbar .left, #topbar .right { display: flex; align-items: center; gap: 8px; min-width: 0; }
   #topbar .right { flex: 0 1 auto; overflow-x: auto; scrollbar-width: none; }
@@ -284,11 +287,15 @@
   /* ---------- 막대 높이를 CSS 변수로 ---------- */
   function syncBars() {
     var tb = document.getElementById('topbar'), bb = document.getElementById('taskbar');
+    document.documentElement.style.setProperty('--app-h', window.innerHeight + 'px');
     document.documentElement.style.setProperty('--topbar-h', tb.offsetHeight + 'px');
     document.documentElement.style.setProperty('--taskbar-h', bb.offsetHeight + 'px');
   }
   syncBars();
   window.addEventListener('resize', syncBars);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', syncBars);
+  /* 브라우저 막대가 늦게 자리를 잡는 기기를 위해 한 번 더 */
+  setTimeout(syncBars, 300); window.addEventListener('pageshow', syncBars);
   window.addEventListener('orientationchange', function () { setTimeout(syncBars, 200); });
   if (window.ResizeObserver) { var ro = new ResizeObserver(syncBars); ro.observe(document.getElementById('topbar')); ro.observe(document.getElementById('taskbar')); }
 
