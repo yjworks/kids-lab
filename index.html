@@ -30,19 +30,19 @@
      일부 안드로이드 태블릿(아래 시스템 작업 표시줄)에서 100dvh가 보이는 높이보다 커서 작업줄이 화면 밖으로 밀리고,
      화면 기준으로 자리 잡는 앱 창과 어긋나 아래로 바탕화면이 비쳤다. */
   body { height: 100%; height: var(--app-h, 100%); overflow: hidden; display: flex; flex-direction: column; background: var(--db-bg); color: var(--db-text); font-size: 20px; }
-  #topbar { flex: none; background: var(--db-card); border-bottom: 1px solid var(--db-line); display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; position: relative; z-index: 50; }
+  #topbar { flex: none; background: var(--db-card); border-bottom: 1px solid var(--db-line); display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 14px; position: relative; z-index: 50; }
   #topbar .left, #topbar .right { display: flex; align-items: center; gap: 8px; min-width: 0; }
   #topbar .fit-hide { display: none !important; }
   #topbar .right { flex: 0 1 auto; overflow-x: auto; scrollbar-width: none; }
   #topbar .right::-webkit-scrollbar { display: none; }
   #topbar .left { flex: 0 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
   #topbar .left::-webkit-scrollbar { display: none; }
-  .pill { background: var(--db-card); color: var(--db-text); border: 1px solid var(--db-line); border-radius: var(--db-pill); padding: 6px 14px; font-weight: 800; display: flex; align-items: center; gap: 6px; font-size: 19px; white-space: nowrap; flex: none; line-height: 1.25; }
+  .pill { background: var(--db-card); color: var(--db-text); border: 1px solid var(--db-line); border-radius: var(--db-pill); padding: 4px 14px; font-weight: 800; display: flex; align-items: center; gap: 6px; font-size: 19px; white-space: nowrap; flex: none; line-height: 1.25; }
   .pill.btn { min-height: var(--db-hit); min-width: var(--db-hit); justify-content: center; }
   @media (hover: hover) { .pill.btn:hover { background: #fff3c4; border-color: var(--db-accent); } }
   #profileBtn { min-width: var(--db-hit); max-width: 46vw; overflow: hidden; }
   #profileBtn .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  #profileBtn .av { font-size: 28px; }
+  #profileBtn .av { font-size: 26px; }
   #clock { font-variant-numeric: tabular-nums; }
   #desktop { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 16px 24px; }
   #greet { font-size: 28px; font-weight: 900; color: var(--db-text); margin: 4px 0 14px 8px; }
@@ -75,8 +75,8 @@
   .app-icon .nm { font-weight: 800; font-size: 19px; color: var(--db-text); }
   .app-icon .badge { position: absolute; top: 8px; right: 10px; background: #ff595e; color: #fff; border-radius: 20px; font-size: 14px; padding: 2px 8px; font-weight: 800; }
   .app-icon .today { position: absolute; top: 8px; left: 10px; font-size: 16px; }
-  #taskbar { flex: none; min-height: 64px; background: var(--db-card); border-top: 1px solid var(--db-line); display: flex; align-items: center; padding: 6px 10px; gap: 8px; z-index: 60; padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)); }
-  #homeBtn { width: 54px; height: 54px; border-radius: 16px; background: var(--db-accent-bg); font-size: 30px; box-shadow: 0 4px 0 rgba(0,0,0,.12); }
+  #taskbar { flex: none; min-height: 56px; background: var(--db-card); border-top: 1px solid var(--db-line); display: flex; align-items: center; padding: 4px 10px; gap: 8px; z-index: 60; padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px)); }
+  #homeBtn { width: 48px; height: 46px; border-radius: 14px; background: var(--db-accent-bg); font-size: 30px; box-shadow: 0 4px 0 rgba(0,0,0,.12); }
   #tasks { display: flex; gap: 8px; flex: 1; overflow-x: auto; }
   .task { background: var(--db-bg); color: var(--db-text); border-radius: 14px; padding: 8px 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; border-bottom: 4px solid transparent; white-space: nowrap; }
   .task.active { background: #fff3c4; border-bottom-color: var(--db-accent); }
@@ -88,9 +88,9 @@
   .win.max { left: 8px !important; top: calc(var(--topbar-h, 64px) + 8px) !important; width: calc(100% - 16px) !important; height: calc(100% - var(--topbar-h, 64px) - var(--taskbar-h, 70px) - 16px) !important; border-radius: 14px; }
   .win.min { display: none; }
   .win.focus { z-index: 200; border-color: var(--db-accent); }
-  .win .bar { height: 54px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px 0 16px; font-weight: 900; font-size: 20px; cursor: move; color: #fff; }
+  .win .bar { height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px 0 16px; font-weight: 900; font-size: 20px; cursor: move; color: #fff; }
   .win .bar .ctl { display: flex; gap: 6px; }
-  .win .bar button { width: 44px; height: 40px; border-radius: 12px; background: rgba(255,255,255,.3); font-size: 20px; font-weight: 900; color: #fff; }
+  .win .bar button { width: 44px; height: 38px; border-radius: 12px; background: rgba(255,255,255,.3); font-size: 20px; font-weight: 900; color: #fff; }
   @media (hover: hover) { .win .bar button:hover { background: rgba(255,255,255,.5); } }
   .win .bar button.close { background: #ff595e; width: 60px; font-size: 24px; }
   @media (hover: hover) { .win .bar button.close:hover { background: #e03e44; } }
@@ -99,8 +99,8 @@
   html.touch .win, html.touch .win.max { left: 0 !important; right: 0 !important; top: var(--topbar-h, 64px) !important; width: 100% !important; height: calc(100% - var(--topbar-h, 64px) - var(--taskbar-h, 70px)) !important; min-width: 0; min-height: 0; border-radius: 0; border-width: 0; }
   html.touch .win .bar { cursor: default; }
   html.touch .win .bar .maxbtn { display: none; }
-  html.touch .win .bar button { height: 46px; }
-  html.touch .win .bar button.close { width: 76px; }
+  html.touch .win .bar button { height: 40px; }
+  html.touch .win .bar button.close { width: 68px; }
   html.touch .task .x { padding: 8px 10px; margin: -8px -10px -8px 0; font-size: 18px; opacity: .75; }
   /* 패널 */
   html, body { overscroll-behavior-x: none; }
@@ -151,7 +151,7 @@
   .gacha-box { text-align: center; padding: 20px; }
   .gacha-result { font-size: 140px; animation: pop .8s; }
   @media (max-width: 760px) {
-    #topbar { padding: 5px 10px; gap: 6px; }
+    #topbar { padding: 4px 10px; gap: 6px; }
     .pill { font-size: 16px; padding: 5px 8px; gap: 3px; border-radius: 24px; }
     #topbar .left, #topbar .right { gap: 5px; }
     .pill.btn { min-height: 44px; }
@@ -170,11 +170,11 @@
     .app-icon .ic { font-size: 44px; width: 68px; height: 68px; border-radius: 20px; }
     .app-icon .nm { font-size: 15px; }
     .app-icon .badge { font-size: 11px; padding: 1px 6px; top: 5px; right: 6px; }
-    #taskbar { min-height: 58px; }
-    #homeBtn { width: 46px; height: 46px; font-size: 24px; border-radius: 14px; }
+    #taskbar { min-height: 48px; padding-top: 3px; padding-bottom: calc(3px + env(safe-area-inset-bottom, 0px)); }
+    #homeBtn { width: 44px; height: 40px; font-size: 22px; border-radius: 12px; box-shadow: 0 3px 0 rgba(0,0,0,.12); }
     .task { padding: 6px 10px; font-size: 15px; border-radius: 12px; }
     .win, .win.max { left: 0 !important; right: 0 !important; top: var(--topbar-h, 56px) !important; width: 100% !important; height: calc(100% - var(--topbar-h, 56px) - var(--taskbar-h, 58px)) !important; min-width: 0; min-height: 0; border-radius: 0; border-width: 0; }
-    .win .bar { height: 46px; font-size: 17px; padding: 0 6px 0 12px; cursor: default; }
+    .win .bar { height: 42px; font-size: 17px; padding: 0 6px 0 12px; cursor: default; }
     .win .bar button { width: 40px; height: 36px; font-size: 18px; }
     .win .bar button.close { width: 52px; font-size: 22px; }
     .win .bar .maxbtn { display: none; }
@@ -221,13 +221,13 @@
     #profileBtn .nm { display: none; }
     .pill { font-size: 15px; padding: 5px 6px; gap: 2px; }
     #topbar { gap: 4px; } #topbar .left, #topbar .right { gap: 4px; }
-    #topbar { gap: 5px; padding: 6px 8px; }
+    #topbar { gap: 5px; padding: 4px 8px; }
     #topbar .left, #topbar .right { gap: 5px; }
   }
   @media (max-width: 340px) { #stampPill { display: none; } }
   /* 위 막대 단추는 누르는 칸을 44px 이상으로 두고, 폰에서도 한 줄에 들어가게 틈과 안쪽 여백을 줄인다 */
   @media (max-width: 430px) {
-    #topbar { gap: 2px; padding: 6px 4px; }
+    #topbar { gap: 2px; padding: 4px 4px; }
     #topbar .left, #topbar .right { gap: 2px; }
     .pill { padding: 5px 4px; }
   }

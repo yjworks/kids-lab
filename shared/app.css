@@ -237,8 +237,8 @@ main, .kl-main { flex: 1; padding: 18px; max-width: 1100px; margin: 0 auto; widt
   body.fixed .kl-back { align-self: flex-start; margin: 0; }
   body.fixed .pad { flex: 1; min-height: 0; justify-content: center; }
   /* 세로가 짧고 가로로 넓으면(폰 가로모드) 쓰기판을 왼쪽에, 조작부를 오른쪽에 둔다.
-     폭이 좁으면(설치 앱의 거의 정사각형 앱 창 412×434 등) 옆으로 두면 넘치므로 위아래 그대로 둔다. */
-  @media (max-height: 520px) and (min-aspect-ratio: 5/4) {
+     세로가 더 길면(설치 앱의 앱 창 412×434 등) 옆으로 두면 넘치므로 위아래 그대로 둔다. */
+  @media (max-height: 520px) and (min-aspect-ratio: 1/1) {
     body.fixed .pad { display: grid; grid-template-columns: auto minmax(180px, 1fr);
       grid-template-areas: "sheet title" "sheet meter" "sheet verdict" "sheet bar";
       align-content: center; justify-content: center; gap: 6px 14px; }

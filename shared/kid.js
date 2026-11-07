@@ -526,7 +526,8 @@
     /* 런처 창 안에서 좁은 화면이면 창 제목과 겹치므로 제목을 감춘 얇은 머리말로 */
     var embedded = false;
     try { embedded = window.parent && window.parent !== window; } catch (e) { }
-    var compact = embedded && window.innerWidth <= 760;
+    /* 키즈랩 창 안에서는 창 제목줄이 이미 이름을 보여 주므로 머리말을 숨긴다 (태블릿에서 두 줄을 차지했다) */
+    var compact = embedded;
     var h = el('div', { class: 'kl-header' + (compact ? ' compact' : '') }, [
       el('div', { class: 'kl-title', html: '<span class="kl-icon">' + (opts.icon || '') + '</span> ' + esc(opts.title || document.title) }),
       el('div', { class: 'kl-right' }, [
