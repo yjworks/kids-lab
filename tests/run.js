@@ -473,6 +473,7 @@ const LEGACY = [
   ['I17', 'calc.js', [OUT], o => /오류: 없음/.test(o), o => (o.match(/오류:.*/) || [''])[0]],
   ['R04', 'resp.js', [], o => /화면 \d+ · 문제 0/.test(o), o => o.replace(/\s+/g, ' ').slice(0, 300)],
   ['L08', 'zoom.js', [], o => /Pixel 7 폭 412\/320\/485\/412 두손가락막힘 true/.test(o) && /iPhone SE 폭 320\/320\/376\/320 두손가락막힘 true/.test(o) && /iPad \(gen 7\) 폭 810\/623\/953\/810 두손가락막힘 true/.test(o) && /Desktop Chrome 폭 1280\/1280\/1280\/1280 두손가락막힘 false/.test(o) && !/오류|넘침/.test(o) && /보호자 단추 4개 아주크게 320 보통 412 창안 true/.test(o), o => o.replace(/\s+/g, ' ')],
+  ['L09', 'topbar.js', [], o => { const L = o.trim().split('\n').filter(x => /^\d+ \{/.test(x)); return L.length === 12 && L.every(x => /"bad":\[\],"lsc":0,"rsc":0/.test(x)); }, o => o.trim().split('\n').map(x => x.replace(/"inst":"[a-z]+",/, '').replace(/,"lsc":0,"rsc":0,"h":\d+/, '')).join(' ').slice(0, 300)],
   ['I18', 'story.js', [], o => /만든 이야기 7200 · 빈 값\/예외 0 · 조사 틀림 0/.test(o) && /입력칸 3 · 이름 들어감 true · 대사 true · 끝 문장 true · 책장 .*\(1\) · 넘침 0/.test(o) && /오류: 없음/.test(o), o => o.replace(/\s+/g, ' ').slice(0, 220)],
   ['L01', 'cats.js', [], o => (o.match(/icons 43 전체:43h/g) || []).length === 2 && (o.match(/errs \[\]/g) || []).length === 2 && /한자·고전:2/.test(o), o => o.split('\n')[0].slice(0, 200)],
   ['L02', 'test.js', [], o => /launcher errors: none/.test(o) && /missions: 4/.test(o) && !/ (fail|error)/i.test(o.replace(/launcher errors: none/, '')), o => (o.match(/missions.*|parent.*|launcher errors.*/g) || []).join(' ')],

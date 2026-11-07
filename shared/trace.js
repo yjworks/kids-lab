@@ -108,9 +108,13 @@
       /* main이 넘침을 감추므로 scrollHeight로는 알 수 없다.
          맨 아래 버튼 줄이 화면 안에 들어왔는지로 판단한다. */
       var guard = 0;
+      var W = document.documentElement.clientWidth;
       var tooBig = function () {
+        /* 아래로 넘치거나, 옆 배치에서 오른쪽 조작부가 화면 밖으로 밀려도 줄인다 */
         return bar.getBoundingClientRect().bottom > window.innerHeight - 4 ||
-               sheet.getBoundingClientRect().bottom > window.innerHeight - 4;
+               sheet.getBoundingClientRect().bottom > window.innerHeight - 4 ||
+               pad.scrollWidth > pad.clientWidth + 1 ||
+               [title, meter, verdict, bar, sheet].some(function (e) { return e.getBoundingClientRect().right > W - 2; });
       };
       while (tooBig() && size > 110 && guard++ < 90) setSize(size - 6);
       drawGuide(); redrawInk();
