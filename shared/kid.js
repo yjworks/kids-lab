@@ -303,6 +303,40 @@
   };
   document.addEventListener('pointerdown', function () { ctx(); }, { once: true });
 
+  /* ---------- 화면 크기 ----------
+     아이들이 두 손가락으로 확대하면 화면이 반쯤 밀린 채 남아 엉망이 되곤 했다.
+     손으로 확대·축소는 막고, 크기는 보호자 설정의 단추로만 바꾼다.
+     크기는 화면 설정(viewport)의 폭을 기기 폭 ÷ 배율로 정해서 바꾼다 → 브라우저 확대와 달리 레이아웃이 그 폭에 맞춰 다시 짜인다.
+     PC 브라우저는 이 설정을 무시하므로(Ctrl +/− 를 쓴다) 손가락 기기에서만 쓴다. */
+  var TOUCH_DEV = (navigator.maxTouchPoints || 0) > 0 && !(window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches);
+  var UI_SCALES = [0.85, 1, 1.15, 1.3];
+  function uiScale() { var v = parseFloat(meta().settings.uiScale); return UI_SCALES.indexOf(v) >= 0 ? v : 1; }
+  function applyUiScale() {
+    if (window.top !== window) return;                       /* 앱 창(iframe)은 바깥 화면을 따른다 */
+    var mv = document.querySelector('meta[name="viewport"]'); if (!mv) return;
+    var sc = TOUCH_DEV ? uiScale() : 1, c;
+    if (sc === 1) c = 'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no';
+    else {
+      var land = window.matchMedia && matchMedia('(orientation: landscape)').matches;
+      var dev = land ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+      /* 앱들은 폭 320까지 맞춰 두었다. 작은 폰에서 크게 하면 그보다 좁아지지 않게 배율을 줄인다 */
+      if (sc > 1 && dev / sc < 320) sc = Math.max(1, dev / 320);
+      sc = Math.round(sc * 1000) / 1000;
+      c = sc === 1 ? 'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no'
+        : 'width=' + Math.round(dev / sc) + ', initial-scale=' + sc + ', minimum-scale=' + sc + ', maximum-scale=' + sc + ', user-scalable=no';
+    }
+    if (mv.getAttribute('content') !== c) mv.setAttribute('content', c);
+  }
+  if (TOUCH_DEV) {
+    /* iPad·iPhone 사파리는 user-scalable=no 를 무시하므로 두 손가락 동작을 직접 막는다 (앱 창 안에서도) */
+    ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (t) { document.addEventListener(t, function (e) { e.preventDefault(); }, { passive: false }); });
+    document.addEventListener('touchmove', function (e) { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false });
+    if (window.top === window) {
+      applyUiScale();
+      try { matchMedia('(orientation: portrait)').addEventListener('change', applyUiScale); } catch (e) { }
+    }
+  }
+
   /* ---------- 음성 (Web Speech API) ---------- */
   var voices = [];
   function loadVoices() { try { voices = window.speechSynthesis ? speechSynthesis.getVoices() : []; } catch (e) { voices = []; } }
@@ -690,7 +724,7 @@
     addWrong: addWrong, takeWrongs: takeWrongs, clearWrong: clearWrong, wrongCount: wrongCount,
     addActivity: addActivity, stampState: stampState, addUsage: addUsage, usageToday: usageToday,
     STICKERS: STICKERS, STICKER_COST: STICKER_COST,
-    sfx: sfx, speak: speak, speakEn: speakEn, stopSpeak: stopSpeak,
+    sfx: sfx, speak: speak, speakEn: speakEn, stopSpeak: stopSpeak, applyUiScale: applyUiScale, uiScale: uiScale, isTouchDevice: function () { return TOUCH_DEV; },
     toast: toast, nope: nope, yep: yep, confetti: confetti, header: header, runQuiz: runQuiz, buildRound: buildRound, qkey: qkey, menu: menu, backButton: backButton,
     numToKo: numToKo, comma: comma, josa: josa,
     el: el, esc: esc, randInt: randInt, pick: pick, shuffle: shuffle, sample: sample, notify: notify, APP_ID: APP_ID
