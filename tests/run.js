@@ -471,6 +471,7 @@ const LEGACY = [
   ['I15', 'elev2.js', [], o => /돌려 본 건물 20/.test(o) && /문제 없음/.test(o), o => (o.match(/돌려 본 건물.*/) || [''])[0]],
   ['I16', 'arcade.js', [OUT], o => !/오류 (?!없음)/.test(o), o => o.replace(/\s+/g, ' ').slice(0, 200)],
   ['I17', 'calc.js', [OUT], o => /오류: 없음/.test(o), o => (o.match(/오류:.*/) || [''])[0]],
+  ['R05', 'fixed.js', [], o => /화면 \d+ \(고정 화면 \d+\) · 문제 0/.test(o), o => o.replace(/\s+/g, ' ').slice(0, 300)],
   ['R04', 'resp.js', [], o => /화면 \d+ · 문제 0/.test(o), o => o.replace(/\s+/g, ' ').slice(0, 300)],
   ['L08', 'zoom.js', [], o => /Pixel 7 폭 412\/320\/485\/412 두손가락막힘 true/.test(o) && /iPhone SE 폭 320\/320\/376\/320 두손가락막힘 true/.test(o) && /iPad \(gen 7\) 폭 810\/623\/953\/810 두손가락막힘 true/.test(o) && /Desktop Chrome 폭 1280\/1280\/1280\/1280 두손가락막힘 false/.test(o) && !/오류|넘침/.test(o) && /보호자 단추 4개 아주크게 320 보통 412 창안 true/.test(o), o => o.replace(/\s+/g, ' ')],
   ['L09', 'topbar.js', [], o => { const L = o.trim().split('\n').filter(x => /^\d+ \{/.test(x)); return L.length === 12 && L.every(x => /"bad":\[\],"lsc":0,"rsc":0/.test(x)); }, o => o.trim().split('\n').map(x => x.replace(/"inst":"[a-z]+",/, '').replace(/,"lsc":0,"rsc":0,"h":\d+/, '')).join(' ').slice(0, 300)],
