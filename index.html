@@ -2,7 +2,7 @@
 <html lang="ko" data-db-app="kids-lab" data-db-theme="light">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>키즈랩 — 우리 아이 학습 놀이터</title>
 <meta name="description" content="다섯 살부터 혼자 켜서 쓰는 한글·영어·수학·과학·생활 학습 놀이터">
 <link rel="canonical" href="https://dibrain.dev/kids-lab/">
@@ -29,7 +29,9 @@
   /* 높이는 100dvh가 아니라 실제 보이는 높이(innerHeight)로 맞춘다.
      일부 안드로이드 태블릿(아래 시스템 작업 표시줄)에서 100dvh가 보이는 높이보다 커서 작업줄이 화면 밖으로 밀리고,
      화면 기준으로 자리 잡는 앱 창과 어긋나 아래로 바탕화면이 비쳤다. */
-  body { height: 100%; height: var(--app-h, 100%); overflow: hidden; display: flex; flex-direction: column; background: var(--db-bg); color: var(--db-text); font-size: 20px; }
+  /* app.css 의 body { min-height: 100vh } 를 끈다. 안드로이드 크롬에서 100vh 는 주소창이 숨었을 때의 큰 높이라,
+     주소창이 보이는 웹에서는 몸통이 길어져 작업줄이 화면 밖으로 밀렸다(설치 앱은 주소창이 없어 멀쩡했다) */
+  body { min-height: 0; height: 100%; height: var(--app-h, 100%); overflow: hidden; display: flex; flex-direction: column; background: var(--db-bg); color: var(--db-text); font-size: 20px; }
   #topbar { flex: none; background: var(--db-card); border-bottom: 1px solid var(--db-line); display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 14px; position: relative; z-index: 50; }
   #topbar .left, #topbar .right { display: flex; align-items: center; gap: 8px; min-width: 0; }
   #topbar .fit-hide { display: none !important; }
@@ -96,7 +98,7 @@
   @media (hover: hover) { .win .bar button.close:hover { background: #e03e44; } }
   .win iframe { flex: 1; border: none; width: 100%; background: var(--db-bg); }
   /* 손가락으로 쓰는 기기(iPad 등): 창은 늘 화면 가득, 끌기·크기 단추 없음, 닫기 단추는 크게 */
-  html.touch .win, html.touch .win.max { left: 0 !important; right: 0 !important; top: var(--topbar-h, 64px) !important; width: 100% !important; height: calc(100% - var(--topbar-h, 64px) - var(--taskbar-h, 70px)) !important; min-width: 0; min-height: 0; border-radius: 0; border-width: 0; }
+  html.touch .win, html.touch .win.max { left: 0 !important; right: 0 !important; top: var(--win-top, var(--topbar-h, 64px)) !important; width: 100% !important; height: var(--win-h, calc(100% - var(--topbar-h, 64px) - var(--taskbar-h, 70px))) !important; min-width: 0; min-height: 0; border-radius: 0; border-width: 0; }
   html.touch .win .bar { cursor: default; }
   html.touch .win .bar .maxbtn { display: none; }
   html.touch .win .bar button { height: 40px; }
@@ -173,7 +175,7 @@
     #taskbar { min-height: 48px; padding-top: 3px; padding-bottom: calc(3px + env(safe-area-inset-bottom, 0px)); }
     #homeBtn { width: 44px; height: 40px; font-size: 22px; border-radius: 12px; box-shadow: 0 3px 0 rgba(0,0,0,.12); }
     .task { padding: 6px 10px; font-size: 15px; border-radius: 12px; }
-    .win, .win.max { left: 0 !important; right: 0 !important; top: var(--topbar-h, 56px) !important; width: 100% !important; height: calc(100% - var(--topbar-h, 56px) - var(--taskbar-h, 58px)) !important; min-width: 0; min-height: 0; border-radius: 0; border-width: 0; }
+    .win, .win.max { left: 0 !important; right: 0 !important; top: var(--win-top, var(--topbar-h, 56px)) !important; width: 100% !important; height: var(--win-h, calc(100% - var(--topbar-h, 56px) - var(--taskbar-h, 58px))) !important; min-width: 0; min-height: 0; border-radius: 0; border-width: 0; }
     .win .bar { height: 42px; font-size: 17px; padding: 0 6px 0 12px; cursor: default; }
     .win .bar button { width: 40px; height: 36px; font-size: 18px; }
     .win .bar button.close { width: 52px; font-size: 22px; }
@@ -235,6 +237,10 @@
   @media (min-width: 761px) and (max-width: 900px) { .pill { padding-left: 9px; padding-right: 9px; } }
   /* 아주 좁은 폰(340px 이하)은 단추 폭을 조금 줄여야 한 줄에 들어간다. 높이 44px은 그대로 */
   @media (max-width: 340px) { .pill.btn, #profileBtn { min-width: 38px; } #topbar .left, #topbar .right { gap: 1px; } }
+  /* viewport-fit=cover: 노치·시스템 단추 자리를 피한다 (없는 기기에서는 원래 여백 그대로).
+     맨 끝에 두어 폭별 규칙의 padding 에 덮이지 않게 한다 */
+  #topbar { padding-top: max(4px, env(safe-area-inset-top, 0px)); padding-left: max(4px, env(safe-area-inset-left, 0px)); padding-right: max(4px, env(safe-area-inset-right, 0px)); }
+  #taskbar { padding-left: max(10px, env(safe-area-inset-left, 0px)); padding-right: max(10px, env(safe-area-inset-right, 0px)); padding-bottom: calc(3px + env(safe-area-inset-bottom, 0px)); }
 </style>
 </head>
 <body>
@@ -299,9 +305,16 @@
   function syncBars() {
     fitTopbar();
     var tb = document.getElementById('topbar'), bb = document.getElementById('taskbar');
-    document.documentElement.style.setProperty('--app-h', window.innerHeight + 'px');
+    /* 실제로 보이는 높이: innerHeight와 보이는 영역(visualViewport) 중 작은 쪽.
+       어떤 안드로이드 크롬은 주소창·아래 시스템 단추 뒤까지 높이에 넣어 작업줄이 가려졌다 */
+    var vh = window.innerHeight;
+    if (window.visualViewport && window.visualViewport.scale <= 1.01) vh = Math.min(vh, Math.round(window.visualViewport.height + window.visualViewport.offsetTop));
+    document.documentElement.style.setProperty('--app-h', vh + 'px');
     document.documentElement.style.setProperty('--topbar-h', tb.offsetHeight + 'px');
     document.documentElement.style.setProperty('--taskbar-h', bb.offsetHeight + 'px');
+    /* 앱 창은 위 막대 아래부터 작업줄 위까지, 실제 자리를 재서 맞춘다 */
+    var top = tb.getBoundingClientRect().bottom, bot = bb.getBoundingClientRect().top;
+    if (bot > top) { document.documentElement.style.setProperty('--win-top', Math.round(top) + 'px'); document.documentElement.style.setProperty('--win-h', Math.round(bot - top) + 'px'); }
   }
   syncBars();
   window.addEventListener('resize', syncBars);
@@ -870,6 +883,16 @@
     panel.appendChild(el('div', { class: 'toggle' }, [el('span', { text: '🗑️ 기록 전체 삭제 (모든 친구)' }), el('button', { text: '모두 지우기', style: 'background:#ff595e;color:#fff', onclick: function () { if (!confirm('키즈랩에 저장된 모든 친구의 기록과 설정을 지웁니다. 되돌릴 수 없어요. 계속할까요?')) return; try { var ks = []; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && k.indexOf('kidlab.') === 0) ks.push(k); } ks.forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {} location.reload(); } })]));
     panel.appendChild(el('p', { style: 'color:#5e5e5e;font-size:16px;margin-top:16px', html: '💡 모든 기록은 이 컴퓨터의 브라우저(localStorage)에만 저장돼요. 서버로 보내지 않아요.<br>키보드: <b>Esc</b> = 앱 닫기, 미로/코딩은 <b>방향키</b> 사용 가능.' }));
     /* 운영자 사이트 첫 화면 링크는 보호자만 보는 이 화면에만 둔다 (첫 화면에는 광고·어른용 도구가 있다) */
+    /* 화면 정보: 기기마다 다른 화면 높이 문제를 원격으로 확인하려고 둔다 */
+    (function () {
+      var probe = function (u) { var d = document.createElement('div'); d.style.cssText = 'position:fixed;top:0;left:-9px;width:1px;height:' + u; document.body.appendChild(d); var h = Math.round(d.getBoundingClientRect().height); d.remove(); return h; };
+      var sa = document.createElement('div'); sa.style.cssText = 'position:fixed;left:-9px;top:0;padding-bottom:env(safe-area-inset-bottom,0px);padding-top:env(safe-area-inset-top,0px)'; document.body.appendChild(sa); var cs = getComputedStyle(sa); var safe = parseInt(cs.paddingTop) + '/' + parseInt(cs.paddingBottom); sa.remove();
+      var vv = window.visualViewport, tbr = document.getElementById('taskbar').getBoundingClientRect();
+      var info = '창 ' + innerWidth + '×' + innerHeight + ' · 보이는 ' + (vv ? Math.round(vv.width) + '×' + Math.round(vv.height) + '+' + Math.round(vv.offsetTop) : '-') +
+        ' · dvh ' + probe('100dvh') + ' svh ' + probe('100svh') + ' lvh ' + probe('100lvh') + ' · 화면 ' + screen.width + '×' + screen.height + ' ×' + (window.devicePixelRatio || 1) +
+        ' · 안전영역 ' + safe + ' · 작업줄 ' + Math.round(tbr.top) + '~' + Math.round(tbr.bottom) + ' · ' + (matchMedia('(display-mode: standalone)').matches ? '설치 앱' : '브라우저') + ' · ' + (navigator.userAgent.match(/(Chrome|Version|Firefox|SamsungBrowser)\/[\d.]+/) || [''])[0];
+      panel.appendChild(el('details', { style: 'margin-top:10px;font-size:14px;color:var(--db-sub)' }, [el('summary', { text: '📐 화면 정보 (문제 알릴 때 캡처해 주세요)' }), el('div', { text: info, style: 'padding:8px 4px;word-break:break-all' })]));
+    })();
     panel.appendChild(el('p', { style: 'font-size:16px;margin:8px 0 0;color:var(--db-sub)', html: '<a href="https://dibrain.dev/" rel="noopener" style="display:inline-block;padding:10px 0;font-weight:800;color:var(--db-text)">DigitalBrain 첫 화면</a> · 키즈랩 밖으로 나가요' }));
     wrap.appendChild(panel); document.getElementById('panels').appendChild(wrap);
   }

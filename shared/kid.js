@@ -315,15 +315,15 @@
     if (window.top !== window) return;                       /* 앱 창(iframe)은 바깥 화면을 따른다 */
     var mv = document.querySelector('meta[name="viewport"]'); if (!mv) return;
     var sc = TOUCH_DEV ? uiScale() : 1, c;
-    if (sc === 1) c = 'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no';
+    if (sc === 1) c = 'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
     else {
       var land = window.matchMedia && matchMedia('(orientation: landscape)').matches;
       var dev = land ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
       /* 앱들은 폭 320까지 맞춰 두었다. 작은 폰에서 크게 하면 그보다 좁아지지 않게 배율을 줄인다 */
       if (sc > 1 && dev / sc < 320) sc = Math.max(1, dev / 320);
       sc = Math.round(sc * 1000) / 1000;
-      c = sc === 1 ? 'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no'
-        : 'width=' + Math.round(dev / sc) + ', initial-scale=' + sc + ', minimum-scale=' + sc + ', maximum-scale=' + sc + ', user-scalable=no';
+      c = sc === 1 ? 'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'
+        : 'width=' + Math.round(dev / sc) + ', initial-scale=' + sc + ', minimum-scale=' + sc + ', maximum-scale=' + sc + ', user-scalable=no, viewport-fit=cover';
     }
     if (mv.getAttribute('content') !== c) mv.setAttribute('content', c);
   }
