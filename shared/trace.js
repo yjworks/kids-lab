@@ -183,14 +183,20 @@
        회색 글자 굵기의 절반 + 아이 선 굵기의 절반 + 손떨림만큼 여유를 둔다 (글자 100 기준) */
     var TOL_ON = 14;      /* 밖으로 나갔는지 보는 거리 */
     var TOL_COVER = 16;   /* 선을 지나갔는지 보는 거리 (회색 글자 가장자리에 붙여 써도 지나간 것으로) */
+    /* 선을 따라 step 간격으로 점을 다시 찍는다.
+       예전에는 이어진 두 점 사이가 step보다 짧으면 그 구간을 점 없이 건너뛰었다. 손가락으로 천천히 그으면
+       터치 점이 촘촘해서(1~2칸 간격) 선 대부분이 사라졌고, 다 써도 "빨간 점을 지나가야 해요"가 나왔다.
+       이제 남은 길이를 다음 구간으로 넘겨 이어서 잰다. */
     function resample(st, step) {
-      var out = [[st[0][0], st[0][1]]], cx = st[0][0], cy = st[0][1];
+      var out = [[st[0][0], st[0][1]]], acc = 0;
       for (var i = 1; i < st.length; i++) {
-        var x = st[i][0], y = st[i][1], d = Math.hypot(x - cx, y - cy);
-        while (d >= step) { var t = step / d; cx += (x - cx) * t; cy += (y - cy) * t; out.push([cx, cy]); d = Math.hypot(x - cx, y - cy); }
-        cx = x; cy = y;
+        var ax = st[i - 1][0], ay = st[i - 1][1], bx = st[i][0], by = st[i][1];
+        var L = Math.hypot(bx - ax, by - ay), t = 0;
+        if (!L) continue;
+        while (acc + (L - t) >= step) { t += step - acc; acc = 0; out.push([ax + (bx - ax) * t / L, ay + (by - ay) * t / L]); }
+        acc += L - t;
       }
-      out.push([cx, cy]);
+      var last = st[st.length - 1]; out.push([last[0], last[1]]);
       return out;
     }
     function pathLen(ss) {
@@ -266,6 +272,7 @@
     }
     function check() {
       var s = score();
+      window.__traceLast = s; window.__traceDrawn = drawn; window.__traceStrokes = strokes;   /* 검사용: 마지막 판정 값 */
       if (!s) { verdict.textContent = '먼저 글자를 따라 그려 보세요 ✏️'; K.sfx.wrong(); return; }
       var pct = Math.round(Math.max(0, Math.min(100,
         (s.covered * 0.6 + s.on * 0.4) * 100 - Math.max(0, s.ratio - 2) * 10)));

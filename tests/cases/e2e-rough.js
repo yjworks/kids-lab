@@ -8,9 +8,9 @@ const { chromium, devices } = require('/opt/node22/lib/node_modules/playwright')
   /* 아이 손글씨 흉내: 획마다 옆으로 치우침(글자 100 기준), 손떨림, 획 끝 덜 긋기, 순서·방향 거꾸로.
      매번 같은 결과가 나오게 난수 씨앗을 고정한다 */
   let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-  function rough(S, off, wob, trim, reverse) {
+  function rough(S, off, wob, trim, reverse, dens) {
     let out = S.map(st => {
-      const pts = []; for (let i = 1; i < st.length; i++) { const a = st[i-1], b = st[i]; const n = Math.max(2, Math.ceil(Math.hypot(b[0]-a[0], b[1]-a[1]) / 4)); for (let k = 0; k < n; k++) pts.push([a[0] + (b[0]-a[0])*k/n, a[1] + (b[1]-a[1])*k/n]); }
+      const pts = []; for (let i = 1; i < st.length; i++) { const a = st[i-1], b = st[i]; const n = Math.max(2, Math.ceil(Math.hypot(b[0]-a[0], b[1]-a[1]) / (dens || 4))); for (let k = 0; k < n; k++) pts.push([a[0] + (b[0]-a[0])*k/n, a[1] + (b[1]-a[1])*k/n]); }
       pts.push(st[st.length-1]);
       const cut = Math.floor(pts.length * trim / 2), seg = pts.slice(cut, Math.max(cut + 2, pts.length - cut));
       const ang = rnd() * Math.PI * 2, dx = Math.cos(ang) * off, dy = Math.sin(ang) * off;
@@ -22,6 +22,8 @@ const { chromium, devices } = require('/opt/node22/lib/node_modules/playwright')
     return out;
   }
   const CASES = {
+    /* 손가락으로 천천히 그으면 터치 점이 0.8칸 간격으로 촘촘하다. 예전 판정은 이것을 거의 다 놓쳤다 */
+    '손가락처럼 촘촘하게': S => rough(S, 4, 1, 0.05, false, 0.8),
     '조금 삐뚤게': S => rough(S, 6, 3, 0.10, false),
     '많이 삐뚤게': S => rough(S, 9, 4, 0.18, false),
     '가장자리에 붙여': S => rough(S, 13, 3, 0.12, false),
