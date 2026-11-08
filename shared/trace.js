@@ -272,7 +272,7 @@
     }
     function check() {
       var s = score();
-      window.__traceLast = s; window.__traceDrawn = drawn; window.__traceStrokes = strokes;   /* 검사용: 마지막 판정 값 */
+      window.__traceLast = s;   /* 검사용: 마지막 판정 값 */
       if (!s) { verdict.textContent = '먼저 글자를 따라 그려 보세요 ✏️'; K.sfx.wrong(); return; }
       var pct = Math.round(Math.max(0, Math.min(100,
         (s.covered * 0.6 + s.on * 0.4) * 100 - Math.max(0, s.ratio - 2) * 10)));

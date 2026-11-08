@@ -467,6 +467,7 @@ const LEGACY = [
   ['I11', 'e2e.js', [], o => /통과: 151 \(100%\)/.test(o) && /오류: 없음/.test(o), o => (o.match(/실제로 그려 본 글자.*/) || [''])[0]],
   ['I12', 'e2e-bad.js', [], o => /전체 칠하기\s+0%/.test(o) && /점 하나\s+0%/.test(o) && /지그재그 낙서\s+0%/.test(o), o => o.replace(/\s+/g, ' ')],
   ['I12b', 'e2e-bad2.js', [], o => /전체 칠하기\s+0%/.test(o) && /점 하나\s+0%/.test(o) && /지그재그 낙서\s+0%/.test(o), o => o.replace(/\s+/g, ' ')],
+  ['I19', 'e2e-rough.js', [], o => { const r = [...o.matchAll(/^\s+(\S.*?)\s+(\d+)% \(/gm)]; return r.length >= 6 && r.every(m => +m[2] >= 90) && /오류: 없음/.test(o); }, o => o.replace(/\s+/g, ' ')],
   ['I13', 'copyjudge.js', [], o => /trace\s+통과 32\/32/.test(o) && /fill\s+통과 0\/32/.test(o) && /dot\s+통과 0\/32/.test(o) && /글꼴에 없는 글자 없음/.test(o), o => o.replace(/\s+/g, ' ')],
   ['I15', 'elev2.js', [], o => /돌려 본 건물 20/.test(o) && /문제 없음/.test(o), o => (o.match(/돌려 본 건물.*/) || [''])[0]],
   ['I16', 'arcade.js', [OUT], o => !/오류 (?!없음)/.test(o), o => o.replace(/\s+/g, ' ').slice(0, 200)],
