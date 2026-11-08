@@ -179,8 +179,10 @@
     /* 회색 본보기의 굵기는 100칸 기준 15칸이다. 그 띠 안에 들어가면 인정한다.
        덮었는지 볼 때는 아이가 그은 굵은 선의 두께까지 감안해 조금 더 넉넉하게 본다. */
     /* 쓰기는 써 보는 것이 목적이라 넉넉하게 본다 (낙서만 거른다) */
-    var TOL_ON = 10;      /* 밖으로 나갔는지 보는 거리 */
-    var TOL_COVER = 12;   /* 선을 지나갔는지 보는 거리 */
+    /* 아주 넉넉하게: 아이가 그은 선은 굵어서(글자의 11%) 눈으로는 덮였는데 선 가운데만 재면 놓쳤다고 나왔다.
+       회색 글자 굵기의 절반 + 아이 선 굵기의 절반 + 손떨림만큼 여유를 둔다 (글자 100 기준) */
+    var TOL_ON = 14;      /* 밖으로 나갔는지 보는 거리 */
+    var TOL_COVER = 16;   /* 선을 지나갔는지 보는 거리 (회색 글자 가장자리에 붙여 써도 지나간 것으로) */
     function resample(st, step) {
       var out = [[st[0][0], st[0][1]]], cx = st[0][0], cy = st[0][1];
       for (var i = 1; i < st.length; i++) {
@@ -200,6 +202,12 @@
       var t2 = tol * tol;
       for (var i = 0; i < pts.length; i++) { var dx = pt[0] - pts[i][0], dy = pt[1] - pts[i][1]; if (dx * dx + dy * dy <= t2) return true; }
       return false;
+    }
+    /* 그린 범위가 글자 범위보다 얼마나 넓게 번졌는지 (칸을 가로지르는 X 낙서를 거른다) */
+    function spillOf(u, t) {
+      var b = function (a) { var r = [1e9, 1e9, -1e9, -1e9]; a.forEach(function (p) { r[0] = Math.min(r[0], p[0]); r[1] = Math.min(r[1], p[1]); r[2] = Math.max(r[2], p[0]); r[3] = Math.max(r[3], p[1]); }); return r; };
+      var ub = b(u), gb = b(t);
+      return Math.max(gb[0] - ub[0], gb[1] - ub[1], ub[2] - gb[2], ub[3] - gb[3]);
     }
     var missed = [];      /* 못 지나간 부분 (틀린 곳 보여주기) */
     function score() {
@@ -245,7 +253,8 @@
         covered: covered / total,
         minStroke: minStroke,
         inOrder: inOrder,
-        ratio: pathLen(user) / Math.max(1, pathLen(strokes))
+        ratio: pathLen(user) / Math.max(1, pathLen(strokes)),
+        spill: spillOf(uAll, tAll)
       };
     }
     /* 못 지나간 곳을 잠깐 표시해 준다 */
@@ -262,8 +271,11 @@
         (s.covered * 0.6 + s.on * 0.4) * 100 - Math.max(0, s.ratio - 2) * 10)));
       meter.querySelector('i').style.width = pct + '%';
       var say = sayOf(set.id, ch);
-      var ok = s.minStroke >= 0.6 && s.covered >= 0.75 && s.on >= 0.62 && s.ratio <= 3.0;
-      var great = s.minStroke >= 0.8 && s.covered >= 0.88 && s.on >= 0.78 && s.ratio <= 2.6 && s.inOrder;
+      /* 아주 넉넉하게: 획마다 40%, 전체 60%만 지나가면 통과. 삐뚤게·작게·가장자리에 붙여·끝을 덜 그어도 된다.
+         막는 것은 칸 칠하기·지그재그(너무 많이 그림), 점 하나(못 지나감), 칸을 가로지르는 낙서(번짐)뿐.
+         기준값은 글자 151개에 아이 글씨 흉내 7가지와 낙서 6가지를 넣어 골랐다(tests/cases/e2e-rough.js). */
+      var ok = s.minStroke >= 0.4 && s.covered >= 0.6 && s.on >= 0.7 && s.ratio <= 2.8 && s.spill <= 18;
+      var great = s.minStroke >= 0.8 && s.covered >= 0.88 && s.on >= 0.85 && s.ratio <= 2.2 && s.spill <= 10 && s.inOrder;
       if (great) {
         verdict.textContent = '🌟 아주 잘 썼어요! (' + pct + '점)';
         K.addStar(2); K.event('trace'); K.sfx.win(); K.confetti(); markDone(set.id, ch);
@@ -274,16 +286,19 @@
         K.addStar(1); K.event('trace'); K.sfx.correct(); markDone(set.id, ch);
         K.speak(say.text + '. 잘했어요', { lang: say.lang });
         setTimeout(nextChar, 1600);
-      } else if (s.minStroke < 0.6 && s.on >= 0.55 && s.covered >= 0.5) {
+      } else if (s.spill > 18) {
+        verdict.textContent = '칸 밖으로 크게 그렸어요. 회색 글자만 따라 그려요 (' + pct + '점)';
+        K.sfx.wrong(); K.speak('회색 글자만 따라 그려요');
+      } else if (s.minStroke < 0.4 && s.on >= 0.5 && s.covered >= 0.45) {
         verdict.textContent = '조금 옆으로 치우쳤어요. 빨간 점을 지나가 봐요 (' + pct + '점)';
         K.sfx.wrong(); K.speak('조금 옆으로 치우쳤어요. 빨간 점을 지나가 봐요'); showMissed();
-      } else if (s.minStroke < 0.6) {
+      } else if (s.minStroke < 0.4) {
         verdict.textContent = '빨간 점을 지나가야 해요. 번호 순서대로! (' + pct + '점)';
         K.sfx.wrong(); K.speak('빠뜨린 곳이 있어요. 빨간 점을 지나가 봐요'); showMissed();
-      } else if (s.ratio > 3.0) {
+      } else if (s.ratio > 2.8) {
         verdict.textContent = '너무 많이 그렸어요. 회색 글자만 따라 그려요 (' + pct + '점)';
         K.sfx.wrong(); K.speak('너무 많이 그렸어요. 회색 글자만 따라 그려요');
-      } else if (s.on < 0.62) {
+      } else if (s.on < 0.7) {
         verdict.textContent = '회색 글자 안쪽으로 그려 봐요 (' + pct + '점)';
         K.sfx.wrong(); K.speak('회색 글자 안쪽으로 그려 봐요');
       } else {
