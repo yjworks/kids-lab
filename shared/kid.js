@@ -303,6 +303,47 @@
   };
   document.addEventListener('pointerdown', function () { ctx(); }, { once: true });
 
+  /* ---------- 화면 꺼짐 방지 (Screen Wake Lock) ----------
+     따라 쓰기·책 읽기·칠교 도중 화면이 어두워지거나 꺼지지 않게, 아이가 화면을 만지는 동안만 켜 둔다.
+     3분 동안 손대지 않으면 풀어 기기가 원래대로 꺼지게 한다. 사용 시간 제한·눈 쉬기 알림은 그대로다.
+     잠금은 바깥 화면(키즈랩) 하나가 맡고, 앱 창(iframe)은 바깥에 신호만 보낸다. */
+  var wakeLock = null, wakeTimer = null, wakeLast = 0, AWAKE_MS = 180000;
+  function wakeRelease() { if (wakeTimer) { clearTimeout(wakeTimer); wakeTimer = null; } if (wakeLock) { try { wakeLock.release(); } catch (e) { } wakeLock = null; } }
+  function awakePing() {
+    try { if (window.top !== window && window.top.KidLab && window.top.KidLab.awakePing) return window.top.KidLab.awakePing(); } catch (e) { }
+    if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+    wakeLast = Date.now();
+    if (!wakeLock) {
+      navigator.wakeLock.request('screen').then(function (l) { wakeLock = l; l.addEventListener('release', function () { if (wakeLock === l) wakeLock = null; }); }).catch(function () { });
+    }
+    if (wakeTimer) clearTimeout(wakeTimer);
+    wakeTimer = setTimeout(wakeRelease, AWAKE_MS);
+  }
+  var awakeThrottle = 0;
+  function onActivity() { var t = Date.now(); if (t - awakeThrottle < 5000) return; awakeThrottle = t; awakePing(); }
+  document.addEventListener('pointerdown', onActivity, { passive: true });
+  document.addEventListener('keydown', onActivity);
+  document.addEventListener('visibilitychange', function () {
+    if (window.top !== window) return;
+    /* 다른 앱에 갔다 오면 잠금이 풀린다. 최근에 쓰고 있었으면 다시 건다 */
+    if (document.visibilityState === 'visible' && Date.now() - wakeLast < AWAKE_MS) { awakeThrottle = 0; awakePing(); }
+  });
+
+  /* ---------- 기록 보존 요청 (Storage API) ----------
+     기록은 이 기기의 브라우저 저장소에만 있다. 저장 공간이 모자라거나(크롬), 7일 동안 안 쓰면(아이폰·아이패드 사파리, 홈 화면에 설치한 앱은 예외)
+     브라우저가 지울 수 있다. "지우지 말 것"을 요청해 둔다. 파이어폭스는 허락 창을 띄우므로 보호자 설정의 단추로만 요청한다. */
+  function storageStatus() {
+    if (!navigator.storage || !navigator.storage.persisted) return Promise.resolve('unsupported');
+    return navigator.storage.persisted().then(function (p) { return p ? 'persisted' : 'not'; }).catch(function () { return 'unsupported'; });
+  }
+  function requestPersist() {
+    if (!navigator.storage || !navigator.storage.persist) return Promise.resolve(false);
+    return navigator.storage.persist().catch(function () { return false; });
+  }
+  if (window.top === window && !/Firefox\//.test(navigator.userAgent)) {
+    storageStatus().then(function (st) { if (st === 'not') requestPersist(); });
+  }
+
   /* ---------- 화면 크기 ----------
      아이들이 두 손가락으로 확대하면 화면이 반쯤 밀린 채 남아 엉망이 되곤 했다.
      손으로 확대·축소는 막고, 크기는 보호자 설정의 단추로만 바꾼다.
@@ -725,7 +766,7 @@
     addWrong: addWrong, takeWrongs: takeWrongs, clearWrong: clearWrong, wrongCount: wrongCount,
     addActivity: addActivity, stampState: stampState, addUsage: addUsage, usageToday: usageToday,
     STICKERS: STICKERS, STICKER_COST: STICKER_COST,
-    sfx: sfx, speak: speak, speakEn: speakEn, stopSpeak: stopSpeak, applyUiScale: applyUiScale, uiScale: uiScale, isTouchDevice: function () { return TOUCH_DEV; },
+    sfx: sfx, speak: speak, speakEn: speakEn, stopSpeak: stopSpeak, awakePing: awakePing, storageStatus: storageStatus, requestPersist: requestPersist, applyUiScale: applyUiScale, uiScale: uiScale, isTouchDevice: function () { return TOUCH_DEV; },
     toast: toast, nope: nope, yep: yep, confetti: confetti, header: header, runQuiz: runQuiz, buildRound: buildRound, qkey: qkey, menu: menu, backButton: backButton,
     numToKo: numToKo, comma: comma, josa: josa,
     el: el, esc: esc, randInt: randInt, pick: pick, shuffle: shuffle, sample: sample, notify: notify, APP_ID: APP_ID

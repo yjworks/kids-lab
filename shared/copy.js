@@ -145,7 +145,14 @@
     }
     function pt(e) { var r = ink.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
     ink.addEventListener('pointerdown', function (e) { e.preventDefault(); ink.setPointerCapture(e.pointerId); cur = [pt(e)]; strokes.push(cur); drawInk(); });
-    ink.addEventListener('pointermove', function (e) { if (!cur) return; cur.push(pt(e)); drawInk(); });
+    /* 화면을 한 번 그리는 사이에 들어온 터치 점까지 모두 받는다 */
+    ink.addEventListener('pointermove', function (e) {
+      if (!cur) return;
+      var evs = (e.getCoalescedEvents && e.getCoalescedEvents()) || [];
+      if (!evs.length) evs = [e];
+      for (var k = 0; k < evs.length; k++) cur.push(pt(evs[k]));
+      drawInk();
+    });
     ['pointerup', 'pointercancel'].forEach(function (ev) { ink.addEventListener(ev, function () { cur = null; }); });
 
     var passed = 0;

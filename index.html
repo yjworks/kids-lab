@@ -278,8 +278,28 @@
   /* 서비스워커: 한 번 열어 두면 인터넷 없이도 실행된다 */
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('sw.js').catch(function () { /* 실패해도 그냥 웹으로 돌아간다 */ });
+      navigator.serviceWorker.register('sw.js').then(function (reg) {
+        /* 오래 켜 둔 화면(설치 앱 등)도 새 버전을 찾게: 화면이 다시 보일 때와 30분마다 확인 */
+        document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') reg.update().catch(function () { }); });
+        setInterval(function () { reg.update().catch(function () { }); }, 30 * 60 * 1000);
+      }).catch(function () { /* 실패해도 그냥 웹으로 돌아간다 */ });
     });
+    /* 새 버전 자동 적용: 배포해도 이미 열린 화면은 예전 코드로 돌아서 "닫았다 다시 열기"가 필요했다.
+       새 서비스워커가 넘겨받으면, 앱 창·설정 창이 열려 있지 않을 때 바탕화면을 조용히 새로고침한다.
+       놀고 있는 중이면 끝날 때(창을 닫을 때)까지 기다린다. 처음 설치할 때는 새로고침하지 않는다. */
+    var hadController = !!navigator.serviceWorker.controller, pendingReload = false;
+    window.__kidlabTryReload = function () {
+      if (!pendingReload) return;
+      if (window.__kidlabBusy && window.__kidlabBusy()) return;
+      pendingReload = false;
+      try { sessionStorage.setItem('kidlab-updated', '1'); } catch (e) { }
+      location.reload();
+    };
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!hadController) { hadController = true; return; }
+      pendingReload = true; window.__kidlabTryReload();
+    });
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') window.__kidlabTryReload(); });
   }
 </script>
 <script src="shared/kid.js"></script>
@@ -493,6 +513,9 @@
   var TOUCH = navigator.maxTouchPoints > 0 && !(window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches);
   if (TOUCH) document.documentElement.classList.add('touch');
   var wins = {}; var zTop = 100;
+  /* 새 버전 적용을 미룰지: 열린 앱 창(최소화 포함)이나 설정·부모 창이 있으면 바쁨 */
+  window.__kidlabBusy = function () { return Object.keys(wins).length > 0 || !!document.querySelector('#panels .overlay'); };
+  try { if (sessionStorage.getItem('kidlab-updated')) { sessionStorage.removeItem('kidlab-updated'); setTimeout(function () { K.toast('✨ 키즈랩이 새 버전으로 바뀌었어요', 2600); }, 800); } } catch (e) { }
   function openApp(id) {
     var a = appById[id]; if (!a) return;
     if (limitReached()) { showLimit(); return; }
@@ -521,7 +544,7 @@
   }
   function darken(hex) { var n = parseInt(hex.slice(1), 16); var r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255; return 'rgb(' + Math.round(r * .72) + ',' + Math.round(g * .72) + ',' + Math.round(b * .72) + ')'; }
   function focusWin(id, noFrameFocus) { for (var k in wins) wins[k].el.classList.remove('focus'); if (wins[id]) { wins[id].el.classList.add('focus'); wins[id].el.style.zIndex = ++zTop; if (!noFrameFocus && !TOUCH) { try { wins[id].frame.focus(); } catch (e) { } } } renderTasks(); }
-  function closeWin(id) { if (!wins[id]) return; wins[id].el.remove(); delete wins[id]; renderTasks(); renderTop(); K.sfx.click(); }
+  function closeWin(id) { if (!wins[id]) return; wins[id].el.remove(); delete wins[id]; renderTasks(); renderTop(); K.sfx.click(); if (window.__kidlabTryReload) setTimeout(window.__kidlabTryReload, 300); }
   function minWin(id) { wins[id].el.classList.add('min'); wins[id].el.classList.remove('focus'); renderTasks(); }
   function toggleMax(id) { wins[id].el.classList.toggle('max'); }
   function drag(handle, w, id) {
@@ -843,6 +866,20 @@
       });
       row.appendChild(seg); panel.appendChild(row);
       panel.appendChild(el('div', { text: '아이가 두 손가락으로 화면을 키우면 화면이 밀린 채 남아 불편해서, 손으로 확대·축소는 막고 이 단추로만 크기를 바꿔요.', style: 'font-size:14px;color:#777;margin:4px 4px 8px' }));
+    })();
+    /* 기록 보존 상태 */
+    (function () {
+      var st = el('span', { text: '확인 중…', style: 'font-size:15px;color:var(--db-sub)' });
+      var row = el('div', { class: 'toggle' }, [el('span', { text: '🔒 기록 보존' }), st]);
+      panel.appendChild(row);
+      var ios = /iP(ad|hone|od)/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+      var standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+      K.storageStatus().then(function (v) {
+        if (v === 'persisted') { st.textContent = '✔ 이 기기에서 지워지지 않게 보존 중'; return; }
+        st.textContent = v === 'unsupported' ? '이 브라우저는 보존 요청을 못 해요' : '아직 보존 안 됨';
+        if (v === 'not') row.appendChild(el('button', { text: '보존 요청', onclick: function () { K.requestPersist().then(function (ok) { st.textContent = ok ? '✔ 보존 중' : '브라우저가 거절했어요 (아래 안내)'; }); } }));
+      });
+      if (ios && !standalone) panel.appendChild(el('div', { text: '아이폰·아이패드 사파리는 7일 동안 쓰지 않으면 웹 기록을 지울 수 있어요. 공유 단추 → "홈 화면에 추가"로 설치하면 지워지지 않아요. 가끔 💾 백업도 받아 두세요.', style: 'font-size:14px;color:var(--db-sub);margin:4px 4px 8px' }));
     })();
     /* 위 막대가 좁아 설치 단추가 접혀도 여기서 설치할 수 있게 */
     if (deferredPrompt) panel.appendChild(el('div', { class: 'toggle' }, [el('span', { text: '📲 홈 화면에 설치' }), el('button', { class: 'on', text: '설치하기', onclick: function () { installBtn.click(); } })]));
